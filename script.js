@@ -16,7 +16,7 @@ links.addEventListener('click', (e) => {
 // YouTube embed: set data-video-id on #video in index.html (or edit VIDEO_ID here).
 const VIDEO_ID = '';
 const video = document.getElementById('video');
-const id = video.dataset.videoId || VIDEO_ID;
+const id = video && (video.dataset.videoId || VIDEO_ID);
 if (id) {
   const frame = document.createElement('iframe');
   frame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id);
