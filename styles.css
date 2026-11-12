@@ -109,6 +109,7 @@ h1 { font-size: clamp(2.5rem, 9vw, 4.6rem); font-weight: 900; }
 
 /* Story */
 .story { font-size: 1.2rem; max-width: 36em; }
+.story + .story { margin-top: 1.1em; }
 
 /* Team */
 .team-intro { margin: -12px 0 28px; }
