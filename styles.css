@@ -111,6 +111,7 @@ h1 { font-size: clamp(2.5rem, 9vw, 4.6rem); font-weight: 900; }
 .story { font-size: 1.2rem; max-width: 36em; }
 
 /* Team */
+.team-intro { margin: -12px 0 28px; }
 .team { display: grid; gap: 16px; }
 .member { border: 2px solid var(--black); border-radius: var(--radius); padding: 28px; display: flex; align-items: center; gap: 20px; }
 .avatar { flex: none; width: 76px; height: 76px; border-radius: 50%; background: var(--yellow); color: var(--black); display: grid; place-items: center; font-weight: 900; font-size: 1.4rem; overflow: hidden; }
