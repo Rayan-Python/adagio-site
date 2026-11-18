@@ -215,9 +215,11 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
   background: linear-gradient(to top, #000000 0%, rgba(0,0,0,.85) 18%, rgba(0,0,0,.5) 42%, rgba(0,0,0,.18) 70%, rgba(0,0,0,0) 100%);
 }
 .hero-brand {
-  position: absolute; right: 20px; bottom: 28px; z-index: 1; margin: 0;
+  position: absolute; left: 20px; top: 24px; z-index: 1; margin: 0;
+  display: flex; align-items: center; gap: .3em;
   font-size: clamp(3rem, 13vw, 8.5rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #FFFFFF;
 }
+.hero-brand img { width: .85em; height: .85em; border-radius: .2em; }
 /* Scroll indicator: small neutral chevron, bottom left, opposite the name */
 .scroll-down {
   position: absolute; left: 14px; bottom: 30px; z-index: 1;
@@ -267,7 +269,7 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
 
 @media (min-width: 720px) {
   .hero-img { object-position: center; }
-  .hero-brand { right: 40px; bottom: 44px; }
+  .hero-brand { left: 40px; top: 36px; }
   .scroll-down { left: 32px; bottom: 50px; }
 }
 @media (prefers-reduced-motion: reduce) {
