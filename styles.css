@@ -216,10 +216,13 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
 }
 .hero-brand {
   position: absolute; left: 20px; top: 24px; z-index: 1; margin: 0;
-  display: flex; align-items: center; gap: .3em;
   font-size: clamp(3rem, 13vw, 8.5rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #FFFFFF;
 }
-.hero-brand img { width: .85em; height: .85em; border-radius: .2em; }
+.o-logo {
+  display: inline-block; width: .555em; height: .555em; margin-left: .03em; vertical-align: -0.012em; /* matches the real "o" */
+  border-radius: 50%; background: url("apple-touch-icon.png") center / 118% no-repeat;
+}
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* Scroll indicator: small neutral chevron, bottom left, opposite the name */
 .scroll-down {
   position: absolute; left: 14px; bottom: 30px; z-index: 1;
