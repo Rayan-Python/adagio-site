@@ -223,20 +223,20 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
 }
 .hero-brand {
   /* Centered on the visible part of the photo, baseline on the lane line at y = 177 of 960.
-     Audiowide's baseline sits .85em below the top of a line-height: 1 box.
+     Archivo's baseline sits .835em below the top of a line-height: 1 box.
      Size: as big as the width allows, but never taller than the space above the line
-     (minus 48px, which also covers the zoom) - its tallest letter is .751em. */
+     (minus 48px, which also covers the zoom) - its tallest letter is .723em. */
   --space: calc(var(--sh) * .184375 - (var(--sh) - 100cqh) / 2 - 48px);
   position: absolute; z-index: 1; margin: 0; white-space: nowrap;
   left: calc((var(--sw) - 100cqw) * var(--px) + 50cqw); top: 18.4375%;
-  transform: translate(-50%, -.85em);
-  font-family: "Audiowide", var(--sans); font-stretch: normal;
-  font-size: min(19cqw, calc(var(--space) / .751)); font-weight: 400; letter-spacing: .06em; line-height: 1; color: #FFFFFF;
+  transform: translate(-50%, -.835em);
+  font-family: var(--sans); font-stretch: normal;
+  font-size: min(19cqw, calc(var(--space) / .723)); font-weight: 700; letter-spacing: .01em; line-height: 1; color: #FFFFFF;
 }
-/* App icon in place of the o, sized to Audiowide's square o */
+/* App icon in place of the o, sized to Archivo's o */
 .o-logo {
-  /* Audiowide's o: 0.585em x 0.528em on the baseline, 0.682em advance */
-  display: inline-block; width: .585em; height: .528em; margin: 0 .048em 0 .049em; vertical-align: baseline;
+  /* Archivo bold o: 0.536em x 0.55em, dipping .012em below the baseline, 0.613em advance */
+  display: inline-block; width: .536em; height: .55em; margin: 0 .038em; vertical-align: -.012em;
   border-radius: .1em; background: url("apple-touch-icon.png") center / cover no-repeat;
 }
 
@@ -281,7 +281,7 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
 
 @media (min-width: 720px) {
   .hero-stage { --px: .5; }
-  .hero-brand { font-size: min(12cqw, calc(var(--space) / .751)); }
+  .hero-brand { font-size: min(12cqw, calc(var(--space) / .723)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-stage { animation: none; }
