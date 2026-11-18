@@ -13,10 +13,10 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="500x500" href="favicon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <!-- Archivo: expanded width for headings, normal width for body and labels. -->
+  <!-- Archivo: expanded width for headings, normal width for body and labels. Orbitron: hero wordmark only. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Orbitron:wght@800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -46,7 +46,8 @@
 
   <main id="main">
     <section class="hero" id="top">
-      <h1 class="hero-brand">Adagio</h1>
+      <!-- Wordmark in Orbitron (square "o"), with the app icon standing in for the o -->
+      <h1 class="hero-brand"><span class="visually-hidden">Adagio</span><span aria-hidden="true">Adagi<span class="o-logo"></span></span></h1>
       <img class="hero-img" src="assets/hero.webp" width="1696" height="960" alt="A runner seen from above, mid-stride on a track at night, casting a long shadow across the lanes" fetchpriority="high">
     </section>
 
