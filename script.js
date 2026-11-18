@@ -34,4 +34,13 @@ document.querySelectorAll('a[data-placeholder="download"]').forEach((a) => {
   }
 });
 
+// Hero dims as the black sections slide up over it.
+const hero = document.querySelector('.hero');
+function dimHero() {
+  const progress = Math.min(window.scrollY / window.innerHeight, 1);
+  hero.style.setProperty('--dim', (progress * 0.7).toFixed(3));
+}
+window.addEventListener('scroll', () => requestAnimationFrame(dimHero), { passive: true });
+dimHero();
+
 document.getElementById('year').textContent = new Date().getFullYear();

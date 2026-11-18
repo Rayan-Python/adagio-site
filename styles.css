@@ -199,14 +199,21 @@ h2 { letter-spacing: -0.02em; }
 /* Top bar: hidden for now */
 .site-header { display: none !important; }
 
-/* Hero: photo with only the logo, slow zoom */
-.hero { height: 100vh; height: 100svh; background: #000000; }
+/* Hero: photo with only the logo, slow zoom. It stays pinned while the black
+   sections slide up over it, and dims as you scroll (script.js sets --dim). */
+.hero { position: sticky; top: 0; z-index: 0; height: 100vh; height: 100svh; background: #000000; }
+.hero::before { content: ""; position: absolute; inset: 0; z-index: 2; background: #000000; opacity: var(--dim, 0); pointer-events: none; }
+main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
 .hero-img {
   width: 100%; height: 100%; max-height: none; aspect-ratio: auto; object-fit: cover; object-position: 86% center;
   transform-origin: 70% 45%; animation: drift 24s ease-in-out infinite alternate;
 }
 @keyframes drift { from { transform: scale(1); } to { transform: scale(1.07); } }
-.hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 35%; background: linear-gradient(to top, #000000, transparent); pointer-events: none; }
+/* Long, soft fade so the photo dissolves into the black below */
+.hero::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 60%; pointer-events: none;
+  background: linear-gradient(to top, #000000 0%, rgba(0,0,0,.85) 18%, rgba(0,0,0,.5) 42%, rgba(0,0,0,.18) 70%, rgba(0,0,0,0) 100%);
+}
 .hero-brand {
   position: absolute; right: 20px; bottom: 28px; z-index: 1; margin: 0;
   font-size: clamp(3rem, 13vw, 8.5rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #FFFFFF;
@@ -222,8 +229,15 @@ h2 { letter-spacing: -0.02em; }
 @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 
 /* Sections */
-.section, #how, #team, .section-dark, .section-soft, .section-yellow { background: #000000; color: #FFFFFF; border-top: 1px solid var(--surface-2); }
-.section-soft { background-image: none; }
+/* Each section starts with a track lane line (with a lane marker tick),
+   carrying the lines from the photo down the page. */
+.section, #how, #team, .section-dark, .section-soft, .section-yellow {
+  background-color: #000000; color: #FFFFFF; border-top: 0;
+  background-image: linear-gradient(rgba(204,255,0,.4), rgba(204,255,0,.4)), linear-gradient(rgba(204,255,0,.4), rgba(204,255,0,.4));
+  background-size: 100% 2px, 2px 16px;
+  background-position: 0 0, 76% 0;
+  background-repeat: no-repeat;
+}
 .section-yellow::before { display: none; }
 .eyebrow, .eyebrow.dark, .eyebrow.dark-on-yellow { color: var(--neon); opacity: 1; }
 .body-lg, .story { color: #FFFFFF; }
@@ -242,12 +256,11 @@ h2 { letter-spacing: -0.02em; }
 .btn-dark, .btn-primary { background: var(--neon); color: #000000; border-color: var(--neon); box-shadow: none; }
 .btn-dark:hover, .btn-primary:hover { background: #E2FF66; box-shadow: none; transform: none; }
 
-.stripes { background: #000000; }
-.stripes span { height: 4px; background: var(--neon) !important; }
-.stripes span:nth-child(2) { opacity: .55; }
-.stripes span:nth-child(3) { opacity: .25; }
+.stripes { display: none; }
 
-.site-footer { background: #000000; }
+.site-footer {
+  background: #000000 linear-gradient(rgba(204,255,0,.4), rgba(204,255,0,.4)) no-repeat 0 0 / 100% 2px;
+}
 .site-footer a { color: var(--neon); }
 .muted { color: #8A8A8A; }
 .wordmark { -webkit-text-stroke: 1.5px rgba(204,255,0,.5); }
