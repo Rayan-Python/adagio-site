@@ -12,6 +12,10 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="500x500" href="favicon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <!-- Headings use ABC Monument Grotesk when installed/licensed; Inter Tight is the free stand-in. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,700;0,800;0,900;1,800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -41,6 +45,7 @@
 
   <main id="main">
     <section class="hero" id="top">
+      <div class="hero-floor" aria-hidden="true"></div>
       <div class="wrap hero-grid">
         <div class="hero-copy">
           <p class="eyebrow">For iPhone · Apple Watch · Garmin</p>
@@ -51,21 +56,26 @@
           </div>
         </div>
         <div class="hero-art" aria-hidden="true">
-          <div class="pulse">
-            <span class="ring r1"></span>
-            <span class="ring r2"></span>
-            <span class="ring r3"></span>
-            <div class="pulse-core">
-              <span class="pulse-label">Cadence</span>
-              <span class="pulse-value">SPM</span>
-              <span class="pulse-arrow">⇄</span>
-              <span class="pulse-label">Tempo</span>
-              <span class="pulse-value">BPM</span>
+          <div class="sun"></div>
+          <div class="console">
+            <div class="console-bar"><i></i><i></i><i></i><span>Adagio // sync</span></div>
+            <div class="console-screen">
+              <div class="readout">
+                <span class="readout-label">Cadence</span>
+                <span class="readout-value">SPM</span>
+              </div>
+              <svg class="wave" viewBox="0 0 120 40" preserveAspectRatio="none"><path d="M0 20h22l6-14 8 28 8-28 8 28 6-14h62"/></svg>
+              <div class="readout">
+                <span class="readout-label">Tempo</span>
+                <span class="readout-value">BPM</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
+
+    <div class="stripes" aria-hidden="true"><span></span><span></span><span></span></div>
 
     <section class="section" id="how">
       <div class="wrap">
@@ -101,6 +111,7 @@
             <div class="icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg>
             </div>
+            <span class="tag">01</span>
             <h3>Cadence matching</h3>
             <p>Music tempo follows your steps per minute in real time, so every beat lands with your stride.</p>
           </article>
@@ -108,6 +119,7 @@
             <div class="icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
             </div>
+            <span class="tag">02</span>
             <h3>Spotify + Apple Music</h3>
             <p>Use the streaming service you already have. Adagio works with both.</p>
           </article>
@@ -115,6 +127,7 @@
             <div class="icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="3"/><path d="M11 18h2"/></svg>
             </div>
+            <span class="tag">03</span>
             <h3>iPhone, Apple Watch, Garmin</h3>
             <p>Run with the device you already wear. Adagio is made for iPhone, Apple Watch and Garmin.</p>
           </article>
@@ -212,6 +225,8 @@
     </section>
   </main>
 
+  <div class="stripes" aria-hidden="true"><span></span><span></span><span></span></div>
+
   <footer class="site-footer">
     <div class="wrap foot">
       <div>
@@ -223,6 +238,7 @@
         <a href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>
       </div>
     </div>
+    <p class="wrap wordmark" aria-hidden="true">Adagio</p>
     <div class="wrap legal"><p>© <span id="year">2026</span> Adagio</p></div>
   </footer>
 
