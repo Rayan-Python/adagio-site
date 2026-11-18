@@ -272,3 +272,10 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) {
   .hero-img { animation: none; }
 }
+
+/* TEMPORARY: wordmark font options (delete with the #font-preview section) */
+.wm-list { list-style: none; margin: 0; padding: 0; }
+.wm-list li { padding: 28px 0; border-bottom: 1px solid var(--surface-2); }
+.wm-name { display: block; font-size: .85rem; color: var(--text-2); margin-bottom: 10px; }
+.wm-sample { margin: 0; font-size: clamp(2.4rem, 11vw, 6.5rem); letter-spacing: .06em; line-height: 1; color: #FFFFFF; }
+.wm-sample .o-logo { width: var(--o-w, .58em); height: var(--o-h, .58em); margin: 0 var(--o-mr, .05em) 0 var(--o-ml, .05em); vertical-align: var(--o-va, 0); }
