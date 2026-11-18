@@ -288,3 +288,101 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
   .hero-stage { animation: none; }
 }
 
+
+/* ------------------------------------------------------------------
+   Timeline: a straight running lane down the page. A spike shoe runs
+   down it as you scroll (script.js sets --run in px), the lane behind it
+   fills with green, and each mile marker and card lights up on arrival.
+   ------------------------------------------------------------------ */
+.tl { --x: 28px; position: relative; margin-top: 16px; padding: 24px 0 72px; }
+.tl-track {
+  position: absolute; top: 0; bottom: 0; left: var(--x); width: 40px; transform: translateX(-50%); z-index: 3;
+  /* lane: two white lane lines, dotted centre line still to run */
+  border-left: 2px solid rgba(255,255,255,.22); border-right: 2px solid rgba(255,255,255,.22);
+  background: radial-gradient(circle, rgba(255,255,255,.28) 1.2px, transparent 1.6px) center top / 4px 10px repeat-y;
+}
+.tl-done { position: absolute; left: 50%; top: 0; width: 3px; height: var(--run, 0px); transform: translateX(-50%); background: var(--neon); border-radius: 2px; }
+.tl-shoe { position: absolute; left: 50%; top: var(--run, 0px); z-index: 2; transform: translate(-50%, -50%); }
+.tl-shoe svg { display: block; width: 84px; max-width: none; height: auto; transform: rotate(90deg); filter: drop-shadow(0 4px 10px rgba(0,0,0,.6)); }
+.shoe-upper { fill: #FFFFFF; }
+.shoe-stripe { fill: none; stroke: var(--neon); stroke-width: 2.4; stroke-linecap: round; }
+.shoe-sole { fill: var(--neon); }
+.shoe-spikes { fill: none; stroke: #CFCFCF; stroke-width: 1.4; stroke-linejoin: round; }
+.tl-mi {
+  position: absolute; left: calc(100% - 4px); top: 50%; transform: translateY(-50%);
+  font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
+  color: #121212; background: var(--neon); padding: 3px 8px; border-radius: 999px;
+}
+
+.tl-steps { list-style: none; margin: 0; padding: 0 0 0 calc(var(--x) + 44px); }
+.tl-step { position: relative; padding: 28px 0 40px; }
+.tl-node {
+  position: absolute; left: calc(-44px - 0px); top: 52px; transform: translate(-50%, -50%);
+  margin-left: 0; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface); border: 1px solid var(--surface-2);
+  transition: background-color 300ms ease-out, box-shadow 300ms ease-out;
+}
+.tl-node svg { width: 20px; height: 20px; fill: none; stroke: #8A8A8A; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke 300ms ease-out; }
+.tl-card {
+  background: var(--surface); border: 1px solid var(--surface-2); border-radius: 16px; padding: 22px 24px;
+  opacity: .35; transform: translateY(14px); transition: opacity 400ms ease-out, transform 400ms ease-out, border-color 400ms ease-out;
+}
+.tl-mile { font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--text-2); margin-bottom: 8px; }
+.tl-card h3 { font-size: 1.35rem; margin-bottom: 6px; }
+.tl-card p:last-child { color: var(--text-2); }
+.tl-step.is-on .tl-node { background: var(--neon); border-color: var(--neon); box-shadow: 0 0 0 6px rgba(188,212,88,.18); }
+.tl-step.is-on .tl-node svg { stroke: #121212; }
+.tl-step.is-on .tl-card { opacity: 1; transform: none; border-color: rgba(188,212,88,.45); }
+.tl-step.is-on .tl-mile { color: var(--neon); }
+
+/* finish line: a checkered band across the lane */
+.tl-finish {
+  position: absolute; bottom: 24px; left: var(--x); width: 40px; height: 12px; transform: translateX(-50%);
+  background: conic-gradient(#FFFFFF 25%, #121212 0 50%, #FFFFFF 0 75%, #121212 0) 0 0 / 8px 8px;
+}
+
+/* wider screens: lane down the middle, cards alternate sides */
+@media (min-width: 900px) {
+  .tl { --x: 50%; }
+  .tl-steps { padding: 0; }
+  .tl-step { width: 50%; padding: 0 72px 0 0; }
+  .tl-step:nth-child(even) { margin-left: 50%; padding: 0 0 0 72px; }
+  .tl-step { padding-bottom: 96px; }
+  .tl-node { left: 100%; top: 24px; }
+  .tl-step:nth-child(even) .tl-node { left: 0; }
+  .tl-card { max-width: 440px; margin-left: auto; }
+  .tl-step:nth-child(even) .tl-card { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-card { transform: none; transition: none; }
+  .tl-node, .tl-node svg { transition: none; }
+}
+
+/* ------------------------------------------------------------------
+   Alternating backgrounds: dark, then the photo's lime, then dark...
+   ------------------------------------------------------------------ */
+.section.on-lime, #team.on-lime {
+  background-color: var(--neon); color: #121212;
+  background-image: linear-gradient(#121212, #121212), linear-gradient(#121212, #121212);
+}
+.on-lime .eyebrow, .on-lime .eyebrow.dark { color: #121212; }
+.on-lime .body-lg, .on-lime .story, .on-lime h2 { color: #121212; }
+.on-lime .member { background: #121212; border-color: #121212; }
+.on-lime .avatar { background: var(--neon); border-color: var(--neon); color: #121212; }
+.on-lime .btn-dark { background: #121212; color: var(--neon); border-color: #121212; }
+.on-lime .btn-dark:hover { background: #2A2A2A; }
+
+/* ------------------------------------------------------------------
+   Small wordmark that appears top left once the big one scrolls away
+   ------------------------------------------------------------------ */
+.mini-brand {
+  position: fixed; top: 16px; left: 16px; z-index: 60;
+  font-family: var(--sans); font-stretch: 125%; font-weight: 900; font-size: 1.35rem; letter-spacing: .03em; line-height: 1;
+  color: #FFFFFF; text-decoration: none; background: rgba(18,18,18,.88); padding: 10px 14px; border-radius: 10px;
+  opacity: 0; transform: translateY(-8px); pointer-events: none;
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.mini-brand.is-shown { opacity: 1; transform: none; pointer-events: auto; }
+@media (min-width: 720px) { .mini-brand { top: 20px; left: 24px; font-size: 1.6rem; } }
+@media (prefers-reduced-motion: reduce) { .mini-brand { transition: none; transform: none; } }
