@@ -43,19 +43,4 @@ function dimHero() {
 window.addEventListener('scroll', () => requestAnimationFrame(dimHero), { passive: true });
 dimHero();
 
-// TEMPORARY: size the logo "o" in each font preview to that font's real "o".
-document.fonts.ready.then(() => {
-  const ctx = document.createElement('canvas').getContext('2d');
-  document.querySelectorAll('.wm-sample').forEach((el) => {
-    ctx.font = `${el.dataset.weight} 100px "${el.dataset.font}"`;
-    const m = ctx.measureText('o');
-    const left = -m.actualBoundingBoxLeft, right = m.actualBoundingBoxRight;
-    el.style.setProperty('--o-w', (right - left) / 100 + 'em');
-    el.style.setProperty('--o-h', (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) / 100 + 'em');
-    el.style.setProperty('--o-ml', left / 100 + 'em');
-    el.style.setProperty('--o-mr', (m.width - right) / 100 + 'em');
-    el.style.setProperty('--o-va', -m.actualBoundingBoxDescent / 100 + 'em');
-  });
-});
-
 document.getElementById('year').textContent = new Date().getFullYear();

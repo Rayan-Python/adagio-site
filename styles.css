@@ -216,13 +216,13 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
 }
 .hero-brand {
   position: absolute; left: 0; right: 0; top: 24px; z-index: 1; margin: 0; text-align: center;
-  font-family: "Orbitron", var(--sans); font-stretch: normal;
-  font-size: clamp(2.6rem, 13vw, 9rem); font-weight: 800; letter-spacing: .06em; line-height: 1; color: #FFFFFF;
+  font-family: "Audiowide", var(--sans); font-stretch: normal;
+  font-size: clamp(2.6rem, 13vw, 9rem); font-weight: 400; letter-spacing: .06em; line-height: 1; color: #FFFFFF;
 }
-/* App icon in place of the o, sized to Orbitron's square o */
+/* App icon in place of the o, sized to Audiowide's square o */
 .o-logo {
-  /* Orbitron's o: 0.588em x 0.58em on the baseline, 0.692em advance */
-  display: inline-block; width: .588em; height: .58em; margin: 0 .053em 0 .051em; vertical-align: baseline;
+  /* Audiowide's o: 0.585em x 0.528em on the baseline, 0.682em advance */
+  display: inline-block; width: .585em; height: .528em; margin: 0 .048em 0 .049em; vertical-align: baseline;
   border-radius: .1em; background: url("apple-touch-icon.png") center / cover no-repeat;
 }
 
@@ -273,9 +273,3 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
   .hero-img { animation: none; }
 }
 
-/* TEMPORARY: wordmark font options (delete with the #font-preview section) */
-.wm-list { list-style: none; margin: 0; padding: 0; }
-.wm-list li { padding: 28px 0; border-bottom: 1px solid var(--surface-2); }
-.wm-name { display: block; font-size: .85rem; color: var(--text-2); margin-bottom: 10px; }
-.wm-sample { margin: 0; font-size: clamp(2.4rem, 11vw, 6.5rem); letter-spacing: .06em; line-height: 1; color: #FFFFFF; }
-.wm-sample .o-logo { width: var(--o-w, .58em); height: var(--o-h, .58em); margin: 0 var(--o-mr, .05em) 0 var(--o-ml, .05em); vertical-align: var(--o-va, 0); }
