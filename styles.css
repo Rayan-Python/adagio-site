@@ -215,6 +215,9 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
   transform-origin: 70% 45%; animation: drift 24s ease-in-out infinite alternate;
 }
 .hero-img { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; aspect-ratio: auto; object-fit: fill; }
+/* The photo can't be dragged or selected */
+.hero { -webkit-user-select: none; user-select: none; }
+.hero-img { -webkit-user-drag: none; pointer-events: none; }
 @keyframes drift { from { transform: scale(1); } to { transform: scale(1.07); } }
 /* Long, soft fade so the photo dissolves into the black below */
 .hero::after {
