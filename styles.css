@@ -13,8 +13,8 @@
   --grad: linear-gradient(180deg, var(--yellow) 0%, var(--lime) 100%);
   --radius: 22px;
   --max: 1100px;
-  --sans: "ABC Monument Grotesk", "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --mono: "Space Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -178,8 +178,8 @@ p { margin: 0; }
 }
 
 /* ------------------------------------------------------------------
-   Black, white and neon. Full-screen photo hero with subtle motion,
-   then the sections below in the same palette. The top nav stays hidden.
+   Black, white and neon. Black top bar, full-screen photo with only the
+   Adagio logo, black sections with neon as the accent.
    ------------------------------------------------------------------ */
 :root {
   --neon: #CCFF00;
@@ -190,33 +190,33 @@ p { margin: 0; }
 html, body { background: #000000; color: #FFFFFF; }
 .skip:focus { background: var(--neon); color: #000000; }
 :focus-visible { outline-color: var(--neon); }
-.site-header { display: none !important; }
 
-/* Hero */
-.hero { height: 100vh; height: 100svh; background: #000000; }
+/* Type: Archivo, expanded for headings */
+h1, h2, h3, .brand-name, .wordmark { font-stretch: 125%; }
+h2 { letter-spacing: -0.02em; }
+.eyebrow { font-weight: 700; letter-spacing: .14em; }
+
+/* Top bar */
+.site-header { background: #000000; backdrop-filter: none; border-bottom: 1px solid var(--surface-2); }
+.logo-ph { background: var(--neon); color: #000000; }
+.nav-links { background: #000000; border-bottom-color: var(--surface-2); }
+.nav-links a { color: #FFFFFF; border-bottom-color: var(--surface-2); }
+.nav-links a:hover { color: var(--neon); }
+
+/* Hero: photo with only the logo, slow zoom */
+.hero { height: calc(100vh - 65px); height: calc(100svh - 65px); background: #000000; }
 .hero-img {
   width: 100%; height: 100%; max-height: none; aspect-ratio: auto; object-fit: cover; object-position: 86% center;
   transform-origin: 70% 45%; animation: drift 24s ease-in-out infinite alternate;
 }
 @keyframes drift { from { transform: scale(1); } to { transform: scale(1.07); } }
-.hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 30%; background: linear-gradient(to top, #000000, transparent); pointer-events: none; }
+.hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 35%; background: linear-gradient(to top, #000000, transparent); pointer-events: none; }
 .hero-brand {
-  position: absolute; top: 24px; left: 20px; z-index: 1;
-  display: flex; align-items: center; gap: 12px;
-  font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 900; letter-spacing: -0.03em; color: #FFFFFF;
+  position: absolute; left: 20px; bottom: 32px; z-index: 1;
+  display: flex; align-items: center; gap: .3em;
+  font-size: clamp(3rem, 13vw, 8.5rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #FFFFFF;
 }
-.hero-brand img { width: 40px; height: 40px; border-radius: 10px; animation: beat 1.6s ease-in-out infinite; }
-@keyframes beat {
-  0%, 100% { box-shadow: 0 0 0 2px var(--neon), 0 0 0 0 rgba(204,255,0,.45); }
-  50% { box-shadow: 0 0 0 2px var(--neon), 0 0 0 8px rgba(204,255,0,0); }
-}
-.scroll-cue {
-  position: absolute; z-index: 1; left: 50%; bottom: 24px; transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  font-family: var(--mono); font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: #FFFFFF; text-decoration: none;
-}
-.scroll-cue i { width: 1px; height: 44px; background: linear-gradient(var(--neon), transparent); transform-origin: top; animation: cue 2s ease-in-out infinite; }
-@keyframes cue { 0% { transform: scaleY(0); opacity: 1; } 60% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+.hero-brand img { width: .85em; height: .85em; border-radius: .2em; }
 
 /* Sections */
 .section, #how, #team, .section-dark, .section-soft, .section-yellow { background: #000000; color: #FFFFFF; border-top: 1px solid var(--surface-2); }
@@ -251,9 +251,12 @@ html, body { background: #000000; color: #FFFFFF; }
 
 @media (min-width: 720px) {
   .hero-img { object-position: center; }
-  .hero-brand { top: 36px; left: 40px; }
+  .hero-brand { left: 40px; bottom: 48px; }
+}
+@media (min-width: 1040px) {
+  .nav-links .nav-cta { background: var(--neon); color: #000000; }
+  .nav-links .nav-cta:hover { background: #E2FF66; color: #000000; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-img, .hero-brand img, .scroll-cue i { animation: none; }
-  .hero-brand img { box-shadow: 0 0 0 2px var(--neon); }
+  .hero-img { animation: none; }
 }
