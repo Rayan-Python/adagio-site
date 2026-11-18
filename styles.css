@@ -178,32 +178,82 @@ p { margin: 0; }
 }
 
 /* ------------------------------------------------------------------
-   Single-screen hero mode: black, white and neon only. The nav and every
-   section below the hero are hidden for now; delete this block to bring
-   the full page back.
+   Black, white and neon. Full-screen photo hero with subtle motion,
+   then the sections below in the same palette. The top nav stays hidden.
    ------------------------------------------------------------------ */
 :root {
   --neon: #CCFF00;
   --surface: #111111;
+  --surface-2: #1A1A1A;
+  --text-2: #A3A3A3;
 }
 html, body { background: #000000; color: #FFFFFF; }
 .skip:focus { background: var(--neon); color: #000000; }
 :focus-visible { outline-color: var(--neon); }
+.site-header { display: none !important; }
 
-.site-header,
-main > section:not(.hero),
-.stripes,
-.site-footer { display: none !important; }
-
+/* Hero */
 .hero { height: 100vh; height: 100svh; background: #000000; }
-.hero-img { width: 100%; height: 100%; max-height: none; aspect-ratio: auto; object-fit: cover; object-position: 86% center; }
+.hero-img {
+  width: 100%; height: 100%; max-height: none; aspect-ratio: auto; object-fit: cover; object-position: 86% center;
+  transform-origin: 70% 45%; animation: drift 24s ease-in-out infinite alternate;
+}
+@keyframes drift { from { transform: scale(1); } to { transform: scale(1.07); } }
+.hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 30%; background: linear-gradient(to top, #000000, transparent); pointer-events: none; }
 .hero-brand {
   position: absolute; top: 24px; left: 20px; z-index: 1;
   display: flex; align-items: center; gap: 12px;
   font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 900; letter-spacing: -0.03em; color: #FFFFFF;
 }
-.hero-brand img { width: 40px; height: 40px; border-radius: 10px; box-shadow: 0 0 0 2px var(--neon); }
+.hero-brand img { width: 40px; height: 40px; border-radius: 10px; animation: beat 1.6s ease-in-out infinite; }
+@keyframes beat {
+  0%, 100% { box-shadow: 0 0 0 2px var(--neon), 0 0 0 0 rgba(204,255,0,.45); }
+  50% { box-shadow: 0 0 0 2px var(--neon), 0 0 0 8px rgba(204,255,0,0); }
+}
+.scroll-cue {
+  position: absolute; z-index: 1; left: 50%; bottom: 24px; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: #FFFFFF; text-decoration: none;
+}
+.scroll-cue i { width: 1px; height: 44px; background: linear-gradient(var(--neon), transparent); transform-origin: top; animation: cue 2s ease-in-out infinite; }
+@keyframes cue { 0% { transform: scaleY(0); opacity: 1; } 60% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+
+/* Sections */
+.section, #how, #team, .section-dark, .section-soft, .section-yellow { background: #000000; color: #FFFFFF; border-top: 1px solid var(--surface-2); }
+.section-soft { background-image: none; }
+.section-yellow::before { display: none; }
+.eyebrow, .eyebrow.dark, .eyebrow.dark-on-yellow { color: var(--neon); opacity: 1; }
+.body-lg, .story { color: #FFFFFF; }
+.section-dark .body-lg { color: var(--text-2); }
+
+.step, .member, .card, .roadmap li { background: var(--surface); border: 1px solid var(--surface-2); box-shadow: none; color: #FFFFFF; }
+.step p, .card p, .role { color: var(--text-2); }
+.step-num { background: var(--neon); color: #000000; }
+.tag { color: #6B6B6B; }
+.icon, .icon-black { background: var(--neon); }
+.icon svg, .icon-black svg { stroke: #000000; }
+.roadmap li::before { color: var(--neon); }
+.avatar { background: var(--neon); border-color: var(--neon); }
+.member-mail { color: #FFFFFF; }
+.member-mail:hover { background: none; color: var(--neon); }
+.btn-dark, .btn-primary { background: var(--neon); color: #000000; border-color: var(--neon); box-shadow: none; }
+.btn-dark:hover, .btn-primary:hover { background: #E2FF66; box-shadow: none; transform: none; }
+
+.stripes { background: #000000; }
+.stripes span { height: 4px; background: var(--neon) !important; }
+.stripes span:nth-child(2) { opacity: .55; }
+.stripes span:nth-child(3) { opacity: .25; }
+
+.site-footer { background: #000000; }
+.site-footer a { color: var(--neon); }
+.muted { color: #8A8A8A; }
+.wordmark { -webkit-text-stroke: 1.5px rgba(204,255,0,.5); }
+
 @media (min-width: 720px) {
   .hero-img { object-position: center; }
   .hero-brand { top: 36px; left: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-img, .hero-brand img, .scroll-cue i { animation: none; }
+  .hero-brand img { box-shadow: 0 0 0 2px var(--neon); }
 }
