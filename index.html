@@ -3,21 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Adagio: music matched to your running cadence</title>
-  <meta name="description" content="Adagio reads your steps per minute while you run and plays Spotify or Apple Music songs whose BPM matches it. For iPhone, Apple Watch and Garmin, with a Haptic Mode for deaf and hard-of-hearing runners.">
-  <meta name="theme-color" content="#FAF9F6">
-  <meta property="og:title" content="Adagio: music matched to your running cadence">
-  <meta property="og:description" content="A running app that matches song BPM to your live steps per minute.">
+  <title>Adagio — Music that runs at your pace</title>
+  <meta name="description" content="Adagio matches your music's tempo to your live running cadence on iPhone, Apple Watch and Garmin, with Spotify and Apple Music. Includes a haptic mode for deaf and hard-of-hearing runners.">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="preload" as="image" href="assets/hero.webp">
+  <meta property="og:title" content="Adagio — Music that runs at your pace">
+  <meta property="og:description" content="A running app that matches music BPM to your live cadence.">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="assets/hero.webp">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="500x500" href="favicon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <!-- Headings use ABC Monument Grotesk once the licensed files are added; Schibsted Grotesk is the free stand-in. Body is Source Sans 3. -->
+  <!-- Headings use ABC Monument Grotesk when installed/licensed; Inter Tight is the free stand-in. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="preload" as="image" href="assets/hero.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,700;0,800;0,900;1,800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -26,7 +25,8 @@
   <header class="site-header">
     <div class="wrap nav">
       <a class="brand" href="#top" aria-label="Adagio home">
-        <img class="brand-mark" src="apple-touch-icon.png" alt="" width="28" height="28">
+        <!-- LOGO PLACEHOLDER: replace this span with <img src="logo.svg" alt="Adagio"> -->
+        <span class="logo-ph" aria-hidden="true">A</span>
         <span class="brand-name">Adagio</span>
       </a>
       <button class="nav-toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
@@ -46,122 +46,112 @@
 
   <main id="main">
     <section class="hero" id="top">
+      <h1 class="visually-hidden">Adagio</h1>
       <img class="hero-img" src="assets/hero.webp" width="1696" height="960" alt="A runner seen from above, mid-stride on a track at night, casting a long shadow across the lanes" fetchpriority="high">
-      <div class="wrap hero-inner">
-        <h1>Stop running off the beat.</h1>
-        <p class="lead">Most playlists ignore your stride. Adagio reads your steps per minute live and picks songs whose BPM matches it.</p>
-        <a class="btn btn-light" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener">Download on the App Store</a>
-        <p class="platforms">iPhone, Apple Watch and Garmin. Works with Spotify and Apple Music.</p>
-      </div>
     </section>
 
+    <div class="stripes" aria-hidden="true"><span></span><span></span><span></span></div>
+
     <section class="section" id="how">
-      <div class="wrap split">
-        <div class="split-head">
-          <p class="label">01</p>
-          <h2>How it works</h2>
-        </div>
-        <ol class="rows">
-          <li>
-            <span class="row-num">1</span>
-            <div>
-              <h3>Run</h3>
-              <p>Adagio reads your live cadence (steps per minute) from your iPhone, Apple Watch, or Garmin watch.</p>
-            </div>
+      <div class="wrap">
+        <p class="eyebrow dark">How it works</p>
+        <h2>Three steps to a run that moves with you.</h2>
+        <ol class="steps">
+          <li class="step">
+            <span class="step-num">1</span>
+            <h3>Run</h3>
+            <p>Adagio reads your live cadence (steps per minute) from your iPhone, Apple Watch, or Garmin watch.</p>
           </li>
-          <li>
-            <span class="row-num">2</span>
-            <div>
-              <h3>Match</h3>
-              <p>It finds songs from Spotify or Apple Music whose tempo (BPM) fits your cadence.</p>
-            </div>
+          <li class="step">
+            <span class="step-num">2</span>
+            <h3>Match</h3>
+            <p>It finds songs from Spotify or Apple Music whose tempo (BPM) fits your cadence.</p>
           </li>
-          <li>
-            <span class="row-num">3</span>
-            <div>
-              <h3>Stay in step</h3>
-              <p>When your pace changes, the music adapts so every footstep lands on the beat.</p>
-            </div>
+          <li class="step">
+            <span class="step-num">3</span>
+            <h3>Stay in step</h3>
+            <p>When your pace changes, the music adapts so every footstep lands on the beat.</p>
           </li>
         </ol>
       </div>
     </section>
 
-    <section class="section" id="features">
-      <div class="wrap split">
-        <div class="split-head">
-          <p class="label">02</p>
-          <h2>Smart song matching</h2>
-        </div>
-        <div>
-          <p class="body-lg">Not every song has tempo data, and Spotify no longer shares it with apps. So we built our own song-tempo lookup that searches several databases. If a playlist doesn't have enough exact matches, Adagio gradually widens the match range, and it also counts half-time and double-time songs, so you always have music that fits your stride.</p>
-          <dl class="specs">
-            <div>
-              <dt>Cadence</dt>
-              <dd>Reads your steps per minute in real time and keeps song BPM close to it.</dd>
+    <section class="section section-dark" id="features">
+      <div class="wrap">
+        <p class="eyebrow">Features</p>
+        <h2>Smart song matching</h2>
+        <p class="body-lg">Not every song has tempo data, and Spotify no longer shares it with apps. So we built our own song-tempo lookup that searches several databases. If a playlist doesn't have enough exact matches, Adagio gradually widens the match range, and it also counts half-time and double-time songs, so you always have music that fits your stride.</p>
+        <div class="cards cards-3">
+          <article class="card">
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg>
             </div>
-            <div>
-              <dt>Music</dt>
-              <dd>Spotify or Apple Music. Use the service you already pay for.</dd>
+            <span class="tag">01</span>
+            <h3>Cadence matching</h3>
+            <p>Music tempo follows your steps per minute in real time, so every beat lands with your stride.</p>
+          </article>
+          <article class="card">
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
             </div>
-            <div>
-              <dt>Devices</dt>
-              <dd>iPhone, Apple Watch, or a Garmin watch.</dd>
+            <span class="tag">02</span>
+            <h3>Spotify + Apple Music</h3>
+            <p>Use the streaming service you already have. Adagio works with both.</p>
+          </article>
+          <article class="card">
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="3"/><path d="M11 18h2"/></svg>
             </div>
-          </dl>
+            <span class="tag">03</span>
+            <h3>iPhone, Apple Watch, Garmin</h3>
+            <p>Run with the device you already wear. Adagio is made for iPhone, Apple Watch and Garmin.</p>
+          </article>
         </div>
       </div>
     </section>
 
-    <section class="section section-tint" id="accessibility">
-      <div class="wrap split">
-        <div class="split-head">
-          <p class="label">03</p>
-          <h2>Haptic Mode</h2>
+    <section class="section section-yellow" id="accessibility">
+      <div class="wrap narrow">
+        <p class="eyebrow dark-on-yellow">Accessibility · Haptic Mode</p>
+        <div class="icon icon-black" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 8c-2 2.5-2 5.500 0 8M19 8c2 2.5 2 5.500 0 8M8.500 10c-1 1.300-1 2.700 0 4M15.500 10c1 1.300 1 2.700 0 4"/><circle cx="12" cy="12" r="1.500"/></svg>
         </div>
-        <div>
-          <p class="statement">Music shouldn't be the only way to run in rhythm.</p>
-          <p class="body-lg">Haptic Mode is built for deaf and hard-of-hearing runners. Instead of sound, your phone and watch pulse to the beat of your target tempo, and they cue you when you're above or below your target pace. Everyone can run in rhythm.</p>
-        </div>
+        <h2>Music shouldn't be the only way to run in rhythm.</h2>
+        <p class="body-lg">Haptic Mode is built for deaf and hard-of-hearing runners. Instead of sound, your phone and watch pulse to the beat of your target tempo, and they cue you when you're above or below your target pace. Everyone can run in rhythm.</p>
       </div>
     </section>
 
-    <section class="section" id="story">
-      <div class="wrap split">
-        <div class="split-head">
-          <p class="label">04</p>
-          <h2>Why we built it</h2>
-        </div>
-        <div class="prose">
-          <p>We're both on our school's cross country team, and we see people run with AirPods in all the time. That got us asking: how could we connect mental health and physical fitness?</p>
-          <p>Music is one of the best things for your mind. Running is one of the best things for your body. But they usually aren't connected. Adagio changes that by matching your music to your running pace.</p>
-          <p>When your music moves with you, runs feel easier, and it's easier to finish them and enjoy them.</p>
-        </div>
+    <section class="section section-soft" id="story">
+      <div class="wrap narrow">
+        <p class="eyebrow dark">Why we built it</p>
+        <h2>Two runners, one idea.</h2>
+        <p class="story">We're both on our school's cross country team, and we see people run with AirPods in all the time. That got us asking: how could we connect mental health and physical fitness?</p>
+        <p class="story">Music is one of the best things for your mind. Running is one of the best things for your body. But they usually aren't connected. Adagio changes that by matching your music to your running pace.</p>
+        <p class="story">When your music moves with you, runs feel easier, and it's easier to finish them and enjoy them.</p>
       </div>
     </section>
 
-    <!-- DEMO SECTION (hidden for now). To restore: uncomment, re-add the nav link,
+    <!-- DEMO SECTION (hidden for now). To restore: uncomment, re-add the nav link and hero button,
          and set data-video-id on #video to your YouTube video ID (the part after v=).
     <section class="section" id="demo">
-      <div class="wrap split">
-        <div class="split-head">
-          <p class="label">Demo</p>
-          <h2>See Adagio in action</h2>
-        </div>
+      <div class="wrap narrow">
+        <p class="eyebrow dark">Demo</p>
+        <h2>See Adagio in action.</h2>
         <div class="video" id="video">
-          <div class="video-ph"><p>Demo video coming soon</p></div>
+          <div class="video-ph">
+            <span class="play" aria-hidden="true"></span>
+            <p>Demo video coming soon</p>
+          </div>
         </div>
       </div>
     </section>
     -->
 
-    <section class="section" id="roadmap">
-      <div class="wrap split">
-        <div class="split-head">
-          <p class="label">05</p>
-          <h2>Coming in 2.0</h2>
-        </div>
-        <ul class="list">
+    <section class="section section-dark" id="roadmap">
+      <div class="wrap">
+        <p class="eyebrow">Coming in 2.0</p>
+        <h2>What's next for Adagio.</h2>
+        <ul class="roadmap">
           <li>Full Apple Watch support</li>
           <li>Android and Wear OS</li>
           <li>More music services</li>
@@ -173,50 +163,58 @@
     </section>
 
     <section class="section" id="team">
-      <div class="wrap split">
-        <div class="split-head">
-          <p class="label">06</p>
-          <h2>Team</h2>
-        </div>
-        <div>
-          <p class="body-lg">Adagio is built by two high school cross country runners.</p>
-          <ul class="people">
-            <!-- PHOTO PLACEHOLDERS: add <img> tags here later if you want headshots -->
-            <li>
-              <span class="person-name">Ryan Soudkhah</span>
-              <span class="person-role">Cross country runner, pianist</span>
-              <a href="mailto:soudkhahr@gmail.com">soudkhahr@gmail.com</a>
-            </li>
-            <li>
-              <span class="person-name">Darren Kapturski</span>
-              <span class="person-role">Cross country runner, pianist</span>
-              <a href="mailto:dmkapturski@gmail.com">dmkapturski@gmail.com</a>
-            </li>
-          </ul>
+      <div class="wrap">
+        <p class="eyebrow dark">Team</p>
+        <h2>Meet the team.</h2>
+        <p class="story team-intro">Adagio is built by two high school cross country runners.</p>
+        <div class="team">
+          <article class="member">
+            <!-- PHOTO PLACEHOLDER: replace with <img src="ryan.jpg" alt="Ryan Soudkhah"> -->
+            <div class="avatar" aria-hidden="true">RS</div>
+            <div>
+              <h3>Ryan Soudkhah</h3>
+              <p class="role">Cross country runner · Pianist</p>
+              <a class="member-mail" href="mailto:soudkhahr@gmail.com">soudkhahr@gmail.com</a>
+            </div>
+          </article>
+          <article class="member">
+            <!-- PHOTO PLACEHOLDER: replace with <img src="darren.jpg" alt="Darren Kapturski"> -->
+            <div class="avatar" aria-hidden="true">DK</div>
+            <div>
+              <h3>Darren Kapturski</h3>
+              <p class="role">Cross country runner · Pianist</p>
+              <a class="member-mail" href="mailto:dmkapturski@gmail.com">dmkapturski@gmail.com</a>
+            </div>
+          </article>
         </div>
       </div>
     </section>
 
-    <section class="section" id="contact">
-      <div class="wrap split">
-        <div class="split-head">
-          <p class="label">07</p>
-          <h2>Contact</h2>
-        </div>
-        <div>
-          <p class="body-lg">For questions, feedback and inquiries:</p>
-          <a class="email-link" href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>
-        </div>
+    <section class="section section-soft" id="contact">
+      <div class="wrap narrow">
+        <p class="eyebrow dark">Contact</p>
+        <h2>Get in touch.</h2>
+        <p class="body-lg">For questions, feedback and inquiries:</p>
+        <a class="btn btn-dark" href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>
       </div>
     </section>
   </main>
 
+  <div class="stripes" aria-hidden="true"><span></span><span></span><span></span></div>
+
   <footer class="site-footer">
     <div class="wrap foot">
-      <p class="brand-name">Adagio</p>
-      <a href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>
-      <p class="legal">© <span id="year">2026</span> Adagio</p>
+      <div>
+        <p class="brand-name">Adagio</p>
+        <p class="muted">Made by runners, for runners.</p>
+      </div>
+      <div>
+        <p class="muted">Contact</p>
+        <a href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>
+      </div>
     </div>
+    <p class="wrap wordmark" aria-hidden="true">Adagio</p>
+    <div class="wrap legal"><p>© <span id="year">2026</span> Adagio</p></div>
   </footer>
 
   <script src="script.js"></script>
