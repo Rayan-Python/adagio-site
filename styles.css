@@ -211,17 +211,15 @@ h2 { letter-spacing: -0.02em; }
   position: absolute; right: 20px; bottom: 28px; z-index: 1; margin: 0;
   font-size: clamp(3rem, 13vw, 8.5rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #FFFFFF;
 }
-/* Scroll indicator: bottom left, opposite the name */
+/* Scroll indicator: small neutral chevron, bottom left, opposite the name */
 .scroll-down {
-  position: absolute; left: 20px; bottom: 28px; z-index: 1;
-  width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid var(--neon);
-  display: grid; place-items: center; transition: background-color 150ms ease-out;
+  position: absolute; left: 14px; bottom: 30px; z-index: 1;
+  width: 36px; height: 36px; display: grid; place-items: center;
   animation: nudge 2.4s ease-in-out infinite;
 }
-.scroll-down svg { width: 22px; height: 22px; fill: none; stroke: var(--neon); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: stroke 150ms ease-out; }
-.scroll-down:hover { background: var(--neon); }
-.scroll-down:hover svg { stroke: #000000; }
-@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+.scroll-down svg { width: 20px; height: 20px; fill: none; stroke: rgba(255,255,255,.55); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke 150ms ease-out; }
+.scroll-down:hover svg { stroke: #FFFFFF; }
+@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 
 /* Sections */
 .section, #how, #team, .section-dark, .section-soft, .section-yellow { background: #000000; color: #FFFFFF; border-top: 1px solid var(--surface-2); }
@@ -257,7 +255,7 @@ h2 { letter-spacing: -0.02em; }
 @media (min-width: 720px) {
   .hero-img { object-position: center; }
   .hero-brand { right: 40px; bottom: 44px; }
-  .scroll-down { left: 40px; bottom: 52px; }
+  .scroll-down { left: 32px; bottom: 50px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-img, .scroll-down { animation: none; }
