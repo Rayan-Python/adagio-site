@@ -208,7 +208,7 @@ h2 { letter-spacing: -0.02em; }
 @keyframes drift { from { transform: scale(1); } to { transform: scale(1.07); } }
 .hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 35%; background: linear-gradient(to top, #000000, transparent); pointer-events: none; }
 .hero-brand {
-  position: absolute; right: 20px; top: 24px; z-index: 1; margin: 0;
+  position: absolute; right: 20px; bottom: 28px; z-index: 1; margin: 0;
   font-size: clamp(3rem, 13vw, 8.5rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #FFFFFF;
 }
 /* Scroll indicator: small neutral chevron, bottom left, opposite the name */
@@ -254,7 +254,7 @@ h2 { letter-spacing: -0.02em; }
 
 @media (min-width: 720px) {
   .hero-img { object-position: center; }
-  .hero-brand { right: 40px; top: 36px; }
+  .hero-brand { right: 40px; bottom: 44px; }
   .scroll-down { left: 32px; bottom: 50px; }
 }
 @media (prefers-reduced-motion: reduce) {
