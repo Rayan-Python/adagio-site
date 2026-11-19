@@ -340,6 +340,10 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
   position: absolute; bottom: 24px; left: var(--x); width: 40px; height: 12px; transform: translateX(-50%);
   background: conic-gradient(#FFFFFF 25%, #121212 0 50%, #FFFFFF 0 75%, #121212 0) 0 0 / 8px 8px;
 }
+.tl-finish span {
+  position: absolute; left: 0; top: calc(100% + 8px); white-space: nowrap;
+  font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #FFFFFF;
+}
 
 /* wider screens: lane down the middle, cards alternate sides */
 @media (min-width: 900px) {
@@ -351,6 +355,7 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
   .tl-node { left: 100%; top: 24px; }
   .tl-step:nth-child(even) .tl-node { left: 0; }
   .tl-card { max-width: 440px; margin-left: auto; }
+  .tl-finish span { left: auto; right: calc(100% + 10px); top: 50%; transform: translateY(-50%); }
   .tl-step:nth-child(even) .tl-card { margin-left: 0; }
 }
 

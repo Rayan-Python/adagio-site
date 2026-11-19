@@ -49,19 +49,30 @@ const tl = document.getElementById('tl');
 if (tl) {
   const steps = [...tl.querySelectorAll('.tl-step')];
   const label = tl.querySelector('.tl-mi');
-  const miles = steps.length;
+  const miles = 3.12; // the whole lane is a 5K
+  // Label each card with the distance where its marker sits on the lane.
+  function labelMiles() {
+    const box = tl.getBoundingClientRect();
+    steps.forEach((step) => {
+      const node = step.querySelector('.tl-node').getBoundingClientRect();
+      const at = (node.top + node.height / 2 - box.top) / box.height * miles;
+      step.querySelector('.tl-mile').textContent = at.toFixed(2) + ' mi';
+    });
+  }
   function runTimeline() {
     const box = tl.getBoundingClientRect();
     const run = Math.min(Math.max(window.innerHeight * 0.6 - box.top, 0), box.height);
     tl.style.setProperty('--run', run + 'px');
-    label.textContent = (run / box.height * miles).toFixed(1) + ' mi';
+    label.textContent = (run / box.height * miles).toFixed(2) + ' mi';
     steps.forEach((step) => {
       const node = step.querySelector('.tl-node').getBoundingClientRect();
       step.classList.toggle('is-on', node.top + node.height / 2 - box.top <= run);
     });
   }
   window.addEventListener('scroll', runTimeline, { passive: true });
-  window.addEventListener('resize', runTimeline);
+  window.addEventListener('resize', () => { labelMiles(); runTimeline(); });
+  document.fonts.ready.then(labelMiles);
+  labelMiles();
   runTimeline();
 }
 
