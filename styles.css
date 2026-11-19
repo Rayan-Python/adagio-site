@@ -12,7 +12,7 @@
   --serif: "Instrument Serif", "Playfair Display", Georgia, serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --pad: 24px;        /* side padding */
-  --pad-line: 48px;   /* side padding on the side the line runs down (phones) */
+  --pad-line: 24px;   /* side padding on the line's side (phones): 48px while the winding line is on */
   --max: 1200px;
   --ease: cubic-bezier(.2, .7, .2, 1);
 }
