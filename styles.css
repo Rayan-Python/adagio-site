@@ -188,12 +188,12 @@ h1, h2, h3, p { margin: 0; }
 .phone-screen img { width: 100%; height: 100%; object-fit: cover; }
 
 /* roadmap */
-.roadmap { list-style: none; margin: 0; padding: 0; counter-reset: rm; border-top: 2px solid var(--fg); }
+.roadmap { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--fg); }
 .roadmap li {
-  counter-increment: rm; display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: baseline;
-  padding: 22px 0; border-bottom: 1px solid var(--outline); font-size: clamp(1.1rem, 2.4vw, 1.6rem); font-weight: 700; letter-spacing: -.01em;
+  display: grid; grid-template-columns: 130px 1fr; gap: 16px; align-items: baseline;
+  padding: 26px 0; border-bottom: 1px solid var(--outline); font-size: clamp(1.4rem, 3.6vw, 2.6rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.1;
 }
-.roadmap li::before { content: "2." counter(rm); font-family: var(--mono); font-size: .8rem; font-weight: 500; color: var(--fg-2); }
+.roadmap .ver { font-family: var(--mono); font-size: .8rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-2); }
 
 /* team: race bibs */
 .team-intro { text-align: center; font-size: 1.2rem; color: var(--fg-2); margin: -24px auto 40px; }
