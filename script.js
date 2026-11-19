@@ -36,7 +36,7 @@ function setMetronome(current) {
   const id = current && current.id;
   const index = metroTicks.findIndex((a) => a.hash === '#' + id);
   const at = index === -1 ? (id ? metroTicks.length - 1 : 0) : index; // footer counts as the last tick
-  metronome.dataset.theme = flow.dataset.theme;
+  metronome.dataset.theme = current ? current.dataset.theme : 'black';
   if (at === metroIndex) return;
   metroIndex = at;
   metroDot.style.setProperty('--i', at);
@@ -46,15 +46,14 @@ function setMetronome(current) {
   metroDot.classList.add('is-pulsing');
 }
 
-// The background eases to the theme of whichever section is in the middle of the screen.
+// The metronome follows whichever section is in the middle of the screen (its tick and
+// its colors). Section backgrounds themselves are fixed in the CSS.
 function setTheme() {
   const middle = window.innerHeight / 2;
   const current = themed.find((el) => {
     const box = el.getBoundingClientRect();
     return box.top <= middle && box.bottom > middle;
   });
-  const theme = current ? current.dataset.theme : 'black';
-  if (flow.dataset.theme !== theme) flow.dataset.theme = theme;
   setMetronome(current);
 }
 

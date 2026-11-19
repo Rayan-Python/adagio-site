@@ -117,6 +117,7 @@ h1, h2, h3, p { margin: 0; }
   translate: 0 -50%; color: #FFFFFF; opacity: 0; pointer-events: none; transition: opacity 300ms ease, color 600ms ease;
 }
 .metronome.is-shown { opacity: 1; pointer-events: auto; }
+.metronome { --bg: transparent; }
 .metronome[data-theme="paper"], .metronome[data-theme="yellow"] { color: #0A0A0A; }
 .metronome ol { position: relative; list-style: none; margin: 0; padding: 0; }
 .metronome ol::before { /* the rail */
@@ -153,23 +154,24 @@ h1, h2, h3, p { margin: 0; }
    The flow: everything after the photo. Its colors ease between themes
    as each section reaches the middle of the screen (script.js).
    ------------------------------------------------------------------ */
-.flow {
+/* Each section has its own fixed background (no switching as you scroll), so the color
+   edge simply moves with the page. Text and glass colors follow the section's theme. */
+.flow, [data-theme] {
   --bg: var(--black); --fg: var(--white); --fg-2: rgba(255,255,255,.7); --outline: rgba(255,255,255,.55);
-  position: relative; z-index: 1; background: var(--bg); color: var(--fg);
-  transition: background-color 600ms ease, color 600ms ease;
 }
-.flow[data-theme="paper"] { --bg: var(--paper); --fg: var(--ink); --fg-2: rgba(10,10,10,.68); --outline: rgba(10,10,10,.5); }
-.flow[data-theme="yellow"] { --bg: var(--yellow); --fg: var(--ink); --fg-2: rgba(10,10,10,.72); --outline: rgba(10,10,10,.55); }
-.flow { --glass-bg: rgba(255,255,255,.06); --glass-border: rgba(255,255,255,.14); --glass-shadow: 0 10px 40px rgba(0,0,0,.25); }
-.flow[data-theme="paper"] { --glass-bg: rgba(255,255,255,.45); --glass-border: rgba(255,255,255,.75); --glass-shadow: 0 10px 40px rgba(10,10,10,.08); }
-.flow[data-theme="yellow"] { --glass-bg: rgba(255,255,255,.26); --glass-border: rgba(255,255,255,.55); --glass-shadow: 0 10px 40px rgba(10,10,10,.1); }
+.flow { position: relative; z-index: 1; background: var(--black); color: var(--white);
+}
+[data-theme="paper"] { --bg: var(--paper); --fg: var(--ink); --fg-2: rgba(10,10,10,.68); --outline: rgba(10,10,10,.5); }
+[data-theme="yellow"] { --bg: var(--yellow); --fg: var(--ink); --fg-2: rgba(10,10,10,.72); --outline: rgba(10,10,10,.55); }
+.flow, [data-theme] { --glass-bg: rgba(255,255,255,.06); --glass-border: rgba(255,255,255,.14); --glass-shadow: 0 10px 40px rgba(0,0,0,.25); }
+[data-theme="paper"] { --glass-bg: rgba(255,255,255,.45); --glass-border: rgba(255,255,255,.75); --glass-shadow: 0 10px 40px rgba(10,10,10,.08); }
+[data-theme="yellow"] { --glass-bg: rgba(255,255,255,.26); --glass-border: rgba(255,255,255,.55); --glass-shadow: 0 10px 40px rgba(10,10,10,.1); }
 
 /* glassmorphism: frosted panels over soft color glows */
 .glass {
   background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 24px;
   -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%);
   box-shadow: var(--glass-shadow);
-  transition: background-color 600ms ease, border-color 600ms ease;
 }
 .glass-pad { padding: clamp(24px, 4vw, 44px); }
 
@@ -198,6 +200,7 @@ h1, h2, h3, p { margin: 0; }
 #contact .orbs i:nth-child(1)      { top: -20%; left: 30%;  background: #1DB954; opacity: .22; }
 #contact .orbs i:nth-child(2)      { bottom: -40%; right: 10%; background: #00A8E1; opacity: .3; }
 
+.block, .site-footer { background: var(--bg); color: var(--fg); }
 .block { position: relative; z-index: 1; min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 120px 0; }
 
 /* the winding line (drawn as you scroll) and the app icon riding its tip */
