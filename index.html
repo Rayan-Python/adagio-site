@@ -191,23 +191,35 @@
       <section class="block" id="contact" data-theme="black">
       <p class="corner corner-tl" aria-hidden="true">07 / Contact</p>
       <p class="corner corner-br" aria-hidden="true">Fig. 07 / Contact</p>
-        <div class="wrap">
-          <h2 class="headline headline-oneline reveal">Get in touch with us</h2>
-          <p class="lead reveal">For questions, feedback and inquiries:</p>
-          <a class="email-big reveal" href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>
+        <div class="wrap contact">
+          <div class="contact-main">
+            <h2 class="headline headline-oneline reveal">Get in touch with us</h2>
+            <p class="lead reveal">For questions, feedback and inquiries:</p>
+            <div class="email-row reveal">
+              <a class="email-big" href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>
+              <button class="copy-btn" type="button" data-copy="adagiorunning.support@gmail.com"><span aria-live="polite">Copy</span></button>
+            </div>
+            <ul class="topics reveal" aria-label="Email us about">
+              <li><a class="topic" href="mailto:adagiorunning.support@gmail.com?subject=Adagio%3A%20Bug%20Report">Bug Report</a></li>
+              <li><a class="topic" href="mailto:adagiorunning.support@gmail.com?subject=Adagio%3A%20Feature%20Request">Feature Request</a></li>
+              <li><a class="topic" href="mailto:adagiorunning.support@gmail.com?subject=Adagio%3A%20Partnerships">Partnerships</a></li>
+            </ul>
+          </div>
+          <!-- cadence waveform accent (decorative) -->
+          <svg class="contact-wave reveal" viewBox="0 0 216 120" aria-hidden="true"><rect x="0" y="51.0" width="6" height="18" rx="3" style="--d:0.00s"/><rect x="14" y="43.0" width="6" height="34" rx="3" style="--d:0.12s"/><rect x="28" y="31.0" width="6" height="58" rx="3" style="--d:0.24s"/><rect x="42" y="19.0" width="6" height="82" rx="3" style="--d:0.36s"/><rect x="56" y="37.0" width="6" height="46" rx="3" style="--d:0.48s"/><rect x="70" y="25.0" width="6" height="70" rx="3" style="--d:0.60s"/><rect x="84" y="12.0" width="6" height="96" rx="3" style="--d:0.72s"/><rect x="98" y="29.0" width="6" height="62" rx="3" style="--d:0.00s"/><rect x="112" y="41.0" width="6" height="38" rx="3" style="--d:0.12s"/><rect x="126" y="23.0" width="6" height="74" rx="3" style="--d:0.24s"/><rect x="140" y="34.0" width="6" height="52" rx="3" style="--d:0.36s"/><rect x="154" y="46.0" width="6" height="28" rx="3" style="--d:0.48s"/><rect x="168" y="28.0" width="6" height="64" rx="3" style="--d:0.60s"/><rect x="182" y="16.0" width="6" height="88" rx="3" style="--d:0.72s"/><rect x="196" y="39.0" width="6" height="42" rx="3" style="--d:0.00s"/><rect x="210" y="49.0" width="6" height="22" rx="3" style="--d:0.12s"/></svg>
         </div>
       </section>
 
       <footer class="site-footer" data-theme="black">
         <div class="wrap foot">
-          <div>
-            <p class="foot-brand">Adagio</p>
-            <p class="muted">Made by runners, for runners.</p>
-          </div>
-          <div>
-            <p class="muted">Contact</p>
-            <a href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>
-          </div>
+          <p class="foot-brand">Adagio <span class="muted">— Made by runners, for runners.</span></p>
+          <!-- PLACEHOLDER LINKS: set the real addresses for these four -->
+          <nav class="foot-links" aria-label="Footer">
+            <a href="#" data-placeholder>Privacy Policy</a>
+            <a href="#" data-placeholder>Terms</a>
+            <a href="#" data-placeholder>Instagram</a>
+            <a href="#" data-placeholder>Strava</a>
+          </nav>
         </div>
         <p class="wrap legal">© <span id="year">2026</span> Adagio</p>
       </footer>
