@@ -140,20 +140,21 @@ h1, h2, h3, p { margin: 0; }
 .orbs i:nth-child(2) { animation-duration: 26s; animation-delay: -8s; }
 @keyframes float { from { translate: 0 0; } to { translate: 6vw 8vh; } }
 .block .wrap { z-index: 1; }
-#how .orbs i:nth-child(1)          { top: 4%;  right: -10%; background: #D9E13A; opacity: .28; }
-#how .orbs i:nth-child(2)          { bottom: 0; left: -14%;  background: #6D28D9; }
-#features .orbs i:nth-child(1)     { top: 10%; left: -16%;  background: #2563EB; opacity: .3; }
-#features .orbs i:nth-child(2)     { bottom: 4%; right: -8%; background: #D9E13A; opacity: .55; }
-#accessibility .orbs i:nth-child(1){ top: 6%;  right: -12%; background: #6D28D9; opacity: .4; }
-#accessibility .orbs i:nth-child(2){ bottom: -6%; left: -10%; background: #DC2626; opacity: .3; }
-#story .orbs i:nth-child(1)        { top: 8%;  left: -14%;  background: #6D28D9; opacity: .45; }
-#story .orbs i:nth-child(2)        { bottom: 2%; right: -12%; background: #2563EB; opacity: .4; }
-#roadmap .orbs i:nth-child(1)      { top: 2%;  right: -10%; background: #D9E13A; opacity: .55; }
-#roadmap .orbs i:nth-child(2)      { bottom: 0; left: -12%;  background: #6D28D9; opacity: .22; }
-#team .orbs i:nth-child(1)         { top: 12%; left: -10%;  background: #6D28D9; opacity: .35; }
-#team .orbs i:nth-child(2)         { top: 20%; right: -10%; background: #DC2626; opacity: .3; }
-#contact .orbs i:nth-child(1)      { top: -20%; left: 30%;  background: #D9E13A; opacity: .18; }
-#contact .orbs i:nth-child(2)      { bottom: -40%; right: 10%; background: #2563EB; opacity: .3; }
+/* glow colors: Apple Music red #FA243C, Spotify green #1DB954, Amazon Music blue #00A8E1 */
+#how .orbs i:nth-child(1)          { top: 4%;  right: -10%; background: #1DB954; opacity: .3; }
+#how .orbs i:nth-child(2)          { bottom: 0; left: -14%;  background: #00A8E1; opacity: .4; }
+#features .orbs i:nth-child(1)     { top: 10%; left: -16%;  background: #00A8E1; opacity: .3; }
+#features .orbs i:nth-child(2)     { bottom: 4%; right: -8%; background: #1DB954; opacity: .35; }
+#accessibility .orbs i:nth-child(1){ top: 6%;  right: -12%; background: #FA243C; opacity: .35; }
+#accessibility .orbs i:nth-child(2){ bottom: -6%; left: -10%; background: #00A8E1; opacity: .35; }
+#story .orbs i:nth-child(1)        { top: 8%;  left: -14%;  background: #00A8E1; opacity: .4; }
+#story .orbs i:nth-child(2)        { bottom: 2%; right: -12%; background: #FA243C; opacity: .35; }
+#roadmap .orbs i:nth-child(1)      { top: 2%;  right: -10%; background: #1DB954; opacity: .35; }
+#roadmap .orbs i:nth-child(2)      { bottom: 0; left: -12%;  background: #FA243C; opacity: .22; }
+#team .orbs i:nth-child(1)         { top: 12%; left: -10%;  background: #FA243C; opacity: .3; }
+#team .orbs i:nth-child(2)         { top: 20%; right: -10%; background: #1DB954; opacity: .35; }
+#contact .orbs i:nth-child(1)      { top: -20%; left: 30%;  background: #1DB954; opacity: .22; }
+#contact .orbs i:nth-child(2)      { bottom: -40%; right: 10%; background: #00A8E1; opacity: .3; }
 
 .block { position: relative; z-index: 1; min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 120px 0; }
 
