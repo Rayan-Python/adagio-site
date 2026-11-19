@@ -236,8 +236,11 @@ h1, h2, h3, p { margin: 0; }
   --bib: #6D28D9; /* left bib: purple band and email hover */
   --tilt: -1.5deg;
   position: relative; overflow: hidden; text-align: center; container-type: inline-size;
-  background: #141414; color: #FFFFFF; border-radius: 6px; padding: 0 20px 26px;
-  box-shadow: 0 12px 24px -6px rgba(0,0,0,.25);
+  /* dark frosted glass, so the bibs match the glass panels and show the glows behind */
+  background: rgba(16,16,16,.55); color: #FFFFFF; border-radius: 10px; padding: 0 20px 26px;
+  border: 1px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 12px 32px -8px rgba(0,0,0,.3);
   rotate: var(--tilt);
   transition: rotate 220ms ease-out, translate 220ms ease-out, box-shadow 220ms ease-out, opacity 700ms var(--ease);
 }
@@ -254,7 +257,7 @@ h1, h2, h3, p { margin: 0; }
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .bib-band {
-  margin: 0 -20px; height: 38px; background: #000000; /* plain black top strip */
+  margin: 0 -20px; height: 38px; background: rgba(0,0,0,.45); border-bottom: 1px solid rgba(255,255,255,.12); /* darker glass top strip */
   font-stretch: 125%; font-weight: 800; font-size: .8rem; letter-spacing: .2em; text-transform: uppercase;
 }
 .bib-num { /* printed race-number look */
