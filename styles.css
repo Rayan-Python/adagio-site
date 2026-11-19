@@ -95,9 +95,10 @@ h1, h2, h3, p { margin: 0; }
 .appstore {
   display: inline-flex; align-items: center; gap: 9px; text-decoration: none; white-space: nowrap; color: #FFFFFF;
   padding: 7px 16px 7px 13px; border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.04) 100%);
+  /* glass with a lime tint */
+  background: linear-gradient(180deg, rgba(196,232,92,.26) 0%, rgba(166,226,46,.10) 100%);
   -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255,255,255,.25);
+  border: 1px solid rgba(214,240,140,.38);
   box-shadow: inset 0 1px 1px rgba(255,255,255,.45), inset 0 -2px 4px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.4);
   transition: transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out;
 }
@@ -106,7 +107,8 @@ h1, h2, h3, p { margin: 0; }
 .appstore-small { font-size: 10px; line-height: 1.1; opacity: .75; letter-spacing: .01em; }
 .appstore-big { font-size: 14px; line-height: 1.15; font-weight: 600; letter-spacing: -.005em; }
 .appstore:hover {
-  transform: translateY(-2px) scale(1.02); border-color: rgba(255,255,255,.35);
+  transform: translateY(-2px) scale(1.02); border-color: rgba(214,240,140,.55);
+  background: linear-gradient(180deg, rgba(196,232,92,.32) 0%, rgba(166,226,46,.14) 100%);
   box-shadow: inset 0 1px 1px rgba(255,255,255,.7), inset 0 -2px 4px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.4), 0 12px 28px rgba(180,212,85,.18);
 }
 
@@ -151,7 +153,7 @@ h1, h2, h3, p { margin: 0; }
 }
 .headline em { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: -.01em; }
 .headline-center { text-align: center; margin-left: auto; margin-right: auto; max-width: none; }
-.headline-oneline { white-space: nowrap; max-width: none; font-size: clamp(2.4rem, 9.5vw, 8.5rem); }
+.headline-oneline { white-space: nowrap; max-width: none; font-size: clamp(1.6rem, 7vw, 6.2rem); }
 
 .lead { font-size: 1.2rem; line-height: 1.55; max-width: 38em; color: var(--fg-2); }
 .statement { font-weight: 800; font-size: clamp(1.5rem, 4vw, 2.6rem); line-height: 1.1; letter-spacing: -.02em; max-width: 20ch; margin-bottom: 24px; }
