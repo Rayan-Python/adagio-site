@@ -151,6 +151,11 @@ if (bigBrand && miniBrand && firstSection) {
   }
   window.addEventListener('scroll', toggleMiniBrand, { passive: true });
   toggleMiniBrand();
+  // Clicking it jumps straight back to the top, with no smooth scroll.
+  miniBrand.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  });
 }
 
 document.getElementById('year').textContent = new Date().getFullYear();
