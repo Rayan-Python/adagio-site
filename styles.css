@@ -397,32 +397,34 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) { .mini-brand { transition: none; transform: none; } }
 
 /* ------------------------------------------------------------------
-   Team cards as race bibs: paper bib, dark band, big number, and four
+   Team cards as race bibs: dark bib with all the text on it, a colored
+   band (red for one runner, blue for the other), big number, and four
    safety-pin holes punched through to the lime behind.
    ------------------------------------------------------------------ */
-#team .team { gap: 28px; max-width: 760px; margin: 0 auto; }
+#team .team { gap: 28px; max-width: 900px; margin: 0 auto; }
 #team .member.bib {
-  position: relative; display: block; overflow: hidden; text-align: center;
-  background: #F7F7F2; color: #121212; border: 0; border-radius: 6px; padding: 0 20px 24px;
+  position: relative; display: block; overflow: hidden; text-align: center; container-type: inline-size;
+  --bib: #E5484D; /* red */
+  background: #121212; color: #FFFFFF; border: 0; border-radius: 6px; padding: 0 20px 24px;
   box-shadow: 0 12px 28px rgba(0,0,0,.22); transform: rotate(-1.5deg);
 }
-#team .member.bib:nth-child(even) { transform: rotate(1.5deg); }
+#team .member.bib:nth-child(even) { --bib: #3E8BFF; transform: rotate(1.5deg); } /* blue */
 #team .member.bib::before { /* safety-pin holes */
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  --hole: radial-gradient(circle, var(--neon) 0 4.5px, #C9C9C0 5px 6px, transparent 6.5px);
+  --hole: radial-gradient(circle, var(--neon) 0 4.5px, #3A3A3A 5px 6px, transparent 6.5px);
   background: var(--hole) 10px 10px / 14px 14px no-repeat, var(--hole) calc(100% - 10px) 10px / 14px 14px no-repeat,
               var(--hole) 10px calc(100% - 10px) / 14px 14px no-repeat, var(--hole) calc(100% - 10px) calc(100% - 10px) / 14px 14px no-repeat;
 }
 .bib-band {
-  margin: 0 -20px; padding: 12px 0; background: #121212; color: var(--neon);
+  margin: 0 -20px; padding: 12px 0; background: var(--bib); color: #121212;
   font-stretch: 125%; font-weight: 800; font-size: .8rem; letter-spacing: .2em; text-transform: uppercase;
 }
 .bib-num {
   margin: 14px 0 4px; font-stretch: 125%; font-weight: 900; line-height: 1; letter-spacing: -.02em;
-  font-size: clamp(4.5rem, 14vw, 7rem); color: #121212;
+  font-size: 26cqw; color: #FFFFFF; /* four digits are ~2.85em wide: fills ~75% of the bib */
 }
-#team .member.bib h3 { font-size: 1.35rem; color: #121212; }
-#team .member.bib .role { color: #52525B; margin-top: 2px; }
-#team .member.bib .member-mail { color: #121212; margin-top: 10px; }
-#team .member.bib .member-mail:hover { color: #5C6914; }
+#team .member.bib h3 { font-size: 1.35rem; color: #FFFFFF; }
+#team .member.bib .role { color: #A3A3A3; margin-top: 2px; }
+#team .member.bib .member-mail { color: #FFFFFF; margin-top: 10px; text-decoration-color: var(--bib); }
+#team .member.bib .member-mail:hover { color: var(--bib); }
 @media (prefers-reduced-motion: reduce) { #team .member.bib { transform: none; } }
