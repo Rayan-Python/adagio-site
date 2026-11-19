@@ -182,7 +182,7 @@ p { margin: 0; }
    Adagio logo, black sections with neon as the accent.
    ------------------------------------------------------------------ */
 :root {
-  --neon: #BCD458; /* the lime of the lane lines in the hero photo */
+  --neon: #B1C468; /* the site green: a softened version of the hero photo's lane-line lime */
   /* every older yellow/lime on the page now uses the same green */
   --yellow: var(--neon);
   --lime: var(--neon);
@@ -278,7 +278,7 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
 }
 .site-footer a { color: var(--neon); }
 .muted { color: #8A8A8A; }
-.wordmark { -webkit-text-stroke: 1.5px rgba(188,212,88,.5); }
+.wordmark { -webkit-text-stroke: 1.5px rgba(177,196,104,.5); }
 
 @media (min-width: 720px) {
   .hero-stage { --px: .5; }
@@ -338,9 +338,9 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
 .tl-mile { font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--text-2); margin-bottom: 8px; }
 .tl-card h3 { font-size: 1.35rem; margin-bottom: 6px; }
 .tl-card p:last-child { color: var(--text-2); }
-.tl-step.is-on .tl-node { background: var(--neon); border-color: var(--neon); box-shadow: 0 0 0 6px rgba(188,212,88,.18); }
+.tl-step.is-on .tl-node { background: var(--neon); border-color: var(--neon); box-shadow: 0 0 0 6px rgba(177,196,104,.18); }
 .tl-step.is-on .tl-node svg { stroke: #121212; }
-.tl-step.is-on .tl-card { opacity: 1; transform: none; border-color: rgba(188,212,88,.45); }
+.tl-step.is-on .tl-card { opacity: 1; transform: none; border-color: rgba(177,196,104,.45); }
 .tl-step.is-on .tl-mile { color: var(--neon); }
 
 /* finish line: a checkered band across the lane at the 5 km marker (placed by script.js) */
@@ -375,9 +375,8 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
   background-image: linear-gradient(#121212, #121212), linear-gradient(#121212, #121212);
 }
 .on-lime .eyebrow, .on-lime .eyebrow.dark { color: #121212; }
-/* team: a slightly softer lime so the red and blue bands sit comfortably, and no
-   lane-marker ticks at its top edge or at the top of the section after it */
-#team.on-lime { background-color: #B1C468; background-image: linear-gradient(#121212, #121212); background-size: 100% 2px; }
+/* team: no lane-marker ticks at its top edge or at the top of the section after it */
+#team.on-lime { background-image: linear-gradient(#121212, #121212); background-size: 100% 2px; }
 #team + section { background-size: 100% 2px, 0 0; }
 .on-lime .body-lg, .on-lime .story, .on-lime h2 { color: #121212; }
 .on-lime .member { background: #121212; border-color: #121212; }
