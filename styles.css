@@ -254,7 +254,7 @@ h1, h2, h3, p { margin: 0; }
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .bib-band {
-  margin: 0 -20px; padding: 12px 0; background: var(--bib); color: #FFFFFF;
+  margin: 0 -20px; height: 38px; background: #000000; /* plain black top strip */
   font-stretch: 125%; font-weight: 800; font-size: .8rem; letter-spacing: .2em; text-transform: uppercase;
 }
 .bib-num { /* printed race-number look */
