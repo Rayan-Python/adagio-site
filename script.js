@@ -29,14 +29,19 @@ function toggleNav() {
   metronome.classList.toggle('is-shown', shown);
 }
 
-// Metronome: the dot snaps to the tick of the section in the middle of the screen,
-// and pulses each time it lands on a new one.
+// Metronome: the dot sits on the tick of the section you're in: the last section whose
+// top has passed the middle of the screen. That holds steady through the gradient bands
+// between sections (and the footer counts as Contact). It pulses on each new section.
+const metroSections = metroTicks.map((a) => document.querySelector(a.hash));
 let metroIndex = -1;
-function setMetronome(current) {
-  const id = current && current.id;
-  const index = metroTicks.findIndex((a) => a.hash === '#' + id);
-  const at = index === -1 ? (id ? metroTicks.length - 1 : 0) : index; // footer counts as the last tick
-  metronome.dataset.theme = current ? current.dataset.theme : 'black';
+function setMetronome() {
+  const middle = window.innerHeight / 2;
+  let at = 0;
+  metroSections.forEach((section, k) => { if (section.getBoundingClientRect().top <= middle) at = k; });
+  const section = metroSections[at];
+  const box = section.getBoundingClientRect();
+  // colors follow what's actually behind the rail: the section, or dark once past its end
+  metronome.dataset.theme = box.bottom > middle ? section.dataset.theme : 'black';
   if (at === metroIndex) return;
   metroIndex = at;
   metroDot.style.setProperty('--i', at);
@@ -45,16 +50,8 @@ function setMetronome(current) {
   void metroDot.offsetWidth; // restart the pulse
   metroDot.classList.add('is-pulsing');
 }
-
-// The metronome follows whichever section is in the middle of the screen (its tick and
-// its colors). Section backgrounds themselves are fixed in the CSS.
 function setTheme() {
-  const middle = window.innerHeight / 2;
-  const current = themed.find((el) => {
-    const box = el.getBoundingClientRect();
-    return box.top <= middle && box.bottom > middle;
-  });
-  setMetronome(current);
+  setMetronome();
 }
 
 // Text fades and slides in as each section enters.
