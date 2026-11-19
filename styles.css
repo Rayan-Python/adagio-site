@@ -296,6 +296,8 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
    lights up each km marker when the shoe reaches it.
    ------------------------------------------------------------------ */
 .section h2.tl-title { text-align: center; max-width: none; }
+.section h2.story-title { text-align: center; max-width: none; }
+#story .eyebrow { text-align: center; }
 #how .eyebrow { text-align: center; }
 .tl { position: relative; margin-top: 16px; padding: 24px 0 80px; }
 .tl-course { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 1; }
