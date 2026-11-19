@@ -1,161 +1,150 @@
-// Mobile nav toggle
-const toggle = document.querySelector('.nav-toggle');
-const links = document.getElementById('nav-links');
+// Adagio: scroll effects for everything below the landing photo.
 
-toggle.addEventListener('click', () => {
-  const open = links.classList.toggle('open');
-  toggle.setAttribute('aria-expanded', String(open));
-});
-links.addEventListener('click', (e) => {
-  if (e.target.closest('a')) {
-    links.classList.remove('open');
-    toggle.setAttribute('aria-expanded', 'false');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const hero = document.querySelector('.hero');
+const heroBrand = document.querySelector('.hero-brand');
+const flow = document.getElementById('flow');
+const nav = document.querySelector('.site-nav');
+const themed = [...flow.querySelectorAll('[data-theme]')];
+
+// The photo dims as the page slides up over it.
+function dimHero() {
+  const progress = Math.min(window.scrollY / window.innerHeight, 1);
+  hero.style.setProperty('--dim', (progress * 0.7).toFixed(3));
+}
+
+// The nav appears once the page has covered the big wordmark.
+function toggleNav() {
+  nav.classList.toggle('is-shown', flow.getBoundingClientRect().top < heroBrand.getBoundingClientRect().top);
+}
+
+// The background eases to the theme of whichever section is in the middle of the screen.
+function setTheme() {
+  const middle = window.innerHeight / 2;
+  const current = themed.find((el) => {
+    const box = el.getBoundingClientRect();
+    return box.top <= middle && box.bottom > middle;
+  });
+  const theme = current ? current.dataset.theme : 'black';
+  if (flow.dataset.theme !== theme) flow.dataset.theme = theme;
+}
+
+// Text fades and slides in as each section enters.
+const reveals = document.querySelectorAll('.reveal');
+if (reduceMotion || !('IntersectionObserver' in window)) {
+  reveals.forEach((el) => el.classList.add('is-in'));
+} else {
+  const seen = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-in');
+        seen.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.15 });
+  reveals.forEach((el) => seen.observe(el));
+}
+
+// One thick line winds down the whole page, drawn up to the point level with 60% down
+// the screen. On wide screens it swings between the left and right gutters, crossing
+// over between sections; on phones it runs straight down the right edge. The app icon
+// rides the tip, tilting a little with the line's direction.
+const course = flow.querySelector('.course');
+const edge = course.querySelector('.course-edge');
+const line = course.querySelector('.course-line');
+const grad = course.querySelector('#course-grad');
+const runner = flow.querySelector('.runner');
+const blocks = themed.filter((el) => el.classList.contains('block'));
+let samples = [];
+let total = 0;
+
+const lengthAtY = (y) => { // the line always heads down, so y rises with length
+  let lo = 0, hi = samples.length - 1;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (samples[mid].y < y) lo = mid + 1; else hi = mid; }
+  return samples[lo].len;
+};
+
+function buildLine() {
+  const box = flow.getBoundingClientRect();
+  const w = box.width, h = box.height;
+  let d;
+  if (window.innerWidth < 720) {
+    const x = w - 22;
+    d = `M${x},0 L${x},${h}`;
+  } else {
+    const gutter = Math.max(40, (w - 1200) / 4);
+    const sides = [gutter, w - gutter];
+    const points = [{ x: w / 2, y: 0 }];
+    blocks.forEach((block, i) => {
+      const b = block.getBoundingClientRect();
+      const x = sides[i % 2];
+      points.push({ x, y: b.top - box.top + 140 }, { x, y: b.bottom - box.top - 140 });
+    });
+    points.push({ x: w / 2, y: h });
+    d = `M${points[0].x},${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const p = points[i - 1], q = points[i], dy = (q.y - p.y) / 2;
+      d += ` C${p.x},${p.y + dy} ${q.x},${q.y - dy} ${q.x},${q.y}`;
+    }
   }
+  course.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  grad.setAttribute('y2', h);
+  edge.setAttribute('d', d);
+  line.setAttribute('d', d);
+  total = line.getTotalLength();
+  samples = [];
+  for (let len = 0; len <= total; len += 4) samples.push({ len, y: line.getPointAtLength(len).y });
+  samples.push({ len: total, y: line.getPointAtLength(total).y });
+  [edge, line].forEach((p) => { p.style.strokeDasharray = `${total} ${total}`; });
+}
+
+function runLine() {
+  if (!samples.length) return;
+  const y = window.innerHeight * 0.6 - flow.getBoundingClientRect().top;
+  const len = y <= 0 ? 0 : lengthAtY(y);
+  [edge, line].forEach((p) => { p.style.strokeDashoffset = total - len; });
+  const tip = line.getPointAtLength(len);
+  const ahead = line.getPointAtLength(Math.min(len + 4, total));
+  const heading = Math.atan2(ahead.y - tip.y, ahead.x - tip.x) * 180 / Math.PI; // 90 = straight down
+  const tilt = Math.max(-25, Math.min(25, (heading - 90) * 0.35));
+  runner.style.transform = `translate(${tip.x}px, ${tip.y}px) translate(-50%, -50%) rotate(${tilt}deg)`;
+  runner.classList.toggle('is-on', len > 0);
+}
+
+function onScroll() {
+  dimHero();
+  toggleNav();
+  setTheme();
+  if (!reduceMotion) runLine();
+}
+
+function onLayout() {
+  if (!reduceMotion) buildLine();
+  onScroll();
+}
+
+window.addEventListener('scroll', onScroll, { passive: true });
+window.addEventListener('resize', onLayout);
+window.addEventListener('load', onLayout);
+document.fonts.ready.then(onLayout);
+onLayout();
+
+// The logo in the nav jumps straight back to the top.
+nav.querySelector('.nav-logo').addEventListener('click', (e) => {
+  e.preventDefault();
+  window.scrollTo({ top: 0, behavior: 'instant' });
 });
 
-// YouTube embed: set data-video-id on #video in index.html (or edit VIDEO_ID here).
-const VIDEO_ID = '';
+// YouTube embed for a future demo section: give #video a data-video-id.
 const video = document.getElementById('video');
-const id = video && (video.dataset.videoId || VIDEO_ID);
-if (id) {
+if (video && video.dataset.videoId) {
   const frame = document.createElement('iframe');
-  frame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id);
+  frame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(video.dataset.videoId);
   frame.title = 'Adagio demo video';
   frame.allow = 'accelerometer; encrypted-media; picture-in-picture; fullscreen';
   frame.allowFullscreen = true;
   frame.loading = 'lazy';
   video.replaceChildren(frame);
-}
-
-// Download link placeholder: don't jump to top until a real URL is set.
-document.querySelectorAll('a[data-placeholder="download"]').forEach((a) => {
-  if (a.getAttribute('href') === '#') {
-    a.addEventListener('click', (e) => e.preventDefault());
-  }
-});
-
-// Hero dims as the black sections slide up over it.
-const hero = document.querySelector('.hero');
-function dimHero() {
-  const progress = Math.min(window.scrollY / window.innerHeight, 1);
-  hero.style.setProperty('--dim', (progress * 0.7).toFixed(3));
-}
-window.addEventListener('scroll', dimHero, { passive: true });
-dimHero();
-
-// Timeline: a 5K race course. The lane is an SVG curve through one waypoint per
-// card: beside the card on the open side, so it swerves left and right down the
-// page (on phones it runs straight down the left edge). Marker k sits at exactly
-// k km and the course ends at the 5 km finish. As you scroll, the shoe runs to the
-// point on the course level with 60% down the screen, turned to follow the lane.
-const tl = document.getElementById('tl');
-if (tl) {
-  const steps = [...tl.querySelectorAll('.tl-step')];
-  const course = tl.querySelector('.tl-course');
-  const paths = [...course.querySelectorAll('path')];
-  const done = course.querySelector('.lane-done');
-  const shoe = tl.querySelector('.tl-shoe');
-  const tag = tl.querySelector('.tl-mi');
-  const finish = tl.querySelector('.tl-finish');
-  const finishLabel = tl.querySelector('.tl-finish-label');
-  let samples = []; // points along the course, every 2px of length
-  let marks = [];   // course length at each km marker
-  let total = 0;
-
-  const lengthAtY = (y) => { // the course always heads down, so y rises with length
-    let lo = 0, hi = samples.length - 1;
-    while (lo < hi) { const mid = (lo + hi) >> 1; if (samples[mid].y < y) lo = mid + 1; else hi = mid; }
-    return samples[lo].len;
-  };
-  const angleAt = (len) => {
-    const a = done.getPointAtLength(Math.max(len - 2, 0));
-    const b = done.getPointAtLength(Math.min(len + 2, total));
-    return Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
-  };
-
-  function buildCourse() {
-    const box = tl.getBoundingClientRect();
-    const wide = window.matchMedia('(min-width: 900px)').matches;
-    const swing = Math.min(box.width * 0.18, 230);
-    const points = [{ x: wide ? box.width / 2 : 28, y: 0 }];
-    steps.forEach((step) => {
-      const card = step.querySelector('.tl-card').getBoundingClientRect();
-      const y = card.top + card.height / 2 - box.top;
-      let x = 28;
-      if (wide) x = box.width / 2 + (card.left + card.width / 2 < box.left + box.width / 2 ? swing : -swing);
-      points.push({ x, y });
-      const li = step.getBoundingClientRect();
-      const node = step.querySelector('.tl-node');
-      node.style.left = (box.left + x - li.left) + 'px';
-      node.style.top = (box.top + y - li.top) + 'px';
-    });
-    // smooth S-bends: leave and arrive heading straight down
-    let d = `M${points[0].x},${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      const p = points[i - 1], q = points[i], dy = (q.y - p.y) / 2;
-      d += ` C${p.x},${p.y + dy} ${q.x},${q.y - dy} ${q.x},${q.y}`;
-    }
-    course.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-    paths.forEach((p) => p.setAttribute('d', d));
-    total = done.getTotalLength();
-    samples = [];
-    for (let len = 0; len <= total; len += 2) { const pt = done.getPointAtLength(len); samples.push({ len, y: pt.y }); }
-    samples.push({ len: total, y: done.getPointAtLength(total).y });
-    marks = points.slice(1).map((p) => lengthAtY(p.y));
-    done.style.strokeDasharray = `${total} ${total}`;
-    const end = points[points.length - 1];
-    finish.style.transform = `translate(${end.x}px, ${end.y}px) rotate(${angleAt(total) + 90}deg) translate(-50%, -50%)`;
-    finishLabel.style.left = end.x + 'px';
-    finishLabel.style.top = end.y + 'px';
-  }
-
-  function kmAt(len) {
-    let prev = 0;
-    for (let k = 0; k < marks.length; k++) {
-      if (len <= marks[k]) return k + (len - prev) / (marks[k] - prev);
-      prev = marks[k];
-    }
-    return marks.length;
-  }
-
-  function runTimeline() {
-    if (!samples.length) return;
-    const box = tl.getBoundingClientRect();
-    const len = lengthAtY(window.innerHeight * 0.6 - box.top);
-    const pt = done.getPointAtLength(len);
-    done.style.strokeDashoffset = total - len;
-    shoe.style.transform = `translate(${pt.x}px, ${pt.y}px) rotate(${angleAt(len)}deg)`;
-    tag.style.left = pt.x + 'px';
-    tag.style.top = pt.y + 'px';
-    tag.textContent = kmAt(len).toFixed(2) + ' km';
-    steps.forEach((step, k) => step.classList.toggle('is-on', len >= marks[k] - 0.5));
-  }
-
-  const rebuild = () => { buildCourse(); runTimeline(); };
-  window.addEventListener('scroll', runTimeline, { passive: true });
-  window.addEventListener('resize', rebuild);
-  document.fonts.ready.then(rebuild);
-  rebuild();
-}
-
-// Small top-left wordmark appears once the big hero wordmark is covered.
-// The hero stays pinned while the sections slide over it, so check where the
-// first section's top edge is rather than whether the wordmark is on screen.
-const bigBrand = document.querySelector('.hero-brand');
-const miniBrand = document.querySelector('.mini-brand');
-const firstSection = document.querySelector('.hero + * + section, .hero ~ section');
-if (bigBrand && miniBrand && firstSection) {
-  function toggleMiniBrand() {
-    const covered = firstSection.getBoundingClientRect().top < bigBrand.getBoundingClientRect().top;
-    miniBrand.classList.toggle('is-shown', covered);
-  }
-  window.addEventListener('scroll', toggleMiniBrand, { passive: true });
-  toggleMiniBrand();
-  // Clicking it jumps straight back to the top, with no smooth scroll.
-  miniBrand.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  });
 }
 
 document.getElementById('year').textContent = new Date().getFullYear();
