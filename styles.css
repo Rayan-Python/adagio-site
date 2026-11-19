@@ -108,6 +108,48 @@ h1, h2, h3, p { margin: 0; }
 .appstore:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.32); }
 
 /* ------------------------------------------------------------------
+   Metronome: tick per section in the right margin; the dot snaps to the
+   current section with a slight overshoot and pulses as it lands.
+   ------------------------------------------------------------------ */
+.metronome {
+  --gap: 22px;
+  position: fixed; right: 4px; top: 50%; z-index: 40; width: 14px;
+  translate: 0 -50%; color: #FFFFFF; opacity: 0; pointer-events: none; transition: opacity 300ms ease, color 600ms ease;
+}
+.metronome.is-shown { opacity: 1; pointer-events: auto; }
+.metronome[data-theme="paper"], .metronome[data-theme="yellow"] { color: #0A0A0A; }
+.metronome ol { position: relative; list-style: none; margin: 0; padding: 0; }
+.metronome ol::before { /* the rail */
+  content: ""; position: absolute; left: 50%; top: calc(var(--gap) / 2); bottom: calc(var(--gap) / 2); width: 1px;
+  background: currentColor; opacity: .25; translate: -50% 0;
+}
+.metronome li { height: var(--gap); display: grid; place-items: center; }
+.metronome a { position: relative; display: block; width: 14px; height: 14px; }
+.metronome a::before { /* tick */
+  content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 2px; border-radius: 1px;
+  background: currentColor; opacity: .45; translate: -50% -50%; transition: width 200ms ease, opacity 200ms ease;
+}
+.metronome a.is-on::before { width: 12px; opacity: 1; }
+.metronome a::after { /* section name on hover (desktop) */
+  content: attr(data-label); position: absolute; right: 22px; top: 50%; translate: 0 -50%; white-space: nowrap;
+  font-family: var(--mono); font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; color: #FFFFFF;
+  background: rgba(10,10,10,.75); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  padding: 4px 8px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity 150ms ease-out;
+}
+.metronome a:hover::after, .metronome a:focus-visible::after { opacity: 1; }
+.metro-dot {
+  position: absolute; left: 50%; top: calc(var(--gap) / 2); width: 10px; height: 10px; border-radius: 50%;
+  background: #D9E13A; box-shadow: 0 0 0 2px #0A0A0A; pointer-events: none;
+  translate: -50% calc(-50% + var(--i, 0) * var(--gap));
+  transition: translate 420ms cubic-bezier(.34, 1.56, .64, 1);
+}
+.metro-dot::after { /* landing pulse */
+  content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid #D9E13A; opacity: 0;
+}
+.metro-dot.is-pulsing::after { animation: metro-pulse 600ms ease-out; }
+@keyframes metro-pulse { from { opacity: .9; scale: 1; } to { opacity: 0; scale: 2.6; } }
+
+/* ------------------------------------------------------------------
    The flow: everything after the photo. Its colors ease between themes
    as each section reaches the middle of the screen (script.js).
    ------------------------------------------------------------------ */
@@ -272,6 +314,7 @@ h1, h2, h3, p { margin: 0; }
    ------------------------------------------------------------------ */
 @media (min-width: 720px) {
   :root { --pad: 80px; --pad-line: 80px; }
+  .metronome { --gap: 30px; right: 28px; width: 20px; }
   .course-edge { stroke-width: 36; }
   .course-line { stroke-width: 28; }
   .runner { width: 52px; height: 52px; border-radius: 13px; }
@@ -294,6 +337,8 @@ h1, h2, h3, p { margin: 0; }
   html { scroll-behavior: auto; }
   .hero-stage { animation: none; }
   .orbs i { animation: none; }
+  .metro-dot { transition: none; }
+  .metro-dot.is-pulsing::after { animation: none; }
   .course, .runner { display: none; }
   .reveal { opacity: 1; translate: none; transition: none; }
   .flow, .corner, .site-nav, .appstore { transition: none; }

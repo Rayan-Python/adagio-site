@@ -19,9 +19,31 @@ function dimHero() {
   hero.style.setProperty('--dim', (progress * 0.7).toFixed(3));
 }
 
-// The nav appears once the page has covered the big wordmark.
+// The nav (and the metronome) appear once the page has covered the big wordmark.
+const metronome = document.querySelector('.metronome');
+const metroDot = metronome.querySelector('.metro-dot');
+const metroTicks = [...metronome.querySelectorAll('a')];
 function toggleNav() {
-  nav.classList.toggle('is-shown', flow.getBoundingClientRect().top < heroBrand.getBoundingClientRect().top);
+  const shown = flow.getBoundingClientRect().top < heroBrand.getBoundingClientRect().top;
+  nav.classList.toggle('is-shown', shown);
+  metronome.classList.toggle('is-shown', shown);
+}
+
+// Metronome: the dot snaps to the tick of the section in the middle of the screen,
+// and pulses each time it lands on a new one.
+let metroIndex = -1;
+function setMetronome(current) {
+  const id = current && current.id;
+  const index = metroTicks.findIndex((a) => a.hash === '#' + id);
+  const at = index === -1 ? (id ? metroTicks.length - 1 : 0) : index; // footer counts as the last tick
+  metronome.dataset.theme = flow.dataset.theme;
+  if (at === metroIndex) return;
+  metroIndex = at;
+  metroDot.style.setProperty('--i', at);
+  metroTicks.forEach((a, k) => a.classList.toggle('is-on', k === at));
+  metroDot.classList.remove('is-pulsing');
+  void metroDot.offsetWidth; // restart the pulse
+  metroDot.classList.add('is-pulsing');
 }
 
 // The background eases to the theme of whichever section is in the middle of the screen.
@@ -33,6 +55,7 @@ function setTheme() {
   });
   const theme = current ? current.dataset.theme : 'black';
   if (flow.dataset.theme !== theme) flow.dataset.theme = theme;
+  setMetronome(current);
 }
 
 // Text fades and slides in as each section enters.
