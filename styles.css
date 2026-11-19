@@ -2,17 +2,21 @@
    Sections alternate black / off-white / app yellow, and one thick line winds down
    behind them with the app icon on its tip. */
 :root {
-  --black: #0A0A0A;
-  --paper: #F4F1E8;
+  --black: #0E0E0E;  /* off-black for big backgrounds */
+  --paper: #E9E6DA;  /* muted warm off-white */
   --yellow: #D9E13A; /* app yellow, toned down a little so it is easier on the eyes */
   --lime: #A6E22E;
+  /* accents only (labels, tags, hovers, dots): streaming-service colors */
+  --apple: #FA243C;
+  --amazon: #25D1DA;
+  --spotify: #1DB954;
   --ink: #0A0A0A;
   --white: #FFFFFF;
   --sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --serif: "Instrument Serif", "Playfair Display", Georgia, serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --pad: 24px;        /* side padding */
-  --pad-line: 24px;   /* side padding on the line's side (phones): 48px while the winding line is on */
+  --pad-line: 56px;   /* side padding on the line's side (phones), clear of the line */
   --max: 1200px;
   --ease: cubic-bezier(.2, .7, .2, 1);
 }
@@ -59,7 +63,7 @@ h1, h2, h3, p { margin: 0; }
 /* Long, soft fade so the photo dissolves into the black below */
 .hero::after {
   content: ""; position: absolute; inset: auto 0 0 0; height: 60%; pointer-events: none;
-  background: linear-gradient(to top, #0A0A0A 0%, rgba(10,10,10,.85) 18%, rgba(10,10,10,.5) 42%, rgba(10,10,10,.18) 70%, rgba(10,10,10,0) 100%);
+  background: linear-gradient(to top, #0E0E0E 0%, rgba(14,14,14,.85) 18%, rgba(14,14,14,.5) 42%, rgba(14,14,14,.18) 70%, rgba(14,14,14,0) 100%);
 }
 .hero-brand {
   /* Centered on the visible part of the photo, baseline on the lane line at y = 177 of 960.
@@ -176,7 +180,7 @@ h1, h2, h3, p { margin: 0; }
 .glass-pad { padding: clamp(24px, 4vw, 44px); }
 
 /* soft blurred color glows behind each section's content */
-.orbs { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.orbs { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
 .orbs i {
   position: absolute; width: min(52vw, 620px); aspect-ratio: 1; border-radius: 50%;
   filter: blur(80px); opacity: .5; animation: float 20s ease-in-out infinite alternate;
@@ -184,24 +188,29 @@ h1, h2, h3, p { margin: 0; }
 .orbs i:nth-child(2) { animation-duration: 26s; animation-delay: -8s; }
 @keyframes float { from { translate: 0 0; } to { translate: 6vw 8vh; } }
 .block .wrap { z-index: 1; }
-/* glow colors: Apple Music red #FA243C, Spotify green #1DB954, Amazon Music blue #00A8E1 */
+/* glow colors: Apple Music red #FA243C, Spotify green #1DB954, Amazon Music cyan #25D1DA */
 #how .orbs i:nth-child(1)          { top: 4%;  right: -10%; background: #1DB954; opacity: .3; }
-#how .orbs i:nth-child(2)          { bottom: 0; left: -14%;  background: #00A8E1; opacity: .4; }
-#features .orbs i:nth-child(1)     { top: 10%; left: -16%;  background: #00A8E1; opacity: .3; }
+#how .orbs i:nth-child(2)          { bottom: 0; left: -14%;  background: #25D1DA; opacity: .4; }
+#features .orbs i:nth-child(1)     { top: 10%; left: -16%;  background: #25D1DA; opacity: .3; }
 #features .orbs i:nth-child(2)     { bottom: 4%; right: -8%; background: #1DB954; opacity: .35; }
 #accessibility .orbs i:nth-child(1){ top: 6%;  right: -12%; background: #FA243C; opacity: .35; }
-#accessibility .orbs i:nth-child(2){ bottom: -6%; left: -10%; background: #00A8E1; opacity: .35; }
-#story .orbs i:nth-child(1)        { top: 8%;  left: -14%;  background: #00A8E1; opacity: .4; }
+#accessibility .orbs i:nth-child(2){ bottom: -6%; left: -10%; background: #25D1DA; opacity: .35; }
+#story .orbs i:nth-child(1)        { top: 8%;  left: -14%;  background: #25D1DA; opacity: .4; }
 #story .orbs i:nth-child(2)        { bottom: 2%; right: -12%; background: #FA243C; opacity: .35; }
 #roadmap .orbs i:nth-child(1)      { top: 2%;  right: -10%; background: #1DB954; opacity: .35; }
 #roadmap .orbs i:nth-child(2)      { bottom: 0; left: -12%;  background: #FA243C; opacity: .22; }
 #team .orbs i:nth-child(1)         { top: 12%; left: -10%;  background: #FA243C; opacity: .3; }
 #team .orbs i:nth-child(2)         { top: 20%; right: -10%; background: #1DB954; opacity: .35; }
 #contact .orbs i:nth-child(1)      { top: -20%; left: 30%;  background: #1DB954; opacity: .22; }
-#contact .orbs i:nth-child(2)      { bottom: -40%; right: 10%; background: #00A8E1; opacity: .3; }
+#contact .orbs i:nth-child(2)      { bottom: -40%; right: 10%; background: #25D1DA; opacity: .3; }
 
-.block, .site-footer { background: var(--bg); color: var(--fg); }
-.block { position: relative; z-index: 1; min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 120px 0; }
+/* Layers inside the flow, back to front: section colors and blends (z -1), glows (-1),
+   the winding line and icon (0-2), then the content (1+). Sections don't form their own
+   stacking context, so the line can run between their background and their content. */
+.site-footer { background: var(--bg); color: var(--fg); }
+.block { color: var(--fg); }
+.block::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--bg); }
+.block { position: relative; z-index: auto; min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 120px 0; }
 
 /* the winding line (drawn as you scroll) and the app icon riding its tip */
 .course { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: visible; }
@@ -252,12 +261,8 @@ h1, h2, h3, p { margin: 0; }
 .numbered-sm { margin-top: 48px; }
 .numbered-sm .big-num { font-size: clamp(3rem, 9vw, 6rem); }
 
-/* features: copy on the left, phone mockup on the right (hidden on small screens) */
+/* features: copy on the left, 3D phone on the right (below the copy on phones) */
 .features { display: grid; gap: 48px; align-items: center; }
-.phone {
-  display: none; width: 290px; aspect-ratio: 9 / 19; justify-self: center; padding: 12px; border-radius: 46px;
-  background: var(--ink); box-shadow: 0 30px 60px -20px rgba(0,0,0,.45), inset 0 0 0 2px #2A2A2A;
-}
 .phone-screen {
   height: 100%; border-radius: 36px; overflow: hidden; display: grid; place-items: center; text-align: center;
   background: repeating-linear-gradient(135deg, #1A1A1A 0 14px, #141414 14px 28px);
@@ -317,7 +322,7 @@ h1, h2, h3, p { margin: 0; }
    ------------------------------------------------------------------ */
 @media (min-width: 720px) {
   :root { --pad: 80px; --pad-line: 80px; }
-  .metronome { --gap: 30px; right: 28px; width: 20px; }
+  .metronome { --gap: 30px; right: 6px; width: 20px; }
   .course-edge { stroke-width: 36; }
   .course-line { stroke-width: 28; }
   .runner { width: 52px; height: 52px; border-radius: 13px; }
@@ -327,7 +332,6 @@ h1, h2, h3, p { margin: 0; }
 }
 @media (min-width: 960px) {
   .features { grid-template-columns: 1fr 320px; gap: 72px; }
-  .phone { display: block; }
 }
 @media (min-width: 1100px) {
   .nav-links { display: flex; }
@@ -346,4 +350,109 @@ h1, h2, h3, p { margin: 0; }
   .reveal { opacity: 1; translate: none; transition: none; }
   .flow, .corner, .site-nav, .appstore { transition: none; }
 
+}
+
+/* ------------------------------------------------------------------
+   Soft gradient bands between dark and light sections
+   ------------------------------------------------------------------ */
+.blend { position: relative; z-index: -1; height: 40vh; height: 40svh; }
+.blend-dark-paper   { background: linear-gradient(#0E0E0E, #E9E6DA); }
+.blend-paper-yellow { background: linear-gradient(#E9E6DA, var(--yellow)); }
+.blend-yellow-dark  { background: linear-gradient(var(--yellow), #0E0E0E); }
+
+/* ------------------------------------------------------------------
+   Accents: streaming-service colors on small details only
+   ------------------------------------------------------------------ */
+.corner .acc { font-weight: 700; }
+#how .acc, #contact .acc { color: var(--amazon); }
+#features .acc, #story .acc { color: var(--spotify); }
+#accessibility .acc, #roadmap .acc, #team .acc { color: var(--apple); }
+.numbered h3::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 12px; vertical-align: .18em; background: var(--apple); }
+.numbered li:nth-child(2) h3::before { background: var(--amazon); }
+.numbered li:nth-child(3) h3::before { background: var(--spotify); }
+.roadmap .ver::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; vertical-align: .1em; background: var(--apple); }
+.roadmap li:nth-child(2) .ver::before { background: var(--amazon); }
+.roadmap li:nth-child(3) .ver::before { background: var(--spotify); }
+.nav-links a:nth-child(3n+1):hover { color: var(--spotify); }
+.nav-links a:nth-child(3n+2):hover { color: var(--amazon); }
+.nav-links a:nth-child(3n):hover { color: var(--apple); }
+.email-big:hover { color: var(--spotify); }
+.person-mail:hover { border-color: var(--apple); color: var(--apple); }
+
+/* ------------------------------------------------------------------
+   Huge outlined section numbers (decorative, behind the content)
+   ------------------------------------------------------------------ */
+.sec-num {
+  position: absolute; z-index: 0; right: var(--pad-line); top: 104px; pointer-events: none;
+  font-weight: 900; font-size: clamp(5rem, 20vw, 17rem); line-height: .8; letter-spacing: -.05em;
+  color: transparent; -webkit-text-stroke: 1.5px var(--outline); opacity: .45;
+}
+
+/* ------------------------------------------------------------------
+   3D phone: stacked slices give it thickness, front screen and back
+   face; script.js spins it with scroll (--ry, --rx) and eases it.
+   ------------------------------------------------------------------ */
+.phone3d-stage { display: grid; justify-items: center; gap: 26px; perspective: 1400px; padding: 12px 0; }
+.phone3d {
+  --w: 210px; --ry: -18deg; --rx: 6deg;
+  position: relative; width: var(--w); aspect-ratio: 9 / 19; transform-style: preserve-3d;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+}
+.p-slice, .p-face { position: absolute; inset: 0; border-radius: calc(var(--w) * .15); }
+.p-slice { /* the phone's edge, built from thin layers */
+  background: linear-gradient(90deg, #3A3A3A, #151515 30%, #151515 70%, #3A3A3A);
+  transform: translateZ(calc(var(--z) * 1px));
+}
+.p-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: inset 0 0 0 2px #2E2E2E; }
+.p-front { transform: translateZ(7px); background: #0A0A0A; padding: calc(var(--w) * .042); }
+.p-back { transform: rotateY(180deg) translateZ(7px); background: linear-gradient(145deg, #222, #0C0C0C); display: grid; place-items: center; }
+.p-back img { width: 26%; height: auto; border-radius: 22%; opacity: .9; }
+.phone3d .phone-screen { border-radius: calc(var(--w) * .11); }
+.phone3d-shadow {
+  width: calc(var(--w) * .8); height: 22px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0,0,0,.35), rgba(0,0,0,0)); filter: blur(3px);
+}
+@media (min-width: 960px) {
+  .phone3d { --w: 280px; }
+}
+
+/* ------------------------------------------------------------------
+   Story: copy on the left; on the right a 3D shoe on a slim shelf that
+   sits on top of the huge section number (shoe.js; app icon until the
+   model loads).
+   ------------------------------------------------------------------ */
+.story { display: grid; gap: 40px; align-items: center; }
+.story-copy { min-width: 0; }
+.shelf-display { display: grid; justify-items: center; }
+.shoe-stage { position: relative; width: 260px; height: 190px; }
+.shoe-stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+.shoe-stage::after { /* soft shadow on the shelf */
+  content: ""; position: absolute; left: 18%; right: 18%; bottom: -6px; height: 16px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0,0,0,.55), rgba(0,0,0,0)); filter: blur(2px);
+}
+.shoe-fallback {
+  position: absolute; left: 50%; bottom: 14px; width: 88px; height: 88px; margin-left: -44px; border-radius: 20px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.4); animation: shelf-spin 8s linear infinite;
+}
+.shoe-stage.is-loaded .shoe-fallback { display: none; }
+@keyframes shelf-spin { from { transform: perspective(500px) rotateY(0deg); } to { transform: perspective(500px) rotateY(360deg); } }
+.shelf {
+  position: relative; z-index: 1; width: 280px; height: 14px; border-radius: 3px;
+  background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.1));
+  border: 1px solid rgba(255,255,255,.28); box-shadow: 0 14px 28px rgba(0,0,0,.45);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.sec-num-shelf { position: static; font-size: clamp(8rem, 30vw, 15rem); margin-top: 4px; opacity: .55; }
+@media (min-width: 960px) {
+  .story { grid-template-columns: 1fr 340px; gap: 56px; }
+  .story .headline { font-size: clamp(2.6rem, 7.2vw, 6rem); } /* "two runners" fits beside the shelf */
+  .shoe-stage { width: 320px; height: 230px; }
+  .shelf { width: 330px; }
+}
+
+/* words the yellow line passes over flip to black (script.js) */
+.w.on-line { color: #0A0A0A; }
+
+@media (prefers-reduced-motion: reduce) {
+  .shoe-fallback { animation: none; }
 }

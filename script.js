@@ -77,8 +77,6 @@ if (reduceMotion || !('IntersectionObserver' in window)) {
 // its own movement (sweeps, zigzags, loops), routed around the small corner labels; on
 // phones it runs straight down the right edge. The app icon rides the tip, tilting a
 // little with the line's direction.
-// (Switched off for now: with the <svg class="course"> and <img class="runner"> removed
-// from the page, none of this runs.)
 const course = flow.querySelector('.course');
 const edge = course && course.querySelector('.course-edge');
 const line = course && course.querySelector('.course-line');
@@ -117,11 +115,11 @@ function buildLine() {
   const w = box.width, h = box.height;
   const points = [], keys = [];
   if (window.innerWidth < 720) {
-    points.push({ x: w - 22, y: 0 }, { x: w - 22, y: h });
+    points.push({ x: w - 36, y: 0 }, { x: w - 36, y: h });
     keys.push(0, h);
   } else {
-    const gutter = Math.max(40, (w - 1200) / 4);
-    const span = w - gutter * 2;
+    const gutter = Math.max(50, (w - 1200) / 4);
+    const span = w - gutter * 2 - 40; // keep the right-hand swings clear of the metronome
     points.push({ x: w / 2, y: 0 });
     keys.push(0);
     blocks.forEach((block, i) => {
@@ -152,6 +150,7 @@ function buildLine() {
   });
   probe.remove();
   [edge, line].forEach((p) => { p.style.strokeDasharray = `${total} ${total}`; });
+  indexLine();
 }
 
 // How much line to draw: scrolling through a section moves the tip evenly through that
@@ -177,6 +176,91 @@ function runLine() {
   const tilt = Math.max(-25, Math.min(25, (heading - 90) * 0.35));
   runner.style.transform = `translate(${tip.x}px, ${tip.y}px) translate(-50%, -50%) rotate(${tilt}deg)`;
   runner.classList.toggle('is-on', len > 0);
+  flipWords(len);
+}
+
+// Words the yellow line passes over flip to black. Every word in the dark sections is
+// wrapped in a <span class="w">; a word flips when its centre sits on the drawn part of
+// the line (or under the icon).
+const darkWords = [];
+document.querySelectorAll('.flow [data-theme="black"] :is(h2, h3, p, li, a, .big-num)').forEach((el) => {
+  if (el.closest('.corner, .sec-num, .orbs, .shelf-display, .phone3d-stage') || el.querySelector('h2, h3, p, li')) return;
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) if (walker.currentNode.nodeValue.trim()) nodes.push(walker.currentNode);
+  nodes.forEach((node) => {
+    if (node.parentElement.classList.contains('w')) return;
+    const frag = document.createDocumentFragment();
+    node.nodeValue.split(/(\s+)/).forEach((part) => {
+      if (!part) return;
+      if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
+      const span = document.createElement('span');
+      span.className = 'w';
+      span.textContent = part;
+      frag.appendChild(span);
+      darkWords.push(span);
+    });
+    node.replaceWith(frag);
+  });
+});
+let lineGrid = new Map(); // 40px rows of the page -> line points in them
+let halfStroke = 7;
+let wordSpots = [];
+function indexLine() {
+  lineGrid = new Map();
+  halfStroke = parseFloat(getComputedStyle(line).strokeWidth) / 2;
+  for (let len = 0; len <= total; len += 3) {
+    const p = line.getPointAtLength(len);
+    const row = Math.floor(p.y / 40);
+    if (!lineGrid.has(row)) lineGrid.set(row, []);
+    lineGrid.get(row).push({ x: p.x, y: p.y, len });
+  }
+  const box = flow.getBoundingClientRect();
+  wordSpots = darkWords.map((el) => {
+    const b = el.getBoundingClientRect();
+    return { el, x: b.left + b.width / 2 - box.left, y: b.top + b.height / 2 - box.top, on: false };
+  });
+}
+function flipWords(len) {
+  const box = flow.getBoundingClientRect();
+  const top = -box.top - 100, bottom = -box.top + window.innerHeight + 100;
+  const tip = runner.classList.contains('is-on') ? runner.getBoundingClientRect() : null;
+  wordSpots.forEach((w) => {
+    if (w.y < top || w.y > bottom) return;
+    let on = false;
+    const reach = halfStroke + 2;
+    for (let row = Math.floor((w.y - reach) / 40); row <= Math.floor((w.y + reach) / 40) && !on; row++) {
+      const pts = lineGrid.get(row);
+      if (pts) on = pts.some((p) => p.len <= len && Math.abs(p.x - w.x) < reach && Math.abs(p.y - w.y) < reach);
+    }
+    if (!on && tip) {
+      const x = w.x + box.left, y = w.y + box.top;
+      on = x > tip.left && x < tip.right && y > tip.top && y < tip.bottom;
+    }
+    if (on !== w.on) { w.on = on; w.el.classList.toggle('on-line', on); }
+  });
+}
+
+// The 3D phone spins as its section scrolls into view and ends facing forward
+// (eased towards the scroll position each frame).
+const phone = document.querySelector('.phone3d');
+const phoneSection = document.getElementById('features');
+let phoneRY = 360, phoneRX = 14, phoneFrame = 0;
+function phoneTarget() {
+  const b = phoneSection.getBoundingClientRect();
+  const p = Math.min(Math.max((window.innerHeight - b.top) / (window.innerHeight / 2 + b.height / 2), 0), 1);
+  return { ry: (1 - p) * 360, rx: (1 - p) * 14 };
+}
+function spinPhone() {
+  const t = phoneTarget();
+  phoneRY += (t.ry - phoneRY) * 0.12;
+  phoneRX += (t.rx - phoneRX) * 0.12;
+  phone.style.setProperty('--ry', phoneRY.toFixed(2) + 'deg');
+  phone.style.setProperty('--rx', phoneRX.toFixed(2) + 'deg');
+  phoneFrame = Math.abs(t.ry - phoneRY) > 0.05 || Math.abs(t.rx - phoneRX) > 0.05 ? requestAnimationFrame(spinPhone) : 0;
+}
+function queuePhone() {
+  if (phone && !reduceMotion && !phoneFrame) phoneFrame = requestAnimationFrame(spinPhone);
 }
 
 function onScroll() {
@@ -184,6 +268,7 @@ function onScroll() {
   toggleNav();
   setTheme();
   if (!reduceMotion) runLine();
+  queuePhone();
 }
 
 function onLayout() {
