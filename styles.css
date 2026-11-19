@@ -194,7 +194,7 @@ h1, h2, h3, p { margin: 0; }
 .team-intro { text-align: center; font-size: 1.2rem; color: var(--fg-2); margin: -24px auto 40px; }
 .team { display: grid; gap: 28px; max-width: 900px; margin: 0 auto; }
 .bib {
-  --bib: #2563EB; /* blue: band gradient and email hover */
+  --bib: #6D28D9; /* left bib: purple band and email hover */
   --tilt: -1.5deg;
   position: relative; overflow: hidden; text-align: center; container-type: inline-size;
   background: #141414; color: #FFFFFF; border-radius: 6px; padding: 0 20px 26px;
@@ -202,7 +202,7 @@ h1, h2, h3, p { margin: 0; }
   rotate: var(--tilt);
   transition: rotate 220ms ease-out, translate 220ms ease-out, box-shadow 220ms ease-out, opacity 700ms var(--ease);
 }
-.bib:nth-child(even) { --tilt: 1.5deg; }
+.bib:nth-child(even) { --bib: #DC2626; --tilt: 1.5deg; } /* right bib: red */
 .bib:hover { rotate: 0deg; box-shadow: 0 20px 32px -8px rgba(0,0,0,.3); }
 .bib::before { /* metal eyelets in the four corners */
   content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
@@ -215,7 +215,7 @@ h1, h2, h3, p { margin: 0; }
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .bib-band {
-  margin: 0 -20px; padding: 12px 0; background: linear-gradient(90deg, #1D4ED8, #2563EB); color: #FFFFFF;
+  margin: 0 -20px; padding: 12px 0; background: var(--bib); color: #FFFFFF;
   font-stretch: 125%; font-weight: 800; font-size: .8rem; letter-spacing: .2em; text-transform: uppercase;
 }
 .bib-num { /* printed race-number look */
