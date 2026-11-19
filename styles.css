@@ -507,3 +507,16 @@ em { font-style: normal; }
   .story .headline { font-size: clamp(2.6rem, 7.2vw, 6rem); } /* "two runners" fits beside the big number */
 }
 
+
+/* ------------------------------------------------------------------
+   No-glass mode (<body class="no-glass">): plain sections, no frosted
+   panels and no color glows. Remove the class to switch glass back on.
+   ------------------------------------------------------------------ */
+.no-glass .orbs { display: none; }
+.no-glass .glass { background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-radius: 0; }
+.no-glass .glass-pad { padding-left: 0; padding-right: 0; }
+.no-glass .numbered li.glass { padding: 14px 0; border-bottom: 1px solid var(--outline); }
+.no-glass .numbered li.glass:last-child { border-bottom: 0; }
+.no-glass .roadmap.glass { border-top: 2px solid var(--fg); padding: 0; }
+.no-glass .people.glass { border-top: 2px solid var(--fg); padding: 0; }
+.no-glass .contact-card.glass { padding: 0; }
