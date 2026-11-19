@@ -29,22 +29,26 @@ function toggleNav() {
   metronome.classList.toggle('is-shown', shown);
 }
 
-// Metronome: the dot sits on the tick of the section you're in: the last section whose
-// top has passed the middle of the screen. That holds steady through the gradient bands
-// between sections (and the footer counts as Contact). It pulses on each new section.
+// Metronome: the dot follows your scroll continuously down the rail (no CSS transition,
+// so every browser moves it the same way), resting on a section's tick as that section
+// reaches the middle of the screen. The current tick lights up and the dot pulses when
+// you enter a new section. The footer counts as Contact.
 const metroSections = metroTicks.map((a) => document.querySelector(a.hash));
 let metroIndex = -1;
 function setMetronome() {
   const middle = window.innerHeight / 2;
+  const tops = metroSections.map((s) => s.getBoundingClientRect().top - middle);
   let at = 0;
-  metroSections.forEach((section, k) => { if (section.getBoundingClientRect().top <= middle) at = k; });
+  tops.forEach((t, k) => { if (t <= 0) at = k; });
+  let pos = at;
+  if (tops[0] > 0) pos = 0;
+  else if (at < tops.length - 1) pos = at + Math.min(1, -tops[at] / (tops[at] < 0 ? tops[at + 1] - tops[at] : 1));
+  metroDot.style.setProperty('--pos', pos.toFixed(3));
+  metronome.querySelector('ol').style.setProperty('--p', pos.toFixed(3));
   const section = metroSections[at];
-  const box = section.getBoundingClientRect();
-  // colors follow what's actually behind the rail: the section, or dark once past its end
-  metronome.dataset.theme = box.bottom > middle ? section.dataset.theme : 'black';
+  metronome.dataset.theme = section.getBoundingClientRect().bottom > middle ? section.dataset.theme : 'black';
   if (at === metroIndex) return;
   metroIndex = at;
-  metroDot.style.setProperty('--i', at);
   metroTicks.forEach((a, k) => a.classList.toggle('is-on', k === at));
   metroDot.classList.remove('is-pulsing');
   void metroDot.offsetWidth; // restart the pulse
@@ -178,26 +182,36 @@ function runLine() {
   runner.classList.toggle('is-on', len > 0);
 }
 
-// The 3D phone spins as its section scrolls into view and ends facing forward
-// (eased towards the scroll position each frame).
+// The 3D phone rests at an angle (-18deg / 4deg) and tilts gently: a little as its
+// section scrolls past, and towards the pointer on hover. Eased each frame.
 const phone = document.querySelector('.phone3d');
 const phoneSection = document.getElementById('features');
-let phoneRY = 360, phoneRX = 14, phoneFrame = 0;
+const phoneStage = document.querySelector('.phone3d-stage');
+let phoneRY = -18, phoneRX = 4, phoneFrame = 0, pointerX = 0, pointerY = 0;
 function phoneTarget() {
   const b = phoneSection.getBoundingClientRect();
-  const p = Math.min(Math.max((window.innerHeight - b.top) / (window.innerHeight / 2 + b.height / 2), 0), 1);
-  return { ry: (1 - p) * 360, rx: (1 - p) * 14 };
+  const p = Math.min(Math.max((window.innerHeight - b.top) / (window.innerHeight + b.height), 0), 1) - 0.5; // -0.5..0.5
+  return { ry: -18 + p * 12 + pointerX * 10, rx: 4 - p * 6 - pointerY * 8 };
 }
-function spinPhone() {
+function tiltPhone() {
   const t = phoneTarget();
   phoneRY += (t.ry - phoneRY) * 0.12;
   phoneRX += (t.rx - phoneRX) * 0.12;
   phone.style.setProperty('--ry', phoneRY.toFixed(2) + 'deg');
   phone.style.setProperty('--rx', phoneRX.toFixed(2) + 'deg');
-  phoneFrame = Math.abs(t.ry - phoneRY) > 0.05 || Math.abs(t.rx - phoneRX) > 0.05 ? requestAnimationFrame(spinPhone) : 0;
+  phoneFrame = Math.abs(t.ry - phoneRY) > 0.02 || Math.abs(t.rx - phoneRX) > 0.02 ? requestAnimationFrame(tiltPhone) : 0;
 }
 function queuePhone() {
-  if (phone && !reduceMotion && !phoneFrame) phoneFrame = requestAnimationFrame(spinPhone);
+  if (phone && !reduceMotion && !phoneFrame) phoneFrame = requestAnimationFrame(tiltPhone);
+}
+if (phoneStage && !reduceMotion) {
+  phoneStage.addEventListener('pointermove', (e) => {
+    const r = phoneStage.getBoundingClientRect();
+    pointerX = (e.clientX - r.left) / r.width - 0.5;
+    pointerY = (e.clientY - r.top) / r.height - 0.5;
+    queuePhone();
+  });
+  phoneStage.addEventListener('pointerleave', () => { pointerX = 0; pointerY = 0; queuePhone(); });
 }
 
 function onScroll() {

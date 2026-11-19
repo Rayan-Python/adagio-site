@@ -142,10 +142,13 @@ h1, h2, h3, p { margin: 0; }
 }
 .metronome a:hover::after, .metronome a:focus-visible::after { opacity: 1; }
 .metro-dot {
-  position: absolute; left: 50%; top: calc(var(--gap) / 2); width: 10px; height: 10px; border-radius: 50%;
+  position: absolute; left: 50%; width: 10px; height: 10px; border-radius: 50%;
   background: #D9E13A; box-shadow: 0 0 0 2px #0A0A0A; pointer-events: none;
-  translate: -50% calc(-50% + var(--i, 0) * var(--gap));
-  transition: translate 420ms cubic-bezier(.34, 1.56, .64, 1);
+  top: calc(var(--gap) / 2 + var(--pos, 0) * var(--gap)); translate: -50% -50%;
+}
+.metronome ol::after { /* progress: the rail fills in down to the dot */
+  content: ""; position: absolute; left: 50%; top: calc(var(--gap) / 2); width: 1px; translate: -50% 0;
+  height: calc(var(--p, 0) * var(--gap)); background: currentColor; opacity: .7;
 }
 .metro-dot::after { /* landing pulse */
   content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid #D9E13A; opacity: 0;
@@ -262,12 +265,6 @@ em { font-style: normal; }
 
 /* features: copy on the left, 3D phone on the right (below the copy on phones) */
 .features { display: grid; gap: 48px; align-items: center; }
-.phone-screen {
-  height: 100%; border-radius: 36px; overflow: hidden; display: grid; place-items: center; text-align: center;
-  background: repeating-linear-gradient(135deg, #1A1A1A 0 14px, #141414 14px 28px);
-  font-family: var(--mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: #8A8A8A;
-}
-.phone-screen img { width: 100%; height: 100%; object-fit: cover; }
 
 /* roadmap */
 .roadmap { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--fg); }
@@ -343,7 +340,6 @@ em { font-style: normal; }
   html { scroll-behavior: auto; }
   .hero-stage { animation: none; }
   .orbs i { animation: none; }
-  .metro-dot { transition: none; }
   .metro-dot.is-pulsing::after { animation: none; }
   .course, .runner { display: none; }
   .reveal { opacity: 1; translate: none; transition: none; }
@@ -388,22 +384,65 @@ em { font-style: normal; }
 .headline-center + .sec-num, .sec-num:has(+ .headline-center) { text-align: center; }
 
 /* ------------------------------------------------------------------
-   3D phone: stacked slices give it thickness, front screen and back
-   face; script.js spins it with scroll (--ry, --rx) and eases it.
+   3D iPhone 16 Pro mockup: a Space Black titanium chassis built from stacked
+   layers (real thickness, brushed metal with rim highlights), raised side
+   buttons, an 8px bezel, Dynamic Island, the app screen as an <img>, and a
+   glass reflection. Angled in 3D; script.js eases a gentle tilt (--ry, --rx)
+   with scroll and pointer.
    ------------------------------------------------------------------ */
-.phone3d-stage { display: grid; justify-items: center; gap: 26px; perspective: 1400px; padding: 12px 0; }
+.phone3d-stage { display: grid; justify-items: center; gap: 26px; perspective: 1200px; padding: 12px 0; }
 .phone3d {
-  --w: 210px; --ry: -18deg; --rx: 6deg;
-  position: relative; width: var(--w); aspect-ratio: 9 / 19; transform-style: preserve-3d;
-  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  --w: 210px; --ry: -18deg; --rx: 4deg; --r: calc(var(--w) * .15);
+  position: relative; width: var(--w); aspect-ratio: 9 / 19.5; transform-style: preserve-3d;
+  transform: rotateY(var(--ry)) rotateX(var(--rx)) rotateZ(-2deg);
 }
-.p-slice, .p-face { position: absolute; inset: 0; border-radius: calc(var(--w) * .15); }
-.p-slice { /* the phone's edge, built from thin layers */
-  background: linear-gradient(90deg, #3A3A3A, #151515 30%, #151515 70%, #3A3A3A);
+.p-slice, .p-face { position: absolute; inset: 0; border-radius: var(--r); }
+.p-slice { /* brushed Space Black titanium edge */
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, rgba(255,255,255,0) 1px 3px),
+    linear-gradient(90deg, #55555A 0%, #2A2A2D 6%, #1C1C1E 20%, #1C1C1E 80%, #2A2A2D 94%, #55555A 100%);
   transform: translateZ(calc(var(--z) * 1px));
 }
-.p-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: inset 0 0 0 2px #2E2E2E; }
-.p-front { transform: translateZ(7px); background: #0A0A0A; padding: calc(var(--w) * .042); }
+.p-slice:first-child { box-shadow: 0 30px 60px -15px rgba(0,0,0,.35), 0 12px 24px -8px rgba(0,0,0,.2); }
+/* raised side buttons: flat plates turned onto the side of the chassis */
+.p-btn {
+  position: absolute; width: 9px; border-radius: 2px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: linear-gradient(180deg, #5C5C61, #2B2B2E 30%, #232326 70%, #4A4A4F);
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.18);
+}
+.p-btn-left { left: 0; transform: translateX(-6px) rotateY(-90deg); }
+.p-btn-right { left: calc(100% - 9px); transform: translateX(6px) rotateY(90deg); }
+.btn-action { top: 17%; height: 5%; }
+.btn-vol-up { top: 25%; height: 9%; }
+.btn-vol-down { top: 36%; height: 9%; }
+.btn-power { top: 25%; height: 13%; }
+.btn-camera { top: 58%; height: 7%; background: linear-gradient(180deg, #3A3A3E, #18181A 40%, #18181A 60%, #3A3A3E); }
+/* front: black glass with an 8px bezel and a thin metal rim */
+.p-front {
+  transform: translateZ(7px); background: #050506; padding: 8px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  box-shadow: 0 0 0 1.5px #3C3C40, 0 0 0 2.5px #141416, inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.p-display { position: relative; height: 100%; overflow: hidden; border-radius: calc(var(--r) - 8px); background: #0C0D0E; }
+.p-screen { display: block; width: 100%; height: 100%; object-fit: cover; }
+.p-island {
+  position: absolute; top: 2.2%; left: 50%; width: 32%; height: 4.6%; translate: -50% 0; border-radius: 999px; background: #000;
+}
+.p-island i { /* front camera lens with a dark-blue glass reflection */
+  position: absolute; right: 9%; top: 50%; height: 56%; aspect-ratio: 1; translate: 0 -50%; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(90,120,200,.8) 0 12%, #10182c 30%, #05070c 70%);
+}
+.p-glare {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(115deg, rgba(255,255,255,.12) 0%, rgba(255,255,255,.03) 35%, transparent 50%);
+}
+.phone3d-shadow {
+  width: calc(var(--w, 210px) * .8); height: 22px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0,0,0,.35), rgba(0,0,0,0)); filter: blur(3px);
+}
+@media (min-width: 960px) {
+  .phone3d { --w: 280px; }
+}
+
 /* iPhone-style back: frosted matte glass with a soft sheen, a raised camera bump (stacked
    layers so its sides show as the phone turns) with lenses standing proud of it, and a
    polished Apple logo. Everything on the back sits in 3D, so it needs its own backface. */
@@ -448,7 +487,6 @@ em { font-style: normal; }
   width: calc(var(--w) * .2); height: auto; fill: #5A5A5F;
   filter: drop-shadow(0 1px 0 rgba(255,255,255,.12)) drop-shadow(0 -1px 0 rgba(0,0,0,.35));
 }
-.phone3d .phone-screen { border-radius: calc(var(--w) * .11); }
 .phone3d-shadow {
   width: calc(var(--w) * .8); height: 22px; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(0,0,0,.35), rgba(0,0,0,0)); filter: blur(3px);

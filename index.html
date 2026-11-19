@@ -148,24 +148,29 @@
               </li>
             </ol>
           </div>
-          <!-- 3D PHONE: replace the contents of <div class="phone-screen"> with
-               <img src="assets/screenshot.png" alt="Adagio app screen"> when you have a screenshot.
-               It spins as you scroll through this section and ends facing forward (script.js). -->
+          <!-- 3D iPhone 16 Pro mockup. The screen is a normal <img>: swap
+               assets/app-screen.svg for a real screenshot (390 x 844 works best).
+               It tilts gently with scroll and with the pointer (script.js). -->
           <div class="phone3d-stage reveal" aria-hidden="true">
             <div class="phone3d">
-                <i class="p-slice" style="--z:-6"></i>
-                <i class="p-slice" style="--z:-5"></i>
-                <i class="p-slice" style="--z:-4"></i>
-                <i class="p-slice" style="--z:-3"></i>
-                <i class="p-slice" style="--z:-2"></i>
-                <i class="p-slice" style="--z:-1"></i>
-                <i class="p-slice" style="--z:0"></i>
-                <i class="p-slice" style="--z:1"></i>
-                <i class="p-slice" style="--z:2"></i>
-                <i class="p-slice" style="--z:3"></i>
-                <i class="p-slice" style="--z:4"></i>
-                <i class="p-slice" style="--z:5"></i>
-                <i class="p-slice" style="--z:6"></i>
+              <i class="p-slice" style="--z:-6"></i>
+              <i class="p-slice" style="--z:-5"></i>
+              <i class="p-slice" style="--z:-4"></i>
+              <i class="p-slice" style="--z:-3"></i>
+              <i class="p-slice" style="--z:-2"></i>
+              <i class="p-slice" style="--z:-1"></i>
+              <i class="p-slice" style="--z:0"></i>
+              <i class="p-slice" style="--z:1"></i>
+              <i class="p-slice" style="--z:2"></i>
+              <i class="p-slice" style="--z:3"></i>
+              <i class="p-slice" style="--z:4"></i>
+              <i class="p-slice" style="--z:5"></i>
+              <i class="p-slice" style="--z:6"></i>
+              <i class="p-btn p-btn-left btn-action"></i>
+              <i class="p-btn p-btn-left btn-vol-up"></i>
+              <i class="p-btn p-btn-left btn-vol-down"></i>
+              <i class="p-btn p-btn-right btn-power"></i>
+              <i class="p-btn p-btn-right btn-camera"></i>
               <div class="p-face p-back">
                 <div class="cam-bump">
                   <i class="bump-slice" style="--z:1"></i><i class="bump-slice" style="--z:2"></i><i class="bump-slice" style="--z:3"></i>
@@ -173,7 +178,13 @@
                 </div>
                 <span class="back-logo"><svg viewBox="0 0 24 24"><path d="M16.37 12.62c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.97.9-3.76 2.28-1.61 2.79-.41 6.91 1.15 9.17.77 1.1 1.68 2.34 2.87 2.3 1.15-.05 1.59-.75 2.98-.75 1.39 0 1.78.75 3 .72 1.24-.02 2.02-1.12 2.78-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.42-.93-2.44-3.68zM14.1 5.88c.64-.77 1.07-1.84.95-2.9-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.77-.97 2.81 1.02.08 2.07-.52 2.71-1.29z"/></svg></span>
               </div>
-              <div class="p-face p-front"><div class="phone-screen"><span>App screenshot<br>goes here</span></div></div>
+              <div class="p-face p-front">
+                <div class="p-display">
+                  <img class="p-screen" src="assets/app-screen.svg" alt="" width="390" height="844">
+                  <span class="p-island"><i></i></span>
+                  <span class="p-glare"></span>
+                </div>
+              </div>
             </div>
             <div class="phone3d-shadow"></div>
           </div>
