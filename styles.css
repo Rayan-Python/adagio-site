@@ -91,38 +91,21 @@ h1, h2, h3, p { margin: 0; }
 .nav-links a { text-decoration: none; font-size: .9rem; color: rgba(255,255,255,.75); transition: color 150ms ease-out; }
 .nav-links a:hover { color: var(--yellow); }
 
-/* Contact Copy button: liquid glass */
-.copy-btn {
-  display: inline-flex; align-items: center; gap: 9px; text-decoration: none; white-space: nowrap; color: #FFFFFF;
-  padding: 7px 16px 7px 13px; border-radius: 14px;
-  /* glass with a lime tint */
-  background: linear-gradient(180deg, rgba(196,232,92,.26) 0%, rgba(166,226,46,.10) 100%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(214,240,140,.38);
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.45), inset 0 -2px 4px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.4);
-  transition: transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out;
-}
-.copy-btn { font: 600 14px/1 var(--sans); cursor: pointer; padding: 11px 16px; border-radius: 12px; }
 
-/* Nav App Store button: a slim dark-glass pill, Apple icon beside two tight lines */
+/* Nav App Store button: flat frosted glass (glassmorphism), slim pill, two-line Apple text */
 .appstore {
   display: inline-flex; align-items: center; gap: 8px; text-decoration: none; white-space: nowrap; color: #FFFFFF;
   padding: 7px 16px; border-radius: 9999px;
-  background: rgba(255,255,255,.08); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,.22);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
-  transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+  background: rgba(255,255,255,.1); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  transition: background-color .2s ease, border-color .2s ease;
 }
 .appstore svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
 .appstore-text { display: flex; flex-direction: column; text-align: left; line-height: 1.05; }
 .appstore-small { font-size: 9.5px; opacity: .7; letter-spacing: .01em; }
 .appstore-big { font-size: 13px; font-weight: 600; letter-spacing: -.005em; }
-.appstore:hover { border-color: rgba(180,212,85,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 16px rgba(180,212,85,.2); }
-.copy-btn:hover {
-  transform: translateY(-2px) scale(1.02); border-color: rgba(214,240,140,.55);
-  background: linear-gradient(180deg, rgba(196,232,92,.32) 0%, rgba(166,226,46,.14) 100%);
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.7), inset 0 -2px 4px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.4), 0 12px 28px rgba(180,212,85,.18);
-}
+.appstore:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.32); }
 
 /* ------------------------------------------------------------------
    The flow: everything after the photo. Its colors ease between themes
@@ -211,7 +194,7 @@ h1, h2, h3, p { margin: 0; }
 .team-intro { text-align: center; font-size: 1.2rem; color: var(--fg-2); margin: -24px auto 40px; }
 .team { display: grid; gap: 28px; max-width: 900px; margin: 0 auto; }
 .bib {
-  --bib: #D9D9D6; /* light grey band */
+  --bib: #2563EB; /* blue: band gradient and email hover */
   --tilt: -1.5deg;
   position: relative; overflow: hidden; text-align: center; container-type: inline-size;
   background: #141414; color: #FFFFFF; border-radius: 6px; padding: 0 20px 26px;
@@ -232,7 +215,7 @@ h1, h2, h3, p { margin: 0; }
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .bib-band {
-  margin: 0 -20px; padding: 12px 0; background: var(--bib); color: #121212;
+  margin: 0 -20px; padding: 12px 0; background: linear-gradient(90deg, #1D4ED8, #2563EB); color: #FFFFFF;
   font-stretch: 125%; font-weight: 800; font-size: .8rem; letter-spacing: .2em; text-transform: uppercase;
 }
 .bib-num { /* printed race-number look */
@@ -246,21 +229,12 @@ h1, h2, h3, p { margin: 0; }
 .member-mail:hover, .member-mail:focus-visible { color: var(--bib); }
 
 /* contact */
-#contact { min-height: auto; padding-bottom: 184px; } /* ~140px from the topic pills to the FIG tag */
-.contact { display: grid; gap: 40px; align-items: center; }
-.email-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin: 20px 0 24px; }
-.copy-btn.is-copied { border-color: rgba(214,240,140,.6); }
-.topics { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
-.topic {
-  display: inline-block; text-decoration: none; font-size: .85rem; padding: 7px 14px; border-radius: 999px;
-  color: var(--fg-2); border: 1px solid rgba(255,255,255,.2); transition: color 150ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out;
-}
-.topic:hover, .topic:focus-visible { color: var(--fg); border-color: var(--yellow); background: rgba(217,225,58,.08); }
-.contact-wave { display: none; width: 100%; max-width: 260px; justify-self: end; fill: var(--yellow); opacity: .55; }
-.contact-wave rect { transform-box: fill-box; transform-origin: center; animation: beat 1.6s ease-in-out var(--d) infinite; }
-@keyframes beat { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(.6); } }
+#contact { min-height: auto; padding-bottom: 96px; }
+.contact { text-align: center; }
+.contact .headline-oneline { margin-left: auto; margin-right: auto; }
+.contact .lead { margin: 0 auto; }
 .email-big {
-  display: inline-block; font-weight: 800; font-size: clamp(1rem, 4.5vw, 2.6rem); letter-spacing: -.02em;
+  display: inline-block; margin-top: 20px; font-weight: 800; font-size: clamp(1rem, 4.5vw, 2.6rem); letter-spacing: -.02em;
   text-decoration: none; overflow-wrap: anywhere; border-bottom: 3px solid var(--yellow); transition: color 150ms ease-out;
 }
 .email-big:hover { color: var(--yellow); }
@@ -295,8 +269,6 @@ h1, h2, h3, p { margin: 0; }
 }
 @media (min-width: 960px) {
   .features { grid-template-columns: 1fr 320px; gap: 72px; }
-  .contact { grid-template-columns: 1fr auto; }
-  .contact-wave { display: block; }
   .phone { display: block; }
 }
 @media (min-width: 1100px) {
@@ -312,6 +284,5 @@ h1, h2, h3, p { margin: 0; }
   .course, .runner { display: none; }
   .reveal, .bib { opacity: 1; translate: none; rotate: none; transition: none; }
   .flow, .corner, .site-nav, .appstore { transition: none; }
-  .copy-btn:hover { transform: none; }
-  .contact-wave rect { animation: none; }
+
 }

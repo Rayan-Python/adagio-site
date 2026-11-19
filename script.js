@@ -193,26 +193,6 @@ if (video && video.dataset.videoId) {
   video.replaceChildren(frame);
 }
 
-// Copy the support email; the button briefly says "Copied ✓".
-document.querySelectorAll('.copy-btn').forEach((btn) => {
-  const label = btn.querySelector('span');
-  btn.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(btn.dataset.copy);
-    } catch {
-      const field = Object.assign(document.createElement('textarea'), { value: btn.dataset.copy });
-      document.body.appendChild(field);
-      field.select();
-      document.execCommand('copy');
-      field.remove();
-    }
-    label.textContent = 'Copied ✓';
-    btn.classList.add('is-copied');
-    clearTimeout(btn.resetTimer);
-    btn.resetTimer = setTimeout(() => { label.textContent = 'Copy'; btn.classList.remove('is-copied'); }, 2000);
-  });
-});
-
 // Placeholder links (no address yet) don't jump to the top.
 document.querySelectorAll('a[data-placeholder]').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));
 
