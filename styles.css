@@ -13,7 +13,6 @@
   --ink: #0A0A0A;
   --white: #FFFFFF;
   --sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --serif: "Instrument Serif", "Playfair Display", Georgia, serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --pad: 24px;        /* side padding */
   --pad-line: 56px;   /* side padding on the line's side (phones), clear of the line */
@@ -195,8 +194,8 @@ h1, h2, h3, p { margin: 0; }
 #features .orbs i:nth-child(2)     { bottom: 4%; right: -8%; background: #1DB954; opacity: .35; }
 #accessibility .orbs i:nth-child(1){ top: 6%;  right: -12%; background: #FA243C; opacity: .35; }
 #accessibility .orbs i:nth-child(2){ bottom: -6%; left: -10%; background: #25D1DA; opacity: .35; }
-#story .orbs i:nth-child(1)        { top: 8%;  left: -14%;  background: #25D1DA; opacity: .4; }
-#story .orbs i:nth-child(2)        { bottom: 2%; right: -12%; background: #FA243C; opacity: .35; }
+#story .orbs i:nth-child(1)        { top: 8%;  left: -14%;  background: #25D1DA; opacity: .14; }
+#story .orbs i:nth-child(2)        { bottom: 2%; right: -12%; background: #FA243C; opacity: .12; }
 #roadmap .orbs i:nth-child(1)      { top: 2%;  right: -10%; background: #1DB954; opacity: .35; }
 #roadmap .orbs i:nth-child(2)      { bottom: 0; left: -12%;  background: #FA243C; opacity: .22; }
 #team .orbs i:nth-child(1)         { top: 12%; left: -10%;  background: #FA243C; opacity: .3; }
@@ -237,7 +236,7 @@ h1, h2, h3, p { margin: 0; }
   font-weight: 900; font-size: clamp(2.6rem, 11vw, 10rem); line-height: .95; letter-spacing: -.045em;
   margin-bottom: 48px; max-width: 14ch;
 }
-.headline em { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: -.01em; }
+em { font-style: normal; }
 .headline-center { text-align: center; margin-left: auto; margin-right: auto; max-width: none; }
 .headline-oneline { white-space: nowrap; max-width: none; font-size: clamp(1.6rem, 7vw, 6.2rem); }
 
@@ -367,9 +366,7 @@ h1, h2, h3, p { margin: 0; }
 #how .acc, #contact .acc { color: var(--amazon); }
 #features .acc, #story .acc { color: var(--spotify); }
 #accessibility .acc, #roadmap .acc, #team .acc { color: var(--apple); }
-.numbered h3::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 12px; vertical-align: .18em; background: var(--apple); }
-.numbered li:nth-child(2) h3::before { background: var(--amazon); }
-.numbered li:nth-child(3) h3::before { background: var(--spotify); }
+.numbered h3::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 12px; vertical-align: .18em; background: currentColor; opacity: .35; }
 .roadmap .ver::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; vertical-align: .1em; background: var(--apple); }
 .roadmap li:nth-child(2) .ver::before { background: var(--amazon); }
 .roadmap li:nth-child(3) .ver::before { background: var(--spotify); }
@@ -383,7 +380,7 @@ h1, h2, h3, p { margin: 0; }
    Huge outlined section numbers (decorative, behind the content)
    ------------------------------------------------------------------ */
 .sec-num {
-  position: absolute; z-index: 0; right: var(--pad-line); top: 104px; pointer-events: none;
+  position: absolute; z-index: 0; right: calc(var(--pad-line) + 16px); top: 104px; pointer-events: none;
   font-weight: 900; font-size: clamp(5rem, 20vw, 17rem); line-height: .8; letter-spacing: -.05em;
   color: transparent; -webkit-text-stroke: 1.5px var(--outline); opacity: .45;
 }
@@ -405,8 +402,22 @@ h1, h2, h3, p { margin: 0; }
 }
 .p-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: inset 0 0 0 2px #2E2E2E; }
 .p-front { transform: translateZ(7px); background: #0A0A0A; padding: calc(var(--w) * .042); }
-.p-back { transform: rotateY(180deg) translateZ(7px); background: linear-gradient(145deg, #222, #0C0C0C); display: grid; place-items: center; }
-.p-back img { width: 26%; height: auto; border-radius: 22%; opacity: .9; }
+/* iPhone-style back: frosted titanium glass, camera bump, Apple logo */
+.p-back { transform: rotateY(180deg) translateZ(7px); background: linear-gradient(150deg, #3B3B3E, #232325 55%, #1A1A1C); display: grid; place-items: center; }
+.cam-bump {
+  position: absolute; top: 4.5%; left: 7%; width: 44%; aspect-ratio: 1; border-radius: 26%;
+  background: linear-gradient(145deg, #2E2E31, #1B1B1D); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.08), 0 2px 6px rgba(0,0,0,.5);
+}
+.lens {
+  position: absolute; width: 38%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #3a4a6a 0 12%, #0b0d14 26%, #050507 60%);
+  box-shadow: 0 0 0 3px #3A3A3D, 0 0 0 4px #121214;
+}
+.l1 { top: 9%; left: 9%; }
+.l2 { top: 53%; left: 9%; }
+.l3 { top: 31%; left: 53%; }
+.flash { position: absolute; width: 11%; aspect-ratio: 1; border-radius: 50%; top: 12%; right: 12%; background: radial-gradient(circle, #f5f0dc, #b9b29a); }
+.back-logo svg { width: calc(var(--w) * .2); height: auto; fill: #4A4A4E; filter: drop-shadow(0 1px 0 rgba(255,255,255,.08)); }
 .phone3d .phone-screen { border-radius: calc(var(--w) * .11); }
 .phone3d-shadow {
   width: calc(var(--w) * .8); height: 22px; border-radius: 50%;
@@ -417,42 +428,14 @@ h1, h2, h3, p { margin: 0; }
 }
 
 /* ------------------------------------------------------------------
-   Story: copy on the left; on the right a 3D shoe on a slim shelf that
-   sits on top of the huge section number (shoe.js; app icon until the
-   model loads).
+   Story: copy on the left, the huge section number on the right.
    ------------------------------------------------------------------ */
 .story { display: grid; gap: 40px; align-items: center; }
 .story-copy { min-width: 0; }
 .shelf-display { display: grid; justify-items: center; }
-.shoe-stage { position: relative; width: 260px; height: 190px; }
-.shoe-stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
-.shoe-stage::after { /* soft shadow on the shelf */
-  content: ""; position: absolute; left: 18%; right: 18%; bottom: -6px; height: 16px; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0,0,0,.55), rgba(0,0,0,0)); filter: blur(2px);
-}
-.shoe-fallback {
-  position: absolute; left: 50%; bottom: 14px; width: 88px; height: 88px; margin-left: -44px; border-radius: 20px;
-  box-shadow: 0 10px 24px rgba(0,0,0,.4); animation: shelf-spin 8s linear infinite;
-}
-.shoe-stage.is-loaded .shoe-fallback { display: none; }
-@keyframes shelf-spin { from { transform: perspective(500px) rotateY(0deg); } to { transform: perspective(500px) rotateY(360deg); } }
-.shelf {
-  position: relative; z-index: 1; width: 280px; height: 14px; border-radius: 3px;
-  background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.1));
-  border: 1px solid rgba(255,255,255,.28); box-shadow: 0 14px 28px rgba(0,0,0,.45);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-}
 .sec-num-shelf { position: static; font-size: clamp(8rem, 30vw, 15rem); margin-top: 4px; opacity: .55; }
 @media (min-width: 960px) {
   .story { grid-template-columns: 1fr 340px; gap: 56px; }
-  .story .headline { font-size: clamp(2.6rem, 7.2vw, 6rem); } /* "two runners" fits beside the shelf */
-  .shoe-stage { width: 320px; height: 230px; }
-  .shelf { width: 330px; }
+  .story .headline { font-size: clamp(2.6rem, 7.2vw, 6rem); } /* "two runners" fits beside the big number */
 }
 
-/* words the yellow line passes over flip to black (script.js) */
-.w.on-line { color: #0A0A0A; }
-
-@media (prefers-reduced-motion: reduce) {
-  .shoe-fallback { animation: none; }
-}

@@ -84,56 +84,60 @@ const grad = course && course.querySelector('#course-grad');
 const runner = flow.querySelector('.runner');
 const blocks = themed.filter((el) => el.classList.contains('block'));
 
-// Waypoints per section, as fractions of the section: x across the width between the
-// gutters, y down its height. Every section starts at its top centre and ends at its
-// bottom centre, so the corner labels (top left, bottom right) stay clear.
-const MOVES = [
-  [[.5, 0], [.55, .18], [.97, .35], [.97, .6], [.72, .8], [.5, 1]],                                   // sweep right
-  [[.5, 0], [.45, .17], [.03, .3], [.14, .44], [.03, .58], [.14, .72], [.06, .84], [.5, 1]],          // zigzag left
-  [[.5, 0], [.7, .14], [.96, .3], [.88, .52], [.72, .44], [.78, .3], [.93, .4], [.92, .66], [.62, .86], [.5, 1]], // loop right
-  [[.5, 0], [.36, .17], [.03, .32], [.06, .55], [.03, .74], [.42, .9], [.5, 1]],                     // wide arc left
-  [[.5, 0], [.62, .16], [.97, .28], [.88, .44], [.98, .58], [.88, .72], [.64, .86], [.5, 1]],         // zigzag right
-  [[.5, 0], [.32, .16], [.04, .32], [.12, .52], [.28, .44], [.22, .3], [.07, .4], [.08, .66], [.38, .86], [.5, 1]], // loop left
-  [[.5, 0], [.62, .16], [.96, .32], [.96, .66], [.62, .86], [.5, 1]],                                // sweep right
-];
-
 let marks = []; // for each waypoint: scroll position it belongs to, and line length there
 let total = 0;
 
-function smoothPath(points) { // Catmull-Rom through every point
+// S-bends that leave and arrive heading straight down, so the line never swings
+// sideways past its waypoints (and into text).
+function smoothPath(points) {
   let d = `M${points[0].x},${points[0].y}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[Math.max(i - 1, 0)], p1 = points[i], p2 = points[i + 1], p3 = points[Math.min(i + 2, points.length - 1)];
-    d += ` C${p1.x + (p2.x - p0.x) / 6},${p1.y + (p2.y - p0.y) / 6} ${p2.x - (p3.x - p1.x) / 6},${p2.y - (p3.y - p1.y) / 6} ${p2.x},${p2.y}`;
+  for (let i = 1; i < points.length; i++) {
+    const p = points[i - 1], q = points[i], dy = (q.y - p.y) / 2;
+    d += ` C${p.x},${p.y + dy} ${q.x},${q.y - dy} ${q.x},${q.y}`;
   }
   return d;
 }
 
+// The line keeps out of all text: through each section it runs down a side margin
+// (alternating left and right, wiggling where there's room), and it only crosses the
+// page inside the empty gradient bands between sections. On phones it runs straight
+// down the right edge.
 function buildLine() {
   if (!course) return;
   const box = flow.getBoundingClientRect();
   const w = box.width, h = box.height;
-  const points = [], keys = [];
+  const points = [];
   if (window.innerWidth < 720) {
-    points.push({ x: w - 36, y: 0 }, { x: w - 36, y: h });
-    keys.push(0, h);
+    const end = blocks[blocks.length - 1].getBoundingClientRect().bottom - box.top; // stop before the footer
+    points.push({ x: w - 36, y: 0 }, { x: w - 36, y: end });
   } else {
-    const gutter = Math.max(50, (w - 1200) / 4);
-    const span = w - gutter * 2 - 40; // keep the right-hand swings clear of the metronome
-    points.push({ x: w / 2, y: 0 });
-    keys.push(0);
+    const half = parseFloat(getComputedStyle(edge).strokeWidth) / 2;
+    const pad = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pad')) || 80;
+    // left margin: between the window edge and the corner labels / text
+    const leftMax = pad - half - 8, leftMin = half + 4;
+    // right margin: between the text / labels and the metronome
+    const metroLeft = w - (window.innerWidth - metronome.getBoundingClientRect().left);
+    const rightMin = w - pad + half + 8, rightMax = Math.min(metroLeft - half - 6, w - half - 4);
+    const lanes = [
+      { a: leftMin, b: Math.max(leftMin, leftMax) },
+      { a: Math.min(rightMin, rightMax), b: Math.max(rightMin, rightMax) },
+    ];
+    let lastBottom = 0;
     blocks.forEach((block, i) => {
-      const b = block.getBoundingClientRect();
-      const top = b.top - box.top, height = b.height;
-      const move = MOVES[i % MOVES.length];
-      move.slice(1).forEach(([fx, fy], k) => {
-        points.push({ x: gutter + fx * span, y: top + fy * height });
-        keys.push(top + (k + 1) / (move.length - 1) * height);
-      });
+      const r = block.getBoundingClientRect();
+      const top = r.top - box.top, bottom = r.bottom - box.top;
+      const lane = lanes[i % 2];
+      const steps = Math.max(2, Math.round((bottom - top) / 150));
+      for (let k = 0; k <= steps; k++) {
+        const x = k === 0 || k === steps ? (lane.a + lane.b) / 2 : (k % 2 ? lane.a : lane.b); // wiggle in the margin
+        points.push({ x, y: top + (bottom - top) * k / steps });
+      }
+      lastBottom = bottom;
     });
-    points.push({ x: w / 2, y: h });
-    keys.push(h);
+    if (points[0].y > 0) points.unshift({ x: points[0].x, y: 0 });
+    points.push({ x: points[points.length - 1].x, y: Math.min(h, lastBottom + 1) });
   }
+  const keys = points.map((p) => p.y);
   course.setAttribute('viewBox', `0 0 ${w} ${h}`);
   grad.setAttribute('y2', h);
   const d = smoothPath(points);
@@ -150,7 +154,6 @@ function buildLine() {
   });
   probe.remove();
   [edge, line].forEach((p) => { p.style.strokeDasharray = `${total} ${total}`; });
-  indexLine();
 }
 
 // How much line to draw: scrolling through a section moves the tip evenly through that
@@ -176,69 +179,6 @@ function runLine() {
   const tilt = Math.max(-25, Math.min(25, (heading - 90) * 0.35));
   runner.style.transform = `translate(${tip.x}px, ${tip.y}px) translate(-50%, -50%) rotate(${tilt}deg)`;
   runner.classList.toggle('is-on', len > 0);
-  flipWords(len);
-}
-
-// Words the yellow line passes over flip to black. Every word in the dark sections is
-// wrapped in a <span class="w">; a word flips when its centre sits on the drawn part of
-// the line (or under the icon).
-const darkWords = [];
-document.querySelectorAll('.flow [data-theme="black"] :is(h2, h3, p, li, a, .big-num)').forEach((el) => {
-  if (el.closest('.corner, .sec-num, .orbs, .shelf-display, .phone3d-stage') || el.querySelector('h2, h3, p, li')) return;
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-  const nodes = [];
-  while (walker.nextNode()) if (walker.currentNode.nodeValue.trim()) nodes.push(walker.currentNode);
-  nodes.forEach((node) => {
-    if (node.parentElement.classList.contains('w')) return;
-    const frag = document.createDocumentFragment();
-    node.nodeValue.split(/(\s+)/).forEach((part) => {
-      if (!part) return;
-      if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
-      const span = document.createElement('span');
-      span.className = 'w';
-      span.textContent = part;
-      frag.appendChild(span);
-      darkWords.push(span);
-    });
-    node.replaceWith(frag);
-  });
-});
-let lineGrid = new Map(); // 40px rows of the page -> line points in them
-let halfStroke = 7;
-let wordSpots = [];
-function indexLine() {
-  lineGrid = new Map();
-  halfStroke = parseFloat(getComputedStyle(line).strokeWidth) / 2;
-  for (let len = 0; len <= total; len += 3) {
-    const p = line.getPointAtLength(len);
-    const row = Math.floor(p.y / 40);
-    if (!lineGrid.has(row)) lineGrid.set(row, []);
-    lineGrid.get(row).push({ x: p.x, y: p.y, len });
-  }
-  const box = flow.getBoundingClientRect();
-  wordSpots = darkWords.map((el) => {
-    const b = el.getBoundingClientRect();
-    return { el, x: b.left + b.width / 2 - box.left, y: b.top + b.height / 2 - box.top, on: false };
-  });
-}
-function flipWords(len) {
-  const box = flow.getBoundingClientRect();
-  const top = -box.top - 100, bottom = -box.top + window.innerHeight + 100;
-  const tip = runner.classList.contains('is-on') ? runner.getBoundingClientRect() : null;
-  wordSpots.forEach((w) => {
-    if (w.y < top || w.y > bottom) return;
-    let on = false;
-    const reach = halfStroke + 2;
-    for (let row = Math.floor((w.y - reach) / 40); row <= Math.floor((w.y + reach) / 40) && !on; row++) {
-      const pts = lineGrid.get(row);
-      if (pts) on = pts.some((p) => p.len <= len && Math.abs(p.x - w.x) < reach && Math.abs(p.y - w.y) < reach);
-    }
-    if (!on && tip) {
-      const x = w.x + box.left, y = w.y + box.top;
-      on = x > tip.left && x < tip.right && y > tip.top && y < tip.bottom;
-    }
-    if (on !== w.on) { w.on = on; w.el.classList.toggle('on-line', on); }
-  });
 }
 
 // The 3D phone spins as its section scrolls into view and ends facing forward
