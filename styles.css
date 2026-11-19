@@ -248,7 +248,7 @@ h1, h2, h3, p { margin: 0; }
 .contact-card { display: inline-block; }
 .email-big {
   display: inline-block; margin-top: 20px; font-weight: 800; font-size: clamp(1rem, 4.5vw, 2.6rem); letter-spacing: -.02em;
-  text-decoration: none; overflow-wrap: anywhere; border-bottom: 3px solid var(--yellow); transition: color 150ms ease-out;
+  text-decoration: none; overflow-wrap: anywhere; transition: color 150ms ease-out;
 }
 .email-big:hover { color: var(--yellow); }
 
