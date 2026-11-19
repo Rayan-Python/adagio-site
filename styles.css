@@ -377,13 +377,15 @@ em { font-style: normal; }
 .person-mail:hover { border-color: var(--apple); color: var(--apple); }
 
 /* ------------------------------------------------------------------
-   Huge outlined section numbers (decorative, behind the content)
+   Huge outlined section numbers: part of the layout (above each headline),
+   so they never sit on top of anything
    ------------------------------------------------------------------ */
 .sec-num {
-  position: absolute; z-index: 0; right: calc(var(--pad-line) + 16px); top: 104px; pointer-events: none;
-  font-weight: 900; font-size: clamp(5rem, 20vw, 17rem); line-height: .8; letter-spacing: -.05em;
-  color: transparent; -webkit-text-stroke: 1.5px var(--outline); opacity: .45;
+  display: block; pointer-events: none; margin-bottom: 8px;
+  font-weight: 900; font-size: clamp(3.5rem, 11vw, 9rem); line-height: .85; letter-spacing: -.05em;
+  color: transparent; -webkit-text-stroke: 1.5px var(--outline); opacity: .5;
 }
+.headline-center + .sec-num, .sec-num:has(+ .headline-center) { text-align: center; }
 
 /* ------------------------------------------------------------------
    3D phone: stacked slices give it thickness, front screen and back
@@ -402,22 +404,50 @@ em { font-style: normal; }
 }
 .p-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: inset 0 0 0 2px #2E2E2E; }
 .p-front { transform: translateZ(7px); background: #0A0A0A; padding: calc(var(--w) * .042); }
-/* iPhone-style back: frosted titanium glass, camera bump, Apple logo */
-.p-back { transform: rotateY(180deg) translateZ(7px); background: linear-gradient(150deg, #3B3B3E, #232325 55%, #1A1A1C); display: grid; place-items: center; }
-.cam-bump {
-  position: absolute; top: 4.5%; left: 7%; width: 44%; aspect-ratio: 1; border-radius: 26%;
-  background: linear-gradient(145deg, #2E2E31, #1B1B1D); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.08), 0 2px 6px rgba(0,0,0,.5);
+/* iPhone-style back: frosted matte glass with a soft sheen, a raised camera bump (stacked
+   layers so its sides show as the phone turns) with lenses standing proud of it, and a
+   polished Apple logo. Everything on the back sits in 3D, so it needs its own backface. */
+.p-back {
+  transform: rotateY(180deg) translateZ(7px); transform-style: preserve-3d; display: grid; place-items: center;
+  background: linear-gradient(150deg, #45454A 0%, #2A2A2D 45%, #1C1C1F 100%);
+}
+.p-back * { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.p-back::before { /* frosted matte grain */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: .22; mix-blend-mode: overlay; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.p-back::after { /* soft diagonal sheen + rim light */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(115deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.09) 44%, rgba(255,255,255,0) 58%);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.07), inset 0 1px 0 rgba(255,255,255,.14);
+}
+.cam-bump { position: absolute; top: 4.5%; left: 7%; width: 44%; aspect-ratio: 1; transform-style: preserve-3d; }
+.bump-slice, .bump-top { position: absolute; inset: 0; border-radius: 26%; }
+.bump-slice { background: #121214; transform: translateZ(calc(var(--z) * 1px)); }
+.bump-top {
+  transform: translateZ(4px); transform-style: preserve-3d;
+  background: linear-gradient(145deg, #3A3A3E, #202023 60%, #19191B);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 0 0 1.5px rgba(255,255,255,.08), 0 3px 8px rgba(0,0,0,.55);
 }
 .lens {
-  position: absolute; width: 38%; aspect-ratio: 1; border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #3a4a6a 0 12%, #0b0d14 26%, #050507 60%);
-  box-shadow: 0 0 0 3px #3A3A3D, 0 0 0 4px #121214;
+  position: absolute; width: 38%; aspect-ratio: 1; border-radius: 50%; transform: translateZ(2.5px);
+  background: radial-gradient(circle at 38% 32%, rgba(140,170,230,.55) 0 7%, #1d2840 14%, #070910 32%, #030305 62%);
+  box-shadow: 0 0 0 3px #46464A, 0 0 0 4.5px #101012, 0 2px 4px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.12);
+}
+.lens::after { /* glass glint */
+  content: ""; position: absolute; top: 14%; left: 20%; width: 26%; height: 16%; border-radius: 50%;
+  background: rgba(255,255,255,.35); filter: blur(.6px); rotate: -30deg;
 }
 .l1 { top: 9%; left: 9%; }
 .l2 { top: 53%; left: 9%; }
 .l3 { top: 31%; left: 53%; }
-.flash { position: absolute; width: 11%; aspect-ratio: 1; border-radius: 50%; top: 12%; right: 12%; background: radial-gradient(circle, #f5f0dc, #b9b29a); }
-.back-logo svg { width: calc(var(--w) * .2); height: auto; fill: #4A4A4E; filter: drop-shadow(0 1px 0 rgba(255,255,255,.08)); }
+.flash { position: absolute; width: 11%; aspect-ratio: 1; border-radius: 50%; top: 12%; right: 12%; transform: translateZ(1px); background: radial-gradient(circle at 40% 35%, #fffbe8, #c9c1a4 70%); }
+.mic { position: absolute; width: 5%; aspect-ratio: 1; border-radius: 50%; bottom: 14%; right: 18%; background: #070708; }
+.back-logo { position: relative; transform: translateZ(.5px); }
+.back-logo svg {
+  width: calc(var(--w) * .2); height: auto; fill: #5A5A5F;
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,.12)) drop-shadow(0 -1px 0 rgba(0,0,0,.35));
+}
 .phone3d .phone-screen { border-radius: calc(var(--w) * .11); }
 .phone3d-shadow {
   width: calc(var(--w) * .8); height: 22px; border-radius: 50%;
