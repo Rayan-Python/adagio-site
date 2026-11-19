@@ -385,12 +385,44 @@ main > section:not(.hero), .site-footer { position: relative; z-index: 1; }
    Small wordmark that appears top left once the big one scrolls away
    ------------------------------------------------------------------ */
 .mini-brand {
-  position: fixed; top: 16px; left: 16px; z-index: 60;
+  position: fixed; top: 16px; left: 16px; z-index: 60; display: flex; align-items: center; gap: .4em;
   font-family: var(--sans); font-stretch: 125%; font-weight: 900; font-size: 1.35rem; letter-spacing: .03em; line-height: 1;
   color: #FFFFFF; text-decoration: none; background: rgba(18,18,18,.88); padding: 10px 14px; border-radius: 10px;
   opacity: 0; transform: translateY(-8px); pointer-events: none;
   transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
 .mini-brand.is-shown { opacity: 1; transform: none; pointer-events: auto; }
+.mini-brand img { width: 1.15em; height: 1.15em; border-radius: .26em; }
 @media (min-width: 720px) { .mini-brand { top: 20px; left: 24px; font-size: 1.6rem; } }
 @media (prefers-reduced-motion: reduce) { .mini-brand { transition: none; transform: none; } }
+
+/* ------------------------------------------------------------------
+   Team cards as race bibs: paper bib, dark band, big number, and four
+   safety-pin holes punched through to the lime behind.
+   ------------------------------------------------------------------ */
+#team .team { gap: 28px; max-width: 760px; margin: 0 auto; }
+#team .member.bib {
+  position: relative; display: block; overflow: hidden; text-align: center;
+  background: #F7F7F2; color: #121212; border: 0; border-radius: 6px; padding: 0 20px 24px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.22); transform: rotate(-1.5deg);
+}
+#team .member.bib:nth-child(even) { transform: rotate(1.5deg); }
+#team .member.bib::before { /* safety-pin holes */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  --hole: radial-gradient(circle, var(--neon) 0 4.5px, #C9C9C0 5px 6px, transparent 6.5px);
+  background: var(--hole) 10px 10px / 14px 14px no-repeat, var(--hole) calc(100% - 10px) 10px / 14px 14px no-repeat,
+              var(--hole) 10px calc(100% - 10px) / 14px 14px no-repeat, var(--hole) calc(100% - 10px) calc(100% - 10px) / 14px 14px no-repeat;
+}
+.bib-band {
+  margin: 0 -20px; padding: 12px 0; background: #121212; color: var(--neon);
+  font-stretch: 125%; font-weight: 800; font-size: .8rem; letter-spacing: .2em; text-transform: uppercase;
+}
+.bib-num {
+  margin: 14px 0 4px; font-stretch: 125%; font-weight: 900; line-height: 1; letter-spacing: -.02em;
+  font-size: clamp(4.5rem, 14vw, 7rem); color: #121212;
+}
+#team .member.bib h3 { font-size: 1.35rem; color: #121212; }
+#team .member.bib .role { color: #52525B; margin-top: 2px; }
+#team .member.bib .member-mail { color: #121212; margin-top: 10px; }
+#team .member.bib .member-mail:hover { color: #5C6914; }
+@media (prefers-reduced-motion: reduce) { #team .member.bib { transform: none; } }
