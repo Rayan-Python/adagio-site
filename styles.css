@@ -198,7 +198,7 @@ h1, h2, h3, p { margin: 0; }
 .team-intro { text-align: center; font-size: 1.2rem; color: var(--fg-2); margin: -24px auto 40px; }
 .team { display: grid; gap: 28px; max-width: 900px; margin: 0 auto; }
 .bib {
-  --bib: var(--yellow);
+  --bib: #D9D9D6; /* light grey band */
   --tilt: -1.5deg;
   position: relative; overflow: hidden; text-align: center; container-type: inline-size;
   background: #141414; color: #FFFFFF; border-radius: 6px; padding: 0 20px 26px;
