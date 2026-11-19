@@ -229,46 +229,15 @@ h1, h2, h3, p { margin: 0; }
 }
 .roadmap .ver { font-family: var(--mono); font-size: .8rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-2); }
 
-/* team: race bibs */
+/* team: one glass panel, a row per person (name, role, email), like What's next */
 .team-intro { text-align: center; font-size: 1.2rem; color: var(--fg-2); margin: -24px auto 40px; }
-.team { display: grid; gap: 28px; max-width: 900px; margin: 0 auto; }
-.bib {
-  --bib: #6D28D9; /* left bib: purple band and email hover */
-  --tilt: -1.5deg;
-  position: relative; overflow: hidden; text-align: center; container-type: inline-size;
-  /* dark frosted glass, so the bibs match the glass panels and show the glows behind */
-  background: rgba(16,16,16,.55); color: #FFFFFF; border-radius: 10px; padding: 0 20px 26px;
-  border: 1px solid rgba(255,255,255,.22);
-  -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%);
-  box-shadow: 0 12px 32px -8px rgba(0,0,0,.3);
-  rotate: var(--tilt);
-  transition: rotate 220ms ease-out, translate 220ms ease-out, box-shadow 220ms ease-out, opacity 700ms var(--ease);
-}
-.bib:nth-child(even) { --bib: #DC2626; --tilt: 1.5deg; } /* right bib: red */
-.bib:hover { rotate: 0deg; box-shadow: 0 20px 32px -8px rgba(0,0,0,.3); }
-.bib::before { /* metal eyelets in the four corners */
-  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  --eyelet: radial-gradient(circle, #1E1E1E 0 2.6px, #B5BAC1 3px 4.6px, #6E747C 5px 5.6px, transparent 6px);
-  background: var(--eyelet) 6px 6px / 14px 14px no-repeat, var(--eyelet) calc(100% - 6px) 6px / 14px 14px no-repeat,
-              var(--eyelet) 6px calc(100% - 6px) / 14px 14px no-repeat, var(--eyelet) calc(100% - 6px) calc(100% - 6px) / 14px 14px no-repeat;
-}
-.bib::after { /* faint matte paper grain */
-  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .09; mix-blend-mode: overlay;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.bib-band {
-  margin: 0 -20px; height: 38px; background: rgba(0,0,0,.45); border-bottom: 1px solid rgba(255,255,255,.12); /* darker glass top strip */
-  font-stretch: 125%; font-weight: 800; font-size: .8rem; letter-spacing: .2em; text-transform: uppercase;
-}
-.bib-num { /* printed race-number look */
-  margin: 12px 0 2px; font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
-  font-weight: 700; line-height: 1; letter-spacing: .01em; font-variant-numeric: tabular-nums;
-  font-size: 30cqw; color: #FFFFFF;
-}
-.bib h3 { font-size: 1.35rem; font-stretch: 125%; font-weight: 900; color: #FFFFFF; }
-.bib .role { color: #A3A3A3; margin-top: 2px; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
-.member-mail { display: inline-block; margin-top: 10px; color: #D4D4D4; text-decoration: none; transition: color 150ms ease-out; }
-.member-mail:hover, .member-mail:focus-visible { color: var(--bib); }
+.people { list-style: none; margin: 0 auto; padding: 4px clamp(20px, 3vw, 36px); max-width: 1000px; }
+.people li { display: grid; gap: 4px; padding: 24px 0; border-bottom: 1px solid var(--outline); }
+.people li:last-child { border-bottom: 0; }
+.person-name { font-size: clamp(1.4rem, 3.6vw, 2.4rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.person-role { font-family: var(--mono); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-2); }
+.person-mail { justify-self: start; color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--outline); transition: border-color 150ms ease-out; overflow-wrap: anywhere; }
+.person-mail:hover { border-color: var(--fg); }
 
 /* contact */
 #contact { min-height: auto; padding-bottom: 96px; }
@@ -296,7 +265,6 @@ h1, h2, h3, p { margin: 0; }
 /* text eases in as each section arrives */
 .reveal { opacity: 0; translate: 0 28px; transition: opacity 700ms var(--ease), translate 700ms var(--ease); }
 .reveal.is-in { opacity: 1; translate: 0 0; }
-.bib.reveal.is-in:hover { translate: 0 -6px; }
 
 /* ------------------------------------------------------------------
    Larger screens: the line swings between the side gutters
@@ -307,7 +275,7 @@ h1, h2, h3, p { margin: 0; }
   .course-line { stroke-width: 28; }
   .runner { width: 52px; height: 52px; border-radius: 13px; }
   .numbered li { gap: 36px; }
-  .team { grid-template-columns: repeat(2, 1fr); }
+  .people li { grid-template-columns: 1.3fr 1fr auto; align-items: baseline; gap: 24px; }
   .foot { grid-template-columns: 1fr auto; }
 }
 @media (min-width: 960px) {
@@ -326,7 +294,7 @@ h1, h2, h3, p { margin: 0; }
   .hero-stage { animation: none; }
   .orbs i { animation: none; }
   .course, .runner { display: none; }
-  .reveal, .bib { opacity: 1; translate: none; rotate: none; transition: none; }
+  .reveal { opacity: 1; translate: none; transition: none; }
   .flow, .corner, .site-nav, .appstore { transition: none; }
 
 }
