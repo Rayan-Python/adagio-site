@@ -35,7 +35,7 @@
       <a href="#team">Team</a>
       <a href="#contact">Contact</a>
     </nav>
-    <a class="appstore appstore-sm" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 12.62c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.97.9-3.76 2.28-1.61 2.79-.41 6.91 1.15 9.17.77 1.1 1.68 2.34 2.87 2.3 1.15-.05 1.59-.75 2.98-.75 1.39 0 1.78.75 3 .72 1.24-.02 2.02-1.12 2.78-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.42-.93-2.44-3.68zM14.1 5.88c.64-.77 1.07-1.84.95-2.9-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.77-.97 2.81 1.02.08 2.07-.52 2.71-1.29z"/></svg><span class="long">Download on the&nbsp;</span>App Store</a>
+    <a class="appstore" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener" aria-label="Download on the App Store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 12.62c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.97.9-3.76 2.28-1.61 2.79-.41 6.91 1.15 9.17.77 1.1 1.68 2.34 2.87 2.3 1.15-.05 1.59-.75 2.98-.75 1.39 0 1.78.75 3 .72 1.24-.02 2.02-1.12 2.78-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.42-.93-2.44-3.68zM14.1 5.88c.64-.77 1.07-1.84.95-2.9-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.77-.97 2.81 1.02.08 2.07-.52 2.71-1.29z"/></svg><span class="appstore-text"><span class="appstore-small">Download on the</span><span class="appstore-big">App Store</span></span></a>
   </header>
 
   <main id="main">
@@ -50,20 +50,9 @@
 
     <!-- Everything below the photo. It slides up over the pinned photo; its background
          eases between black, off-white and yellow as each section reaches the middle of
-         the screen (script.js sets data-theme). One thick line winds down behind it all,
-         drawn as you scroll, with the app icon riding its tip. -->
+         the screen (script.js sets data-theme). -->
     <div class="flow" id="flow" data-theme="black">
-      <svg class="course" aria-hidden="true">
-        <defs>
-          <linearGradient id="course-grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1000">
-            <stop offset="0" stop-color="#E8F02A"/>
-            <stop offset="1" stop-color="#A6E22E"/>
-          </linearGradient>
-        </defs>
-        <path class="course-edge"/>
-        <path class="course-line"/>
-      </svg>
-      <img class="runner" src="apple-touch-icon.png" alt="" width="180" height="180" aria-hidden="true">
+      <!-- The winding line and the app icon riding it are switched off for now. -->
 
       <section class="block" id="how" data-theme="black">
       <p class="corner corner-tl" aria-hidden="true">01 / How it works</p>
@@ -209,7 +198,6 @@
           <h2 class="headline headline-oneline reveal">Get in touch</h2>
           <p class="lead reveal">For questions, feedback and inquiries:</p>
           <a class="email-big reveal" href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>
-          <a class="appstore reveal" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 12.62c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.97.9-3.76 2.28-1.61 2.79-.41 6.91 1.15 9.17.77 1.1 1.68 2.34 2.87 2.3 1.15-.05 1.59-.75 2.98-.75 1.39 0 1.78.75 3 .72 1.24-.02 2.02-1.12 2.78-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.42-.93-2.44-3.68zM14.1 5.88c.64-.77 1.07-1.84.95-2.9-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.77-.97 2.81 1.02.08 2.07-.52 2.71-1.29z"/></svg>Download on the App Store</a>
         </div>
       </section>
 

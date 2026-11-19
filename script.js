@@ -55,10 +55,12 @@ if (reduceMotion || !('IntersectionObserver' in window)) {
 // its own movement (sweeps, zigzags, loops), routed around the small corner labels; on
 // phones it runs straight down the right edge. The app icon rides the tip, tilting a
 // little with the line's direction.
+// (Switched off for now: with the <svg class="course"> and <img class="runner"> removed
+// from the page, none of this runs.)
 const course = flow.querySelector('.course');
-const edge = course.querySelector('.course-edge');
-const line = course.querySelector('.course-line');
-const grad = course.querySelector('#course-grad');
+const edge = course && course.querySelector('.course-edge');
+const line = course && course.querySelector('.course-line');
+const grad = course && course.querySelector('#course-grad');
 const runner = flow.querySelector('.runner');
 const blocks = themed.filter((el) => el.classList.contains('block'));
 
@@ -88,6 +90,7 @@ function smoothPath(points) { // Catmull-Rom through every point
 }
 
 function buildLine() {
+  if (!course) return;
   const box = flow.getBoundingClientRect();
   const w = box.width, h = box.height;
   const points = [], keys = [];
