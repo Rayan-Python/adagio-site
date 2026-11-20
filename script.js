@@ -142,94 +142,6 @@ onBeat(() => {
     .onfinish = () => ring.remove();
 });
 
-// how it works, 02: the track-staff. A straight of running track whose five white lane
-// lines are a music staff. Engraved like real sheet music: noteheads one staff-space
-// tall, stems 3.5 spaces long (up on the right below the middle line, down on the left
-// above it), eighth notes beamed in pairs. Two bars of 4/4; on every beat the spike
-// print under that beat lights up and its note gives a small nod.
-const ts = $('[data-trackstaff]');
-if (ts) {
-  const NS = 'http://www.w3.org/2000/svg';
-  const art = $('[data-ts-art]', ts);
-  const SP = 26;                         // staff space = lane width
-  const BOTTOM = 184;                    // the bottom staff line
-  const lineY = [0, 1, 2, 3, 4].map((k) => BOTTOM - k * SP);
-  const stepY = (s) => BOTTOM - s * (SP / 2); // s: 0 = bottom line, 1 = first space …
-  const el = (tag, attrs, parent = art) => {
-    const e = document.createElementNS(NS, tag);
-    Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
-    parent.appendChild(e);
-    return e;
-  };
-
-  // lane lines (= staff), start line, lane numbers, clef, time signature
-  lineY.forEach((y) => el('line', { class: 'ts-lane', x1: 0, x2: 640, y1: y, y2: y }));
-  [210, 236].forEach((y) => el('line', { class: 'ts-lane', x1: 0, x2: 640, y1: y, y2: y })); // outer lanes
-  el('rect', { class: 'ts-paint', x: 56, y: 54, width: 5, height: 222 }); // start line
-  // lane numbers, painted sideways behind the start line: lane 1 by the curb
-  [67, 93, 119, 145, 171, 197, 223].forEach((y, i) => {
-    const t = el('text', { class: 'ts-lane-no', x: 30, y, transform: `rotate(90 30 ${y})` });
-    t.textContent = String(i + 1);
-  });
-  const clef = el('text', { class: 'ts-glyph', x: 70, y: lineY[1] });
-  clef.textContent = '\u{1D11E}';        // treble clef, sitting on the G line
-  const time = el('text', { class: 'ts-glyph', x: 124, y: lineY[2] });
-  time.textContent = '\u{1D134}';        // common time
-
-  // the melody: [beat x, staff step, beamed group id or null]
-  const beats = [
-    [[192, 2]], [[244, 4]], [[290, 5], [318, 6]], [[358, 4]],
-    [[418, 3], [446, 4]], [[492, 6]], [[540, 5]], [[588, 2]],
-  ];
-  el('line', { class: 'ts-bar', x1: 388, x2: 388, y1: lineY[4], y2: lineY[0] });
-  el('rect', { class: 'ts-paint', x: 618, y: 54, width: 5, height: 222 });   // finish line …
-  el('line', { class: 'ts-bar', x1: 611, x2: 611, y1: lineY[4], y2: lineY[0] }); // … as the final bar line
-
-  const HEAD_RX = 12.6, HEAD_RY = 9.2, STEM = SP * 3.5; // a notehead fills one staff space
-  const noteGroups = beats.map((notes) => {
-    const g = el('g', { class: 'ts-note' });
-    const up = notes.reduce((a, [, s]) => a + s, 0) / notes.length < 4; // below the middle line: stems up
-    const stemX = (x) => x + (up ? HEAD_RX - 0.9 : -HEAD_RX + 0.9);
-    // beam line for pairs: follows the pitch a little, never steeper than half a space
-    const tips = notes.map(([x, s]) => ({ x: stemX(x), y: stepY(s) + (up ? -STEM : STEM) }));
-    if (notes.length > 1) {
-      const slope = clamp((tips[1].y - tips[0].y) * 0.4, -SP / 2, SP / 2);
-      const mid = (tips[0].y + tips[1].y) / 2 + (up ? -4 : 4);
-      tips[0].y = mid - slope / 2; tips[1].y = mid + slope / 2;
-    }
-    notes.forEach(([x, s], i) => {
-      const y = stepY(s);
-      el('ellipse', { cx: x, cy: y, rx: HEAD_RX, ry: HEAD_RY, transform: `rotate(-22 ${x} ${y})` }, g);
-      el('line', { class: 'ts-stem', x1: tips[i].x, x2: tips[i].x, y1: y + (up ? -2 : 2), y2: tips[i].y }, g);
-      if (s === 0 || s >= 10) el('line', { class: 'ts-ledger', x1: x - 19, x2: x + 19, y1: y, y2: y }, g);
-    });
-    if (notes.length > 1) {
-      const t = SP * 0.42; // beam thickness
-      const d = up ? t : -t;
-      el('path', { class: 'ts-beam', d: `M${tips[0].x - 1} ${tips[0].y} L${tips[1].x + 1} ${tips[1].y} L${tips[1].x + 1} ${tips[1].y + d} L${tips[0].x - 1} ${tips[0].y + d} Z` }, g);
-    }
-    return g;
-  });
-
-  // worn spike prints in the outer lane, one per beat, left and right
-  const prints = beats.map((notes, i) => {
-    const x = notes[0][0] + (notes.length > 1 ? 12 : 0);
-    const y = i % 2 ? 223 : 197; // lanes 6 and 7
-    const g = el('g', { class: 'ts-print', transform: `translate(${x} ${y}) rotate(${i % 2 ? 4 : -4})` });
-    el('path', { d: 'M-15 0 C-15 -6 -4 -7.5 6 -6.5 C13 -5.8 16 -3 16 0 C16 3 13 5.8 6 6.5 C-4 7.5 -15 6 -15 0 Z' }, g);
-    [[-8, -2.5], [-2, 3], [4, -3], [10, 1.5], [-11, 2.5], [2, 0]].forEach(([cx, cy]) => el('circle', { class: 'ts-pin', cx, cy, r: 1.3 }, g));
-    return g;
-  });
-
-  watch(ts);
-  onBeat((n) => {
-    if (!isOn(ts)) return;
-    const k = (n - 1) % beats.length;
-    prints.forEach((p, i) => p.classList.toggle('on', i === k));
-    if (!reduceMotion) noteGroups[k].animate([{ transform: 'translateY(-3px)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out' });
-  });
-}
-
 /* ======================================================================
    Hero: light strands (canvas). A bundle of thin lime strands pinches into a
    bright knot and fans out, swaying slowly. Each beat kicks them outward; the
@@ -353,53 +265,62 @@ if (ctx) {
 }
 
 /* ======================================================================
-   Try it: tap your cadence
+   Try it: step pads. Tap left, right, left, right like running in place
+   (or press F and J). Every step stamps a print on the lane, which slides
+   away like a timeline, so the gaps between prints show your rhythm.
    ====================================================================== */
 const pad = $('[data-pad]');
 const padStatus = $('[data-pad-status]');
-const padRing = pad && $('.pad-ring', pad);
+const lane = $('[data-lane]');
+const feetBtns = $$('[data-foot]');
+const LANE_MS = 3200; // how long a print takes to cross the lane
 let taps = [];
-if (padStatus && window.matchMedia('(pointer: coarse)').matches) padStatus.textContent = 'Tap 4+ times in time with your stride';
-function tap() {
+let lastFoot = 'R';
+function stamp(foot) {
+  if (!lane || reduceMotion) return;
+  const p = document.createElement('i');
+  p.className = `print ${foot}`;
+  lane.appendChild(p);
+  const dist = lane.clientWidth * 0.82 + 30;
+  p.animate([{ transform: 'translateX(0)', opacity: 0.95 }, { transform: `translateX(${-dist}px)`, opacity: 0.25 }], { duration: LANE_MS, easing: 'linear' })
+    .onfinish = () => p.remove();
+}
+function step(foot) {
+  foot = foot || (lastFoot === 'L' ? 'R' : 'L');
+  lastFoot = foot;
+  const btn = feetBtns.find((b) => b.dataset.foot === foot);
+  if (btn) { btn.classList.add('hit'); setTimeout(() => btn.classList.remove('hit'), 100); }
+  stamp(foot);
   const now = performance.now();
   if (taps.length && now - taps[taps.length - 1] > 2000) taps = [];
   taps.push(now);
   if (taps.length > 9) taps.shift();
-  pad.classList.add('hit');
-  setTimeout(() => pad.classList.remove('hit'), 90);
-  if (!reduceMotion && padRing) padRing.animate([{ scale: 1, opacity: 0.8 }, { scale: 1.35, opacity: 0 }], { duration: 500, easing: 'ease-out' });
-  if (taps.length < 3) { padStatus.textContent = `Keep going… (${taps.length})`; return; }
+  if (taps.length < 3) { padStatus.textContent = `Keep stepping… (${taps.length})`; return; }
   const gaps = taps.slice(1).map((t, i) => t - taps[i]);
   const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
   setBPM(60000 / avg, { align: true });
-  padStatus.textContent = taps.length < 5 ? 'Finding your rhythm…' : `Locked in: ${tempo.bpm} steps per minute. The whole page is on your beat now.`;
+  padStatus.textContent = taps.length < 5 ? 'Finding your rhythm…' : `Locked in: ${tempo.bpm} steps per minute. The whole page runs at your pace now.`;
 }
 if (pad) {
-  pad.addEventListener('pointerdown', (e) => { e.preventDefault(); tap(); });
-  pad.addEventListener('keydown', (e) => {
-    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!e.repeat) tap(); }
+  feetBtns.forEach((b) => {
+    b.addEventListener('pointerdown', (e) => { e.preventDefault(); step(b.dataset.foot); });
+    b.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); step(b.dataset.foot); } });
   });
-  // space bar taps anywhere while the Try it section is on screen
+  // F / J (or the arrow keys, or space) step while the Try it section is on screen
   const play = $('#play');
   watch(play);
+  const keyFoot = { f: 'L', j: 'R', ArrowLeft: 'L', ArrowRight: 'R', ' ': null };
   document.addEventListener('keydown', (e) => {
-    if (e.key !== ' ' || e.repeat || !isOn(play)) return;
+    if (e.repeat || !isOn(play) || !(e.key in keyFoot) || e.metaKey || e.ctrlKey || e.altKey) return;
     const tag = document.activeElement && document.activeElement.tagName;
-    if (['INPUT', 'TEXTAREA', 'BUTTON', 'A', 'SELECT'].includes(tag)) return;
-    e.preventDefault(); tap();
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || (e.key === ' ' && ['BUTTON', 'A'].includes(tag))) return;
+    e.preventDefault();
+    step(keyFoot[e.key]);
   });
-  // the music staff passing through rings the pad
-  pad.addEventListener('adagio:note-hit', () => {
-    if (!reduceMotion && padRing) padRing.animate([{ scale: 1, opacity: 0.7 }, { scale: 1.45, opacity: 0 }], { duration: 800, easing: 'ease-out' });
-  });
-  // ambient pulse on the pad when you're not tapping
-  const ring2 = $('.pad-ring.r2', pad);
-  onBeat(() => {
-    if (!isOn(pad) || reduceMotion || performance.now() - (taps[taps.length - 1] || 0) < 1500) return;
-    ring2.animate([{ scale: 1, opacity: 0.45 }, { scale: 1.18, opacity: 0 }], { duration: Math.min(700, tempo.len * 1.6), easing: 'ease-out' });
-  });
+  // the music staff passing through leaves a pair of prints on the lane
+  pad.addEventListener('adagio:note-hit', () => { stamp('L'); setTimeout(() => stamp('R'), tempo.len); });
 }
-if (slider) slider.addEventListener('input', () => { taps = []; setBPM(+slider.value); padStatus.textContent = 'Set by slider. Tap to match your real stride.'; });
+if (slider) slider.addEventListener('input', () => { taps = []; setBPM(+slider.value); padStatus.textContent = 'Set by slider. Step to match your real stride.'; });
 
 // "Hear it": a metronome click on each beat (accent every fourth). "Feel it": a vibration
 // on each beat, where the browser supports it (Android).
@@ -444,6 +365,96 @@ if (reduceMotion || !watcher) {
     });
   }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
   reveals.forEach((el) => seen.observe(el));
+}
+
+// Some text types itself in as it scrolls into view, as if it's being processed live.
+// Leads type letter by letter with a caret; small mono labels "decode" from scrambled
+// characters. The untyped rest stays in place (transparent), so nothing shifts, and
+// screen readers always get the full text.
+const typeTargets = [...new Set([
+  ...$$('[data-type]'),
+  ...$$('.panel .lead, #accessibility .lead, .contact-sec .lead, .devices-copy .stat-text'),
+])];
+const decodeTargets = $$('main .tag');
+function splitForTyping(el) {
+  const nodes = [];
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) if (walker.currentNode.textContent.trim()) nodes.push(walker.currentNode);
+  return nodes.map((n) => {
+    const on = document.createElement('span');
+    const off = document.createElement('span');
+    off.className = 't-off';
+    off.textContent = n.textContent;
+    n.replaceWith(on, off);
+    return { on, off, text: n.textContent };
+  });
+}
+function typeIn(parts, msPerChar = 13) {
+  const total = parts.reduce((a, p) => a + p.text.length, 0);
+  const caret = document.createElement('span');
+  caret.className = 't-caret';
+  caret.setAttribute('aria-hidden', 'true');
+  const start = performance.now();
+  const frame = (now) => {
+    let left = Math.min(total, Math.floor((now - start) / msPerChar));
+    const done = left >= total;
+    parts.forEach((p) => {
+      const take = Math.max(0, Math.min(p.text.length, left));
+      left -= take;
+      p.on.textContent = p.text.slice(0, take);
+      p.off.textContent = p.text.slice(take);
+    });
+    const cur = parts.find((p) => p.off.textContent.length) || parts[parts.length - 1];
+    cur.on.after(caret);
+    if (!done) requestAnimationFrame(frame); else setTimeout(() => caret.remove(), 1200);
+  };
+  requestAnimationFrame(frame);
+}
+const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/·';
+function decode(parts, ms = 700) {
+  const start = performance.now();
+  const frame = (now) => {
+    const p = Math.min(1, (now - start) / ms);
+    parts.forEach(({ on, off, text }) => {
+      const shown = Math.floor(text.length * p);
+      on.textContent = text.slice(0, shown) + [...text.slice(shown)].map((ch) => (ch === ' ' ? ' ' : GLYPHS[(Math.random() * GLYPHS.length) | 0])).join('');
+      off.textContent = '';
+    });
+    if (p < 1) requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+if (!reduceMotion && watcher) {
+  const jobs = new Map();
+  // prepare every target up front (untyped text transparent), so nothing flashes before it types
+  typeTargets.forEach((el) => {
+    el.classList.remove('reveal'); // typing is its own entrance
+    el.__parts = splitForTyping(el);
+    jobs.set(el, () => typeIn(el.__parts));
+  });
+  decodeTargets.forEach((el) => { el.__parts = splitForTyping(el); el.__parts.forEach((q) => { q.on.textContent = ''; }); jobs.set(el, () => decode(el.__parts)); });
+  const typer = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      typer.unobserve(e.target);
+      const job = jobs.get(e.target);
+      if (job) job();
+    });
+  }, { threshold: 0.35 });
+  jobs.forEach((_, el) => typer.observe(el));
+}
+
+// Hero video: a faint runner on the track. Plays muted; with reduced motion it stays
+// on its poster (the original runner photo).
+const heroVideo = $('[data-hero-video]');
+if (heroVideo) {
+  if (reduceMotion) heroVideo.removeAttribute('autoplay');
+  else {
+    const playHero = () => heroVideo.play().catch(() => {});
+    heroVideo.addEventListener('canplay', playHero, { once: true });
+    playHero();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && window.scrollY < window.innerHeight) playHero(); });
+  }
 }
 
 // marquee: drifts on its own, speeds up with scroll speed, reverses when you scroll up

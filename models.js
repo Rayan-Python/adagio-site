@@ -168,7 +168,8 @@ const LEN = 10; // heel at x = 0, toe at x = 10
 const groundY = (x) => (x < 6.3 ? 0 : 0.62 * Math.pow((x - 6.3) / 3.7, 2.2)); // toe spring
 const stackH = (x) => lerp(0.62, 0.2, smooth(0.6, 5.0, x));                      // heel foam → thin plate
 const baseY = (x) => groundY(x) + stackH(x);                                     // where the upper starts
-const topRaw = curve([[0, 2.62], [0.35, 2.88], [1.1, 2.5], [2.2, 2.38], [3.2, 2.62], [3.9, 2.66], [5.4, 2.26], [7.0, 1.72], [8.4, 1.3], [9.4, 1.03], [10, 0.95]]);
+// low and long, like a modern distance spike: tall padded heel, a long sloping vamp to a pointed toe
+const topRaw = curve([[0, 2.62], [0.35, 2.88], [1.1, 2.5], [2.2, 2.36], [3.2, 2.5], [3.9, 2.5], [5.4, 2.05], [7.0, 1.52], [8.4, 1.15], [9.4, 0.92], [10, 0.86]]);
 const topY = (x) => topRaw(x) + groundY(x) * 0.7;
 const widthRaw = curve([[0, 0.84], [0.7, 0.95], [2.4, 0.96], [3.8, 1.02], [5.8, 1.22], [7.2, 1.2], [8.5, 0.98], [9.4, 0.7], [10, 0.45]]);
 const HEEL_R = 0.8, TOE_R = 1.05;
@@ -405,10 +406,34 @@ function buildSpike() {
   return pivot;
 }
 
+// A real, scanned or modeled spike can replace the built-in one: put a glTF binary in
+// assets/models/ and name it on the canvas, e.g. data-glb="assets/models/spike.glb".
+// It's centered and scaled to fit automatically.
+async function loadRealSpike(pivot, url) {
+  if (!url) return false;
+  try {
+    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+    const gltf = await new GLTFLoader().loadAsync(url);
+    const model = gltf.scene;
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+    model.position.sub(box.getCenter(new THREE.Vector3()));
+    const holder = new THREE.Group();
+    holder.add(model);
+    holder.scale.setScalar(10 / Math.max(size.x, size.y, size.z)); // same length as the built-in shoe
+    pivot.clear();
+    pivot.add(holder);
+    return true;
+  } catch {
+    return false; // keep the built-in shoe
+  }
+}
+
 function initSpike(canvas) {
   const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 28, distance: 20, fitWidth: 12.5, lights: 'studio' });
   const spike = buildSpike();
   scene.add(spike);
+  loadRealSpike(spike, canvas.dataset.glb);
   let spin = -2.55, last = 0; // start at a three-quarter view, toe toward the viewer
   runWhileVisible(canvas, (now) => {
     const dt = last ? Math.min(now - last, 50) : 16;
@@ -648,6 +673,158 @@ function initWatch(canvas) {
   }, () => renderer.render(scene, camera));
 }
 
+/* ----------------------------------------------------------------------
+   Apple Watch (Haptic Mode): midnight aluminum case with rounded edges, an
+   all-glass front, the digital crown (ridged, with its red ring) and the long
+   side button, a sport band with pin holes. It gives a small "haptic" tap on
+   every beat, and turns a full circle when the music staff passes by.
+   ---------------------------------------------------------------------- */
+function roundedRectShape(w, h, r) {
+  const s = new THREE.Shape();
+  const x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y);
+  s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+
+function drawAppleFace(g, W, H, bpm) {
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  g.textBaseline = 'alphabetic';
+  g.fillStyle = '#A6E22E'; g.font = '600 34px -apple-system, "SF Pro Text", Archivo, sans-serif';
+  g.textAlign = 'left'; g.fillText('Haptic', 46, 78);
+  g.fillStyle = '#fff'; g.textAlign = 'right'; g.fillText('10:09', W - 46, 78);
+  // target ring
+  const cx = W / 2, cy = H * 0.52, r = W * 0.3;
+  g.lineCap = 'round';
+  g.strokeStyle = 'rgba(166,226,46,.22)'; g.lineWidth = 26;
+  g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+  g.strokeStyle = '#A6E22E';
+  g.beginPath(); g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, bpm / 200)); g.stroke();
+  g.textAlign = 'center';
+  g.fillStyle = '#fff'; g.font = '800 120px -apple-system, "SF Pro Display", Archivo, sans-serif';
+  g.fillText(String(bpm), cx, cy + 40);
+  g.fillStyle = 'rgba(255,255,255,.65)'; g.font = '600 30px -apple-system, "SF Pro Text", Archivo, sans-serif';
+  g.fillText('SPM target', cx, cy + 84);
+  g.fillStyle = 'rgba(255,255,255,.8)'; g.font = '600 30px -apple-system, "SF Pro Text", Archivo, sans-serif';
+  g.fillText('On pace', cx, H - 62);
+}
+
+function buildAppleWatch() {
+  const watch = new THREE.Group();
+  const W = 3.2, H = 3.9, R = 0.95, D = 0.6, BEV = 0.24;
+  const alu = new THREE.MeshPhysicalMaterial({ color: 0x2c3036, metalness: 0.85, roughness: 0.32, clearcoat: 0.4 });
+  const caseGeo = new THREE.ExtrudeGeometry(roundedRectShape(W, H, R), { depth: D, bevelEnabled: true, bevelThickness: BEV, bevelSize: BEV, bevelSegments: 10, curveSegments: 24 });
+  caseGeo.translate(0, 0, -D / 2);
+  watch.add(new THREE.Mesh(caseGeo, alu));
+  const front = D / 2 + BEV; // z of the front face
+
+  // all-glass front: black glass edge to edge, the display inset inside it
+  const glassGeo = new THREE.ShapeGeometry(roundedRectShape(W + BEV * 1.6, H + BEV * 1.6, R + BEV * 0.8), 24);
+  const glass = new THREE.Mesh(glassGeo, new THREE.MeshPhysicalMaterial({ color: 0x050506, roughness: 0.05, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.03 }));
+  glass.position.z = front + 0.012;
+  watch.add(glass);
+  const faceCanvas = document.createElement('canvas');
+  faceCanvas.width = 600; faceCanvas.height = 720;
+  drawAppleFace(faceCanvas.getContext('2d'), 600, 720, tempo().bpm);
+  const faceTex = new THREE.CanvasTexture(faceCanvas);
+  faceTex.colorSpace = THREE.SRGBColorSpace;
+  const dispGeo = new THREE.ShapeGeometry(roundedRectShape(W - 0.15, H - 0.15, R - 0.12), 24);
+  // map the shape's x/y onto the texture
+  const uv = dispGeo.attributes.uv, pos = dispGeo.attributes.position;
+  for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / (W - 0.15) + 0.5, pos.getY(i) / (H - 0.15) + 0.5);
+  const display = new THREE.Mesh(dispGeo, new THREE.MeshBasicMaterial({ map: faceTex }));
+  display.position.z = front + 0.016;
+  watch.add(display);
+  const sheen = new THREE.Mesh(glassGeo, new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.06, roughness: 0, clearcoat: 1, envMapIntensity: 2 }));
+  sheen.position.z = front + 0.03;
+  watch.add(sheen);
+
+  // digital crown: ridged (a striped bump map around it) with a red ring on its face
+  const ridge = document.createElement('canvas');
+  ridge.width = 256; ridge.height = 4;
+  const rg = ridge.getContext('2d');
+  for (let i = 0; i < 64; i++) { rg.fillStyle = i % 2 ? '#222' : '#ddd'; rg.fillRect(i * 4, 0, 4, 4); }
+  const ridgeTex = new THREE.CanvasTexture(ridge);
+  const crownMat = new THREE.MeshStandardMaterial({ color: 0x3a3e45, metalness: 0.9, roughness: 0.3, bumpMap: ridgeTex, bumpScale: 2 });
+  const edge = W / 2 + BEV;
+  const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.34, 48), crownMat);
+  crown.rotation.z = Math.PI / 2;
+  crown.position.set(edge + 0.14, 0.72, 0);
+  watch.add(crown);
+  const red = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.03, 10, 40), new THREE.MeshStandardMaterial({ color: 0xff3b30, roughness: 0.4 }));
+  red.rotation.y = Math.PI / 2;
+  red.position.set(edge + 0.315, 0.72, 0);
+  watch.add(red);
+  // side button: long and flat, below the crown
+  const btn = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.95, 8, 16), new THREE.MeshStandardMaterial({ color: 0x2c3036, metalness: 0.85, roughness: 0.35 }));
+  btn.scale.set(0.55, 1, 1);
+  btn.position.set(edge + 0.02, -0.55, 0);
+  watch.add(btn);
+
+  // sport band, curving back around the wrist, with pin holes on the lower half
+  const band = new THREE.MeshPhysicalMaterial({ color: 0x1b1d21, roughness: 0.55, sheen: 0.5, sheenColor: new THREE.Color(0x666666), side: THREE.DoubleSide });
+  const bandOutline = roundedRect(2.45, 0.32, 0.14);
+  for (const dir of [1, -1]) {
+    const y0 = dir * (H / 2 + BEV - 0.1);
+    const path = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, y0, -0.05),
+      new THREE.Vector3(0, y0 + dir * 0.8, -0.15),
+      new THREE.Vector3(0, y0 + dir * 1.5, -0.7),
+      new THREE.Vector3(0, y0 + dir * 1.85, -1.7),
+      new THREE.Vector3(0, y0 + dir * 1.8, -2.8),
+    ]);
+    watch.add(new THREE.Mesh(sweep(path, bandOutline, { samples: 70 }), band));
+    if (dir < 0) {
+      const wrist = new THREE.Vector3(0, 0, -2.4);
+      for (let k = 0; k < 5; k++) {
+        const p = path.getPointAt(0.35 + k * 0.11);
+        const out = new THREE.Vector3(0, p.y - wrist.y, p.z - wrist.z).normalize();
+        const hole = new THREE.Mesh(new THREE.CircleGeometry(0.09, 18), new THREE.MeshBasicMaterial({ color: 0x050506 }));
+        hole.position.copy(p).addScaledVector(out, 0.17);
+        hole.lookAt(p.clone().addScaledVector(out, 2));
+        watch.add(hole);
+      }
+    }
+  }
+  // sensor dome on the back
+  const sensor = new THREE.Mesh(new THREE.SphereGeometry(1.2, 40, 20, 0, Math.PI * 2, 0, Math.PI / 5), new THREE.MeshPhysicalMaterial({ color: 0x0d0e10, roughness: 0.2, clearcoat: 1 }));
+  sensor.rotation.x = -Math.PI / 2;
+  sensor.position.z = -front + 0.85;
+  watch.add(sensor);
+
+  watch.userData.setBPM = (bpm) => { drawAppleFace(faceCanvas.getContext('2d'), 600, 720, bpm); faceTex.needsUpdate = true; };
+  return watch;
+}
+
+function initAppleWatch(canvas) {
+  const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 30, distance: 15.5, fitWidth: 7.5, lights: 'studio' });
+  const watch = buildAppleWatch();
+  scene.add(watch);
+  document.addEventListener('adagio:bpm', (e) => watch.userData.setBPM(e.detail));
+  if (document.fonts) document.fonts.ready.then(() => watch.userData.setBPM(tempo().bpm));
+  let turnStart = -1;
+  const stage = canvas.closest('.aw-stage');
+  if (stage) stage.addEventListener('adagio:note-hit', () => { if (turnStart < 0) turnStart = performance.now(); });
+  runWhileVisible(canvas, (now) => {
+    if (!drag.on) drag.offset *= 0.95;
+    const t = reduceMotion ? 0 : now;
+    // the haptic tap: a quick little buzz at the start of every beat
+    const ph = reduceMotion ? 1 : tempo().phase(now);
+    const buzz = ph < 0.12 ? Math.sin(ph * 160) * 0.035 * (1 - ph / 0.12) : 0;
+    let turn = 0;
+    if (turnStart >= 0) {
+      const p = clamp((now - turnStart) / 1500, 0, 1);
+      turn = Math.PI * 2 * easeInOut(p);
+      if (p >= 1) turnStart = -1;
+    }
+    watch.rotation.set(-0.22 + Math.sin(t * 0.0005) * 0.06, 0.5 + Math.sin(t * 0.0006) * 0.35 + drag.offset + turn, 0.08 + buzz);
+    watch.position.set(buzz * 2, Math.sin(t * 0.001) * 0.1, 0);
+  }, () => renderer.render(scene, camera));
+}
+
 /* ---------------------------------------------------------------------- */
 function supportsWebGL() {
   try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; }
@@ -656,6 +833,8 @@ if (supportsWebGL()) {
   document.documentElement.classList.add('has-3d');
   const spikeCanvas = document.querySelector('[data-model="spike"]');
   const watchCanvas = document.querySelector('[data-model="watch"]');
+  const appleCanvas = document.querySelector('[data-model="applewatch"]');
   if (spikeCanvas) initSpike(spikeCanvas);
   if (watchCanvas) initWatch(watchCanvas);
+  if (appleCanvas) initAppleWatch(appleCanvas);
 }

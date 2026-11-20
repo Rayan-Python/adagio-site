@@ -193,7 +193,7 @@
     return words;
   }
   const heads = [...document.querySelectorAll('main .headline, main .devices-title')].map((el) => ({ el, words: splitWords(el), armed: true }));
-  const cards = [...document.querySelectorAll('main .glass, main .pad, main .cta-card, main .phone-zone, main .watch-stage')];
+  const cards = [...document.querySelectorAll('main .glass, main .steppad, main .cta-card, main .watch-stage, main .aw-stage')];
 
   function wave(head) {
     head.words.forEach((w, i) => {
