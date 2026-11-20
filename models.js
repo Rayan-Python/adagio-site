@@ -441,7 +441,7 @@ function buildSpike() {
 
   // real-shoe proportions: about 3 times as long as it is tall, and wider through the
   // forefoot (the profile curves above are drawn long; this brings it back to scale)
-  const SX = 0.76, SZ = 1.32;
+  const SX = 0.72, SZ = 1.4;
   shoe.scale.set(SX, 1, SZ);
   shoe.position.set(-5 * SX, -1.2, 0); // center the shoe on its pivot
   const pivot = new THREE.Group();
