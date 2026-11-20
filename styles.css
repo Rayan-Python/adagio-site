@@ -317,8 +317,14 @@ em { font-style: normal; }
 .legal { margin-top: 32px; font-family: var(--mono); font-size: .75rem; color: var(--fg-2); }
 
 /* text eases in as each section arrives */
-.reveal { opacity: 0; translate: 0 28px; transition: opacity 700ms var(--ease), translate 700ms var(--ease); }
-.reveal.is-in { opacity: 1; translate: 0 0; }
+/* Scroll reveal: each block is uncovered from top to bottom, once per page load.
+   The clip is slightly larger than the box so glyph edges and outlines aren't cut, and it's
+   dropped once the wipe ends (script.js) so nothing stays clipped. The 3D phone just fades in. */
+.reveal { clip-path: inset(-12px -24px calc(100% + 12px) -24px); transition: clip-path 1000ms var(--ease); }
+.reveal.is-in { clip-path: inset(-12px -24px -24px -24px); }
+.reveal.is-done { clip-path: none; }
+.phone3d-stage.reveal { clip-path: none; opacity: 0; transition: opacity 900ms var(--ease); }
+.phone3d-stage.reveal.is-in { opacity: 1; }
 
 /* ------------------------------------------------------------------
    Larger screens: the line swings between the side gutters
@@ -347,7 +353,7 @@ em { font-style: normal; }
   .type-ch.is-cur::after { display: none; }
   .orbs i { animation: none; }
   .metro-dot.is-pulsing::after { animation: none; }
-  .reveal { opacity: 1; translate: none; transition: none; }
+  .reveal, .phone3d-stage.reveal { opacity: 1; clip-path: none; transition: none; }
   .flow, .corner, .site-nav, .appstore { transition: none; }
 
 }

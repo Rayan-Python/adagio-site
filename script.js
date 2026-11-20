@@ -94,20 +94,23 @@ function setTheme() {
   setMetronome();
 }
 
-// Text fades and slides in as each section enters.
+// Text is uncovered top to bottom as each section enters. Each item plays once per page
+// load: it stops being watched after it appears, so scrolling back up never replays it.
 const reveals = document.querySelectorAll('.reveal');
-if (reduceMotion || !('IntersectionObserver' in window)) {
-  reveals.forEach((el) => el.classList.add('is-in'));
-} else {
-  const seen = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-in');
-        seen.unobserve(entry.target);
-      }
-    });
-  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.15 });
-  reveals.forEach((el) => seen.observe(el));
+reveals.forEach((el) => el.addEventListener('transitionend', (e) => {
+  if (e.target === el && el.classList.contains('is-in')) el.classList.add('is-done');
+}));
+// Checked on scroll by position (an IntersectionObserver would never fire: the clip hides
+// the element from it).
+let unrevealed = [...reveals];
+function checkReveals() {
+  if (!unrevealed.length) return;
+  const line = window.innerHeight * 0.9;
+  unrevealed = unrevealed.filter((el) => {
+    const r = el.getBoundingClientRect();
+    if (reduceMotion || (r.top < line && r.bottom > 0)) { el.classList.add('is-in'); return false; }
+    return true;
+  });
 }
 
 // The 3D phone rests at an angle (-18deg / 4deg) and tilts gently: a little as its
@@ -143,6 +146,7 @@ if (phoneStage && !reduceMotion) {
 }
 
 function onScroll() {
+  checkReveals();
   dimHero();
   toggleNav();
   setTheme();
