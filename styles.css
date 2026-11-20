@@ -85,6 +85,17 @@ h1, h2, h3, p { margin: 0; }
   font-family: var(--sans); font-stretch: 125%;
   font-size: min(calc(var(--sh) * .05), 6.5cqw); font-weight: 700; letter-spacing: .04em; line-height: 1; color: #FFFFFF;
 }
+/* Typing in on load (script.js): every letter keeps its place from the start, so nothing
+   shifts; each one appears in lime and settles to white, with a lime caret on the newest. */
+.js .hero-brand:not(.is-split), .js .hero-tagline:not(.is-split) { visibility: hidden; }
+.type-ch { position: relative; opacity: 0; }
+.type-ch.is-typed { opacity: 1; animation: type-in 450ms ease-out both; }
+.type-ch.is-cur::after {
+  content: ""; position: absolute; left: 100%; top: .08em; bottom: -.04em; width: .07em; margin-left: .04em;
+  background: var(--lime); animation: caret 900ms steps(1) infinite;
+}
+@keyframes type-in { from { color: var(--lime); } to { color: #FFFFFF; } }
+@keyframes caret { 50% { opacity: 0; } }
 
 /* ------------------------------------------------------------------
    Sticky nav: logo left, links middle, App Store right. Hidden over the photo.
@@ -332,6 +343,8 @@ em { font-style: normal; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .hero-stage { animation: none; }
+  .type-ch { opacity: 1; animation: none; }
+  .type-ch.is-cur::after { display: none; }
   .orbs i { animation: none; }
   .metro-dot.is-pulsing::after { animation: none; }
   .reveal { opacity: 1; translate: none; transition: none; }

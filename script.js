@@ -13,6 +13,42 @@ const flow = document.getElementById('flow');
 const nav = document.querySelector('.site-nav');
 const themed = [...flow.querySelectorAll('[data-theme]')];
 
+// On load, "Adagio" and then "Run your rhythm" type in from left to right. Letters are
+// wrapped in spans that hold their place, so the centered words never move.
+function splitLetters(el) {
+  const text = el.textContent;
+  el.setAttribute('aria-label', text);
+  el.textContent = '';
+  const letters = [...text].map((c) => {
+    const s = document.createElement('span');
+    s.className = 'type-ch';
+    s.setAttribute('aria-hidden', 'true');
+    s.textContent = c;
+    el.appendChild(s);
+    return s;
+  });
+  el.classList.add('is-split');
+  return letters;
+}
+function typeIn() {
+  const brand = splitLetters(heroBrand);
+  const tagline = splitLetters(document.querySelector('.hero-tagline'));
+  if (reduceMotion) return;
+  const steps = [];
+  let t = 350;
+  brand.forEach((s) => { steps.push([s, t]); t += 130; });
+  t += 300;
+  tagline.forEach((s) => { steps.push([s, t]); t += s.textContent === ' ' ? 40 : 60; });
+  let prev = null;
+  steps.forEach(([s, at]) => setTimeout(() => {
+    if (prev) prev.classList.remove('is-cur');
+    s.classList.add('is-typed', 'is-cur');
+    prev = s;
+  }, at));
+  setTimeout(() => prev && prev.classList.remove('is-cur'), t + 1800); // caret blinks a moment, then goes
+}
+typeIn();
+
 // The photo dims as the page slides up over it.
 function dimHero() {
   const progress = Math.min(window.scrollY / window.innerHeight, 1);
