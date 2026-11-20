@@ -289,13 +289,36 @@ button { font: inherit; color: inherit; }
 .finish { position: relative; z-index: 3; height: 132px; background: var(--black); overflow: hidden; }
 .finish-flag { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .finish-tag {
-  position: absolute; z-index: 2; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: baseline; gap: 10px;
-  padding: 10px 20px; border-radius: 999px; background: var(--yellow); color: var(--ink); white-space: nowrap;
-  box-shadow: 0 0 0 4px var(--ink), 0 18px 40px -12px rgba(0,0,0,.7);
+  position: absolute; z-index: 2; left: 50%; top: 50%; transform: translate(-50%, -62%); display: flex; align-items: center; gap: 2px;
+  padding: 4px; border-radius: 999px; background: var(--yellow); color: var(--ink); white-space: nowrap;
+  box-shadow: 0 0 0 4px var(--ink), 0 18px 40px -12px rgba(0,0,0,.7); transition: transform .2s;
 }
-.finish-tag .mono { font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; }
-.finish-tag b { font-weight: 800; font-size: 1.6rem; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
-@media (max-width: 719px) { .finish { height: 104px; } .finish-tag b { font-size: 1.3rem; } }
+.finish-core {
+  display: flex; align-items: baseline; gap: 10px; padding: 6px 10px; border-radius: 999px;
+  cursor: ew-resize; touch-action: none; user-select: none; -webkit-user-select: none; outline-offset: 2px; outline-color: var(--ink);
+}
+.finish-core.is-tapping { background: rgba(10,10,10,.08); }
+.finish-tag.is-hit { transform: translate(-50%, -62%) scale(1.06); transition: transform .06s; }
+.finish-step {
+  width: 34px; height: 34px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer;
+  background: rgba(10,10,10,.08); color: var(--ink); font-size: 1.4rem; line-height: 1; padding-bottom: 3px; transition: background .15s;
+}
+.finish-step:hover { background: rgba(10,10,10,.18); }
+.finish-step:focus-visible { outline-color: var(--ink); }
+.finish-tag .mono { font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; min-width: 10ch; text-align: right; }
+.finish-tag .mono:last-child { min-width: 0; text-align: left; }
+.finish-tag b { font-weight: 800; font-size: 1.6rem; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; min-width: 3ch; text-align: center; }
+.finish-hint {
+  position: absolute; z-index: 2; left: 50%; bottom: 10px; transform: translateX(-50%); margin: 0; padding: 4px 10px; border-radius: 999px;
+  background: var(--ink); color: rgba(255,255,255,.75); font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+  transition: opacity .4s; pointer-events: none;
+}
+.finish-hint.is-gone { opacity: 0; }
+@media (max-width: 719px) {
+  .finish { height: 112px; } .finish-tag b { font-size: 1.3rem; }
+  .finish-step { width: 30px; height: 30px; } .finish-core { gap: 6px; padding: 6px 4px; }
+  .finish-tag .mono { min-width: 0; }
+}
 
 /* TRY IT ----------------------------------------------------------- */
 .play { padding-top: 150px; }
@@ -465,6 +488,12 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .d-badge.ok { border: 0; background: rgba(166,226,46,.12); }
 .device-list li.soon { border-style: dashed; background: transparent; }
 .device-list li.soon .d-name { color: var(--fg-2); }
+.device-list li.pick { padding: 0; }
+.d-pick { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; padding: 12px 16px; border: 0; border-radius: 12px;
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background .2s, box-shadow .2s; }
+.d-pick:hover { background: rgba(255,255,255,.04); }
+.d-pick[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--lime); }
+.d-pick[aria-pressed="true"] .d-name { color: var(--fg); }
 
 /* HAPTIC ----------------------------------------------------------- */
 .haptic-grid { display: grid; gap: 56px; align-items: center; }
@@ -537,7 +566,8 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .foot-links { display: flex; flex-wrap: wrap; gap: 8px 24px; }
 .foot-links a { color: var(--fg-2); text-decoration: none; font-size: .9rem; transition: color 150ms; }
 .foot-links a:hover { color: var(--lime); }
-.legal { margin-top: 28px; font-size: .66rem; color: var(--fg-2); }
+.legal { margin-top: 28px; font-size: .66rem; color: var(--fg-2); line-height: 1.7; }
+.legal a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .foot-word {
   margin: 20px 0 -0.18em; text-align: center; font-weight: 900; font-stretch: 125%; line-height: .8; letter-spacing: -.06em;
   font-size: clamp(5rem, 24vw, 22rem); pointer-events: none; user-select: none;

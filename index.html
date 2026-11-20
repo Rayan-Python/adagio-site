@@ -63,6 +63,7 @@
       <!-- footsteps striking the track, faint behind the copy (Pexels, free to use);
            the light strands pulse in time with them (script.js) -->
       <video class="hero-video" muted loop playsinline preload="metadata" poster="assets/video/hero-feet-strike.jpg" aria-hidden="true" data-hero-video>
+        <source src="assets/video/hero-feet-strike-480.mp4" type="video/mp4" media="(max-width: 719px)">
         <source src="assets/video/hero-feet-strike.mp4" type="video/mp4">
       </video>
       <canvas class="strands" aria-hidden="true"></canvas>
@@ -99,7 +100,14 @@
          the page tempo. script.js draws it; the tag shows the live cadence. -->
     <div class="finish" data-finish>
       <canvas class="finish-flag" data-finish-flag aria-hidden="true"></canvas>
-      <p class="finish-tag"><span class="mono">Finish line</span><b data-bpm>176</b><span class="mono">spm</span></p>
+      <div class="finish-tag">
+        <button class="finish-step" type="button" data-finish-step="-2" aria-label="Slower cadence">&lsaquo;</button>
+        <div class="finish-core" data-finish-core role="slider" tabindex="0" aria-label="Your cadence in steps per minute. Drag, use the arrow keys, or tap in rhythm." aria-valuemin="100" aria-valuemax="220" aria-valuenow="176">
+          <span class="mono" data-finish-zone>Race pace</span><b data-bpm>176</b><span class="mono">spm</span>
+        </div>
+        <button class="finish-step" type="button" data-finish-step="2" aria-label="Faster cadence">&rsaquo;</button>
+      </div>
+      <p class="finish-hint mono" data-finish-hint aria-hidden="true">Drag, or tap your rhythm</p>
     </div>
 
     <!-- ============ TRY IT: tap your cadence ============ -->
@@ -182,8 +190,9 @@
             <ul class="device-chips mono"><li>iPhone</li><li>Apple Watch</li><li>Garmin</li></ul>
           </div>
           <div class="spike-stage" aria-hidden="true">
-            <!-- To use a real 3D shoe: add data-glb="assets/models/spike.glb" (any .glb file) -->
-            <canvas class="model-canvas" data-model="spike"></canvas>
+            <!-- data-glb loads a real 3D shoe: Paavo Nurmi's 1925 racing spikes, a museum scan (CC BY 4.0, credited in the footer).
+                 Remove the attribute to show the built-in modern spike instead. -->
+            <canvas class="model-canvas" data-model="spike" data-glb="assets/models/nurmi-spike.glb"></canvas>
             <p class="mono model-cap">Drag to spin</p>
           </div>
         </div>
@@ -343,7 +352,7 @@
           <div class="devices glass reveal" id="devices">
             <div class="watch-stage" aria-hidden="true">
               <canvas class="model-canvas" data-model="watch"></canvas>
-              <p class="mono model-cap">Drag to turn</p>
+              <p class="mono model-cap" data-watch-cap>Garmin · drag to turn</p>
             </div>
             <div class="devices-copy">
               <p class="mono dim">Compatible devices</p>
@@ -352,8 +361,8 @@
               <ul class="device-list">
                 <li><span class="d-name">iPhone</span><span class="d-badge ok">✓ Supported</span></li>
                 <li><span class="d-name">Apple Watch</span><span class="d-badge ok">✓ Supported</span></li>
-                <li><span class="d-name">Garmin</span><span class="d-badge ok">✓ Supported</span></li>
-                <li class="soon"><span class="d-name">COROS</span><span class="d-badge">Coming soon</span></li>
+                <li class="pick"><button class="d-pick" type="button" data-device="garmin" aria-pressed="true"><span class="d-name">Garmin</span><span class="d-badge ok">✓ Supported</span></button></li>
+                <li class="soon pick"><button class="d-pick" type="button" data-device="coros" aria-pressed="false"><span class="d-name">COROS</span><span class="d-badge">Coming soon</span></button></li>
               </ul>
             </div>
           </div>
@@ -479,7 +488,7 @@
         <a href="#" data-placeholder>Strava</a>
       </nav>
     </div>
-    <p class="wrap legal mono">© <span id="year">2026</span> Adagio · Keeping time at <span data-bpm>176</span> spm · Footage: Pexels</p>
+    <p class="wrap legal mono">© <span id="year">2026</span> Adagio · Keeping time at <span data-bpm>176</span> spm · Footage: Pexels · 3D spike: <a href="https://sketchfab.com/3d-models/paavo-nurmis-spike-shoes-fd5c790ead9e43ac8897b3c42f667873" rel="noopener">&ldquo;Paavo Nurmi&rsquo;s Spike Shoes&rdquo;</a> by Sports Museum of Finland (urheilumuseo), <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a></p>
     <p class="foot-word" aria-hidden="true">Adagio</p>
   </footer>
 
