@@ -623,56 +623,6 @@ if (finish) {
     requestAnimationFrame(loop);
     onBeat(() => { if (isOn(finish)) kicks.push((performance.now() - t0) / 1000); });
   }
-
-  // The tag sets your cadence: drag it sideways, use the arrows (or arrow keys), or tap it
-  // in rhythm, one tap per step. Each tap also sends a ripple through the flag.
-  const core = $('[data-finish-core]', finish);
-  const tag = core.parentElement;
-  const zoneEl = $('[data-finish-zone]', finish);
-  const hint = $('[data-finish-hint]', finish);
-  const MIN = 100, MAX = 220, PX = 5; // pixels per step per minute while dragging
-  const zoneFor = (b) => b < 125 ? 'Walk' : b < 150 ? 'Easy jog' : b < 168 ? 'Steady run' : b < 184 ? 'Race pace' : b < 198 ? 'Tempo run' : 'Sprint';
-  const show = (b) => { zoneEl.textContent = zoneFor(b); core.setAttribute('aria-valuenow', b); core.setAttribute('aria-valuetext', `${b} steps per minute, ${zoneFor(b)}`); };
-  show(tempo.bpm);
-  document.addEventListener('adagio:bpm', (e) => show(e.detail));
-  const used = () => hint.classList.add('is-gone');
-  const set = (b) => { setBPM(clamp(b, MIN, MAX)); used(); };
-  $$('[data-finish-step]', finish).forEach((btn) => btn.addEventListener('click', () => set(tempo.bpm + +btn.dataset.finishStep)));
-  core.addEventListener('keydown', (e) => {
-    const step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1, PageDown: -10, PageUp: 10 }[e.key];
-    if (step) { e.preventDefault(); set(tempo.bpm + step); }
-  });
-  let drag = null, taps = [], idle = 0;
-  core.addEventListener('pointerdown', (e) => {
-    drag = { x: e.clientX, from: tempo.bpm, moved: false };
-    try { core.setPointerCapture(e.pointerId); } catch { /* synthetic or lost pointer */ }
-  });
-  core.addEventListener('pointermove', (e) => {
-    if (!drag) return;
-    const dx = e.clientX - drag.x;
-    if (Math.abs(dx) > 6) drag.moved = true;
-    if (drag.moved) set(drag.from + dx / PX);
-  });
-  core.addEventListener('pointerup', () => {
-    if (!drag) return;
-    const wasTap = !drag.moved;
-    drag = null;
-    if (!wasTap) { taps = []; return; }
-    const now = performance.now();
-    taps = taps.filter((t) => now - t < 2500).concat(now).slice(-6);
-    kicks.push((now - t0) / 1000);
-    tag.classList.add('is-hit');
-    setTimeout(() => tag.classList.remove('is-hit'), 90);
-    core.classList.add('is-tapping');
-    clearTimeout(idle);
-    idle = setTimeout(() => { core.classList.remove('is-tapping'); taps = []; }, 1600);
-    if (taps.length >= 3) { // two or more gaps between taps: use their average
-      const gap = (taps[taps.length - 1] - taps[0]) / (taps.length - 1);
-      setBPM(clamp(60000 / gap, MIN, MAX), { align: true });
-      used();
-    }
-  });
-  core.addEventListener('pointercancel', () => { drag = null; });
 }
 let lastY = window.scrollY;
 

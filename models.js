@@ -1,8 +1,8 @@
 // Adagio — real 3D models (three.js, WebGL), built from code, no model files:
 //   • a distance track spike for "How it works · 01": green-to-gold knit upper, cream laces,
 //     cream heel foam, green plate with salmon traction nubs and silver pins
-//   • a Garmin-style round GPS watch (fenix / Forerunner look) and a COROS-style watch
-//     (coming soon) for "Compatible devices"; their screens show the page tempo
+//   • a Garmin-style round GPS watch (fenix / Forerunner look) for "Compatible devices";
+//     its screen shows the page tempo and updates when you tap a new cadence
 // Drag either one sideways to turn it. They only render while on screen.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -441,7 +441,7 @@ function buildSpike() {
 
   // real-shoe proportions: about 3 times as long as it is tall, and wider through the
   // forefoot (the profile curves above are drawn long; this brings it back to scale)
-  const SX = 0.72, SZ = 1.4;
+  const SX = 0.76, SZ = 1.32;
   shoe.scale.set(SX, 1, SZ);
   shoe.position.set(-5 * SX, -1.2, 0); // center the shoe on its pivot
   const pivot = new THREE.Group();
@@ -522,7 +522,7 @@ function drawFace(g, size, bpm) {
   g.font = '600 34px "JetBrains Mono", ui-monospace, monospace';
   g.fillText('SAT 01', m, m - 150);
   // big two-tone time, the Garmin signature
-  g.font = '800 205px Archivo, Helvetica, Arial, sans-serif';
+  g.font = 'italic 800 205px Archivo, Helvetica, Arial, sans-serif';
   g.textAlign = 'right'; g.fillStyle = '#ffffff'; g.fillText('10', m - 6, m + 60);
   g.textAlign = 'left'; g.fillStyle = '#A6E22E'; g.fillText('10', m + 6, m + 60);
   // three data complications: heart rate, cadence (highlighted), music tempo
@@ -687,36 +687,13 @@ function buildWatch() {
 
 function initWatch(canvas) {
   const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 30, distance: 16.5, fitWidth: 8.5 });
-  // two watches share the stage: the Garmin (supported) and the COROS (coming soon).
-  // Picking one in the device list spins the other out and this one in; until you pick,
-  // they take turns every few seconds.
-  const models = { garmin: buildWatch(), coros: buildCoros() };
-  const holder = new THREE.Group();
-  scene.add(holder);
-  Object.values(models).forEach((w) => holder.add(w));
-  models.coros.visible = false;
-  const setAll = (bpm) => Object.values(models).forEach((w) => w.userData.setBPM(bpm));
-  document.addEventListener('adagio:bpm', (e) => setAll(e.detail));
-  if (document.fonts) document.fonts.ready.then(() => setAll(tempo().bpm)); // redraw once fonts load
-
-  const zone = canvas.closest('.devices') || canvas;
-  const cap = zone.querySelector('[data-watch-cap]');
-  const buttons = [...zone.querySelectorAll('[data-device]')];
-  const captions = { garmin: 'Garmin · drag to turn', coros: 'COROS · coming soon' };
-  let current = 'garmin', prev = null, swapStart = -1, auto = true, lastSwap = performance.now();
-  const pick = (name, byUser) => {
-    if (byUser) auto = false;
-    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.device === name)));
-    if (cap) cap.textContent = captions[name];
-    if (name === current) return;
-    prev = current; current = name;
-    models[current].visible = true;
-    swapStart = performance.now(); lastSwap = swapStart;
-    if (reduceMotion) { models[prev].visible = false; prev = null; swapStart = -1; }
-  };
-  buttons.forEach((b) => b.addEventListener('click', () => pick(b.dataset.device, true)));
+  const watch = buildWatch();
+  scene.add(watch);
+  document.addEventListener('adagio:bpm', (e) => watch.userData.setBPM(e.detail));
+  if (document.fonts) document.fonts.ready.then(() => watch.userData.setBPM(tempo().bpm)); // redraw once fonts load
 
   // tilt toward the pointer over the panel; a full turn when the music staff passes by
+  const zone = canvas.closest('.devices') || canvas;
   let px = 0, py = 0, tx = 0, ty = 0, turnStart = -1;
   zone.addEventListener('pointermove', (e) => {
     const r = zone.getBoundingClientRect();
@@ -727,7 +704,6 @@ function initWatch(canvas) {
   if (stage) stage.addEventListener('adagio:note-hit', () => { if (turnStart < 0) turnStart = performance.now(); });
 
   runWhileVisible(canvas, (now) => {
-    if (auto && swapStart < 0 && now - lastSwap > 6500) pick(current === 'garmin' ? 'coros' : 'garmin', false);
     if (!drag.on) drag.offset *= 0.95;
     px += (tx - px) * 0.08; py += (ty - py) * 0.08;
     const t = reduceMotion ? 0 : now;
@@ -737,179 +713,11 @@ function initWatch(canvas) {
       turn = Math.PI * 2 * easeInOut(p);
       if (p >= 1) turnStart = -1;
     }
-    // swap: the old watch spins away and shrinks while the new one spins in
-    models[current].scale.setScalar(1);
-    models[current].rotation.set(0, 0, 0);
-    if (swapStart >= 0) {
-      const p = clamp((now - swapStart) / 900, 0, 1), e = easeInOut(p);
-      models[current].scale.setScalar(Math.max(0.001, e));
-      models[current].rotation.y = -Math.PI * (1 - e);
-      models[prev].scale.setScalar(Math.max(0.001, 1 - e));
-      models[prev].rotation.y = Math.PI * e;
-      if (p >= 1) { models[prev].visible = false; prev = null; swapStart = -1; }
-    }
-    holder.rotation.y = -0.4 + Math.sin(t * 0.0006) * 0.3 + px * 0.6 + drag.offset + turn;
-    holder.rotation.x = -0.3 + Math.sin(t * 0.0005 + 1) * 0.07 + py * 0.4;
-    holder.rotation.z = 0.1;
-    holder.position.y = Math.sin(t * 0.001) * 0.12;
+    watch.rotation.y = -0.4 + Math.sin(t * 0.0006) * 0.3 + px * 0.6 + drag.offset + turn;
+    watch.rotation.x = -0.3 + Math.sin(t * 0.0005 + 1) * 0.07 + py * 0.4;
+    watch.rotation.z = 0.1;
+    watch.position.y = Math.sin(t * 0.001) * 0.12;
   }, () => renderer.render(scene, camera));
-}
-
-/* ----------------------------------------------------------------------
-   COROS-style training watch (coming soon): a light, matte polymer case, a slim
-   dark bezel, the big knurled "digital dial" at two o'clock with the single button
-   below it, and a soft nylon-look band. Its face is a ring of 60 bars that lights
-   up to your cadence, a big upright time and three run fields.
-   ---------------------------------------------------------------------- */
-function drawCorosFace(g, size, bpm) {
-  const m = size / 2;
-  g.fillStyle = '#020303'; g.fillRect(0, 0, size, size);
-  // 60 bars around the edge, lit in lime up to the cadence (out of 220)
-  const lit = Math.round(60 * clamp(bpm / 220, 0, 1));
-  for (let i = 0; i < 60; i++) {
-    const a = -Math.PI / 2 + (i / 60) * Math.PI * 2;
-    g.strokeStyle = i < lit ? '#A6E22E' : 'rgba(255,255,255,.14)';
-    g.lineWidth = i % 5 === 0 ? 9 : 6;
-    g.lineCap = 'round';
-    g.beginPath();
-    g.moveTo(m + Math.cos(a) * (m - 18), m + Math.sin(a) * (m - 18));
-    g.lineTo(m + Math.cos(a) * (m - 44), m + Math.sin(a) * (m - 44));
-    g.stroke();
-  }
-  g.textAlign = 'center'; g.textBaseline = 'alphabetic';
-  g.fillStyle = 'rgba(255,255,255,.6)';
-  g.font = '600 26px "JetBrains Mono", ui-monospace, monospace';
-  g.fillText('ADAGIO · RUN', m, m - 170);
-  g.fillStyle = '#ffffff';
-  g.font = '800 150px Archivo, Helvetica, Arial, sans-serif';
-  g.fillText('10:10', m, m - 30);
-  // a thin divider, then three fields: pace, cadence (big, lime), music tempo
-  g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(m - 210, m + 2, 420, 3);
-  const field = (x, label, value, big, color) => {
-    g.fillStyle = color;
-    g.font = `800 ${big ? 92 : 48}px Archivo, Helvetica, Arial, sans-serif`;
-    g.fillText(value, x, m + (big ? 104 : 90));
-    g.fillStyle = 'rgba(255,255,255,.55)';
-    g.font = '600 20px "JetBrains Mono", ui-monospace, monospace';
-    g.fillText(label, x, m + 136);
-  };
-  field(m - 165, 'PACE', "4'48", false, '#ffffff');
-  field(m, 'SPM', String(bpm), true, '#A6E22E');
-  field(m + 165, '♪ BPM', String(bpm), false, '#ffffff');
-  // "coming soon" pill at the bottom
-  g.strokeStyle = 'rgba(166,226,46,.8)'; g.lineWidth = 3;
-  g.beginPath(); g.roundRect(m - 112, m + 168, 224, 46, 23); g.stroke();
-  g.fillStyle = '#A6E22E';
-  g.font = '700 21px "JetBrains Mono", ui-monospace, monospace';
-  g.fillText('COMING SOON', m, m + 199);
-}
-
-function knurledDial(radius, length) {
-  // a cylinder whose rim is ridged like a knurled crown
-  const geo = new THREE.CylinderGeometry(radius, radius, length, 120, 1);
-  const p = geo.attributes.position;
-  for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), z = p.getZ(i), r = Math.hypot(x, z);
-    if (r < radius * 0.99) continue; // leave the cap centers flat
-    const a = Math.atan2(z, x);
-    const k = 1 + 0.06 * Math.sign(Math.sin(a * 30));
-    p.setX(i, x * k); p.setZ(i, z * k);
-  }
-  geo.computeVertexNormals();
-  return geo;
-}
-
-function buildCoros() {
-  const watch = new THREE.Group();
-  const R = 2.3;
-  const polymer = new THREE.MeshPhysicalMaterial({ color: 0xe6e8e4, roughness: 0.55, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.5 });
-  const bezelMat = new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.35, metalness: 0.3 });
-  const metal = new THREE.MeshStandardMaterial({ color: 0xb8bcc2, metalness: 1, roughness: 0.28 });
-  const band = new THREE.MeshPhysicalMaterial({ color: 0xc9ccc8, roughness: 0.85, sheen: 0.8, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xffffff), side: THREE.DoubleSide });
-
-  // case: a soft, rounded lathe profile so the polymer edges catch the light
-  const caseProfile = [[0, -0.45], [R * 0.86, -0.45], [R * 0.97, -0.36], [R, -0.15], [R, 0.2], [R * 0.97, 0.38], [R * 0.9, 0.46], [0, 0.46]]
-    .map(([r, y]) => new THREE.Vector2(r, y));
-  const caseGeo = new THREE.LatheGeometry(caseProfile, 128);
-  caseGeo.rotateX(Math.PI / 2);
-  watch.add(new THREE.Mesh(caseGeo, polymer));
-  // slim, slightly raised dark bezel with 12 printed indices
-  const bezelGeo = new THREE.LatheGeometry([[1.98, 0.44], [1.98, 0.54], [2.02, 0.57], [2.14, 0.57], [2.18, 0.5], [2.18, 0.44]].map(([r, y]) => new THREE.Vector2(r, y)), 128);
-  bezelGeo.rotateX(Math.PI / 2);
-  watch.add(new THREE.Mesh(bezelGeo, bezelMat));
-  for (let k = 0; k < 12; k++) {
-    const a = (k / 12) * Math.PI * 2;
-    const dot = new THREE.Mesh(new THREE.BoxGeometry(k % 3 ? 0.03 : 0.05, 0.1, 0.01), new THREE.MeshBasicMaterial({ color: k === 0 ? 0xa6e22e : 0xd8d8d8 }));
-    dot.position.set(Math.sin(a) * 2.08, Math.cos(a) * 2.08, 0.575);
-    dot.rotation.z = -a;
-    watch.add(dot);
-  }
-
-  // screen + glass
-  const faceCanvas = document.createElement('canvas');
-  faceCanvas.width = faceCanvas.height = 768;
-  drawCorosFace(faceCanvas.getContext('2d'), 768, tempo().bpm);
-  const faceTex = new THREE.CanvasTexture(faceCanvas);
-  faceTex.colorSpace = THREE.SRGBColorSpace;
-  faceTex.anisotropy = 8;
-  const screen = new THREE.Mesh(new THREE.CircleGeometry(1.97, 96), new THREE.MeshBasicMaterial({ map: faceTex }));
-  screen.position.z = 0.47;
-  watch.add(screen);
-  const glass = new THREE.Mesh(new THREE.CircleGeometry(1.98, 96),
-    new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, roughness: 0.02, clearcoat: 1, envMapIntensity: 1.8 }));
-  glass.position.z = 0.5;
-  watch.add(glass);
-
-  // the knurled digital dial at two o'clock, with a lime accent ring, and one button at four
-  const dialA = (35 * Math.PI) / 180;
-  const dial = new THREE.Mesh(knurledDial(0.36, 0.42), metal);
-  dial.position.set(Math.cos(dialA) * (R + 0.2), Math.sin(dialA) * (R + 0.2), 0.02);
-  dial.rotation.z = dialA - Math.PI / 2;
-  watch.add(dial);
-  const accent = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.33, 0.06, 48), new THREE.MeshStandardMaterial({ color: 0xa6e22e, emissive: 0x3d4a00, roughness: 0.4 }));
-  accent.position.set(Math.cos(dialA) * (R + 0.44), Math.sin(dialA) * (R + 0.44), 0.02);
-  accent.rotation.z = dialA - Math.PI / 2;
-  watch.add(accent);
-  const btnA = (-35 * Math.PI) / 180;
-  const btn = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.32, 6, 16), metal);
-  btn.position.set(Math.cos(btnA) * (R + 0.06), Math.sin(btnA) * (R + 0.06), 0.02);
-  btn.rotation.z = btnA - Math.PI / 2;
-  btn.rotation.x = Math.PI / 2;
-  watch.add(btn);
-
-  // integrated lugs and a soft band wrapping back around the wrist, with a hook-and-loop end
-  const outline = roundedRect(1.72, 0.2, 0.09);
-  for (const dir of [1, -1]) {
-    const lug = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 1.3, 6, 16), polymer);
-    lug.rotation.z = Math.PI / 2;
-    lug.position.set(0, dir * (R - 0.15), -0.1);
-    watch.add(lug);
-    const path = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, dir * (R - 0.1), -0.12),
-      new THREE.Vector3(0, dir * (R + 0.55), -0.25),
-      new THREE.Vector3(0, dir * (R + 1.25), -0.8),
-      new THREE.Vector3(0, dir * (R + 1.55), -1.75),
-      new THREE.Vector3(0, dir * (R + 1.5), -2.8),
-    ]);
-    watch.add(new THREE.Mesh(sweep(path, outline, { samples: 70 }), band));
-    // a few woven ridges across the band
-    for (let k = 0; k < 9; k++) {
-      const t = 0.12 + k * 0.09;
-      const p = path.getPointAt(t), tan = path.getTangentAt(t);
-      const nrm = new THREE.Vector3().crossVectors(tan, new THREE.Vector3(1, 0, 0)).normalize();
-      const rib = new THREE.Mesh(new THREE.BoxGeometry(1.66, 0.025, 0.02), new THREE.MeshStandardMaterial({ color: 0xb4b7b3, roughness: 0.9 }));
-      rib.position.copy(p).addScaledVector(nrm, -0.105);
-      rib.lookAt(rib.position.clone().add(nrm));
-      watch.add(rib);
-    }
-  }
-  const back = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.78, R * 0.78, 0.14, 64), new THREE.MeshStandardMaterial({ color: 0x2a2d31, roughness: 0.5 }));
-  back.rotation.x = Math.PI / 2;
-  back.position.z = -0.5;
-  watch.add(back);
-
-  watch.userData.setBPM = (bpm) => { drawCorosFace(faceCanvas.getContext('2d'), 768, bpm); faceTex.needsUpdate = true; };
-  return watch;
 }
 
 /* ----------------------------------------------------------------------
@@ -1220,18 +1028,9 @@ if (supportsWebGL()) {
   const spikeCanvas = document.querySelector('[data-model="spike"]');
   const watchCanvas = document.querySelector('[data-model="watch"]');
   const appleCanvas = document.querySelector('[data-model="applewatch"]');
+  if (spikeCanvas) initSpike(spikeCanvas);
+  if (watchCanvas) initWatch(watchCanvas);
+  if (appleCanvas) initAppleWatch(appleCanvas);
   const phoneCanvas = document.querySelector('[data-model="iphone"]');
-  if (phoneCanvas) initIPhone(phoneCanvas); // the hero: right away
-  // the rest are built only when they come within a screen of view, so phones don't
-  // spend time and memory on models far down the page
-  const later = [[spikeCanvas, initSpike], [watchCanvas, initWatch], [appleCanvas, initAppleWatch]].filter(([c]) => c);
-  const soon = new IntersectionObserver((entries) => {
-    entries.forEach((e) => {
-      if (!e.isIntersecting) return;
-      soon.unobserve(e.target);
-      const job = later.find(([c]) => c === e.target);
-      if (job) job[1](job[0]);
-    });
-  }, { rootMargin: '100% 0px' });
-  later.forEach(([c]) => soon.observe(c));
+  if (phoneCanvas) initIPhone(phoneCanvas);
 }
