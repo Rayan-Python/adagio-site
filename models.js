@@ -439,7 +439,11 @@ function buildSpike() {
   badge.rotation.y = -Math.PI / 2;
   add(badge, false);
 
-  shoe.position.set(-5, -1.2, 0); // center the shoe on its pivot
+  // real-shoe proportions: about 3 times as long as it is tall, and wider through the
+  // forefoot (the profile curves above are drawn long; this brings it back to scale)
+  const SX = 0.82, SZ = 1.22;
+  shoe.scale.set(SX, 1, SZ);
+  shoe.position.set(-5 * SX, -1.2, 0); // center the shoe on its pivot
   const pivot = new THREE.Group();
   pivot.add(shoe);
   return pivot;
@@ -469,7 +473,7 @@ async function loadRealSpike(pivot, url) {
 }
 
 function initSpike(canvas) {
-  const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 28, distance: 16.5, fitWidth: 11.5, lights: 'studio', shadows: true });
+  const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 28, distance: 16.5, fitWidth: 10, lights: 'studio', shadows: true });
   const spike = buildSpike();
   // a tilted turntable: the shoe spins steadily on its own axis, angled toward the
   // viewer and slightly toe-up, like a product shot. No bobbing or hopping.

@@ -32,6 +32,8 @@
   const defs = make('defs', {}, svg);
   const clipDark = make('clipPath', { id: 'staff-clip-dark' }, defs);
   const clipLight = make('clipPath', { id: 'staff-clip-light' }, defs);
+  // The staff runs behind the text. Where it passes through a letter, the letter itself
+  // shows it in the opposite color: the text uses "difference" blending (styles.css).
   const layers = ['dark', 'light'].map((kind) => {
     const g = make('g', { class: `staff-layer ${kind}`, 'clip-path': `url(#staff-clip-${kind})` }, svg);
     const lines = Array.from({ length: 5 }, () => make('path', { class: 'staff-line' }, g));

@@ -16,7 +16,7 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
    Tempo: the page's clock
    ====================================================================== */
 const tempo = {
-  bpm: 170,
+  bpm: 176,
   next: 0,      // time of the next beat (performance.now ms)
   count: 0,     // beats since load
   get len() { return 60000 / this.bpm; },
@@ -51,7 +51,7 @@ function setBPM(value, { align = false } = {}) {
   document.dispatchEvent(new CustomEvent('adagio:bpm', { detail: bpm })); // the 3D watch face listens
 }
 window.adagioTempo = tempo; // shared with the 3D models (models.js)
-setBPM(170, { align: true });
+setBPM(176, { align: true }); // the hero runner's cadence (see HERO_STEP below)
 
 function tick(now) {
   if (now - tempo.next > tempo.len * 2) tempo.next = now; // came back from a hidden tab
@@ -279,7 +279,9 @@ function drawStrands(now) {
   mouse.x += (mouse.tx - mouse.x) * 0.12;
   mouse.y += (mouse.ty - mouse.y) * 0.12;
   const t = reduceMotion ? 0 : now;
-  const kick = reduceMotion ? 0 : Math.exp(-tempo.phase(now) * 5);
+  const vk = heroKick(); // locked to the footsteps in the hero video while it plays
+  // if the video stalls for a moment, keep pulsing at the same footstep rate
+  const kick = reduceMotion ? 0 : (vk !== null ? vk : Math.exp(-(((now / 1000) / HERO_STEP) % 1) * 5));
   const scrolled = clamp(window.scrollY / Math.max(H, 1), 0, 1);
   const spreadMul = 1 + scrolled * 1.6;
 
@@ -541,17 +543,18 @@ if (screens.length > 1 && !reduceMotion) {
   }, 3200);
 }
 
-// Hero video: a faint runner on the track. Plays muted; with reduced motion it stays
-// on its poster (the original runner photo).
+// Hero video: footsteps striking the track, faint behind the copy. Plays muted; with
+// reduced motion it stays on its poster frame.
 const heroVideo = $('[data-hero-video]');
-// Hero video options to compare: add ?hero=start (or headphones, pushin, behind) to the
-// address. Remove this list once one is chosen.
-const HERO_OPTIONS = { start: 'hero-start-line', headphones: 'hero-headphones', pushin: 'hero-push-in', behind: 'hero-track-feet' };
-const heroPick = HERO_OPTIONS[new URLSearchParams(location.search).get('hero')];
-if (heroVideo && heroPick) {
-  heroVideo.poster = `assets/video/${heroPick}.jpg`;
-  $('source', heroVideo).src = `assets/video/${heroPick}.mp4`;
-  heroVideo.load();
+// The hero's light strands pulse in time with those footsteps. The clip is slow motion:
+// a foot lands every 0.675 s of playback (measured from the footage), about 89 a minute on
+// screen, which is a real cadence of about 176 steps per minute (the page's start tempo).
+const HERO_STEP = 0.675;      // seconds between footstrikes in the clip
+const HERO_FIRST_STEP = 0.2;  // when the first one lands
+function heroKick() {
+  if (!heroVideo || heroVideo.paused || heroVideo.readyState < 2) return null;
+  const phase = (((heroVideo.currentTime - HERO_FIRST_STEP) / HERO_STEP) % 1 + 1) % 1;
+  return Math.exp(-phase * 5);
 }
 if (heroVideo) {
   if (reduceMotion) heroVideo.removeAttribute('autoplay');
