@@ -441,7 +441,7 @@ function buildSpike() {
 
   // real-shoe proportions: about 3 times as long as it is tall, and wider through the
   // forefoot (the profile curves above are drawn long; this brings it back to scale)
-  const SX = 0.82, SZ = 1.22;
+  const SX = 0.76, SZ = 1.32;
   shoe.scale.set(SX, 1, SZ);
   shoe.position.set(-5 * SX, -1.2, 0); // center the shoe on its pivot
   const pivot = new THREE.Group();
@@ -726,14 +726,25 @@ function initWatch(canvas) {
    side button, a sport band with pin holes. It gives a small "haptic" tap on
    every beat, and turns a full circle when the music staff passes by.
    ---------------------------------------------------------------------- */
+// Apple-style "continuous" corners: each corner is a superellipse that eases into the
+// straight edge (the curvature builds up gradually) instead of a circular arc that snaps
+// onto it. That's what makes an iPhone or Apple Watch corner look right.
 function roundedRectShape(w, h, r) {
   const s = new THREE.Shape();
-  const x = -w / 2, y = -h / 2;
-  s.moveTo(x + r, y);
-  s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
-  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
-  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  const e = Math.min(r * 1.28, w / 2, h / 2); // continuous corners reach further along each edge
+  const k = 2 / 5;                             // superellipse exponent 5
+  const corners = [[w / 2 - e, -h / 2 + e, -Math.PI / 2], [w / 2 - e, h / 2 - e, 0], [-w / 2 + e, h / 2 - e, Math.PI / 2], [-w / 2 + e, -h / 2 + e, Math.PI]];
+  let first = true;
+  corners.forEach(([cx, cy, a0]) => {
+    for (let i = 0; i <= 16; i++) {
+      const a = a0 + (i / 16) * (Math.PI / 2);
+      const c = Math.cos(a), sn = Math.sin(a);
+      const x = cx + e * Math.sign(c) * Math.pow(Math.abs(c), k);
+      const y = cy + e * Math.sign(sn) * Math.pow(Math.abs(sn), k);
+      if (first) { s.moveTo(x, y); first = false; } else s.lineTo(x, y);
+    }
+  });
+  s.closePath();
   return s;
 }
 
@@ -892,7 +903,7 @@ const PHONE_SCREENS = ['4-run-on-target', '1-run-speed-up', '5-set-up-run', '2-s
 
 function buildIPhone() {
   const phone = new THREE.Group();
-  const W = 3.6, H = 7.8, R = 1.02, D = 0.3, BEV = 0.07;
+  const W = 3.6, H = 7.8, R = 0.6, D = 0.3, BEV = 0.07; // iPhone 16 Pro proportions: corner radius about 1/6 of the width
   const titanium = new THREE.MeshPhysicalMaterial({ color: 0x3a3a3d, metalness: 1, roughness: 0.38, clearcoat: 0.3 });
   const bodyGeo = new THREE.ExtrudeGeometry(roundedRectShape(W, H, R), { depth: D, bevelEnabled: true, bevelThickness: BEV, bevelSize: BEV, bevelSegments: 6, curveSegments: 32 });
   bodyGeo.translate(0, 0, -D / 2);

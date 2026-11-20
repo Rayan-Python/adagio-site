@@ -566,20 +566,65 @@ if (heroVideo) {
   }
 }
 
-// marquee: drifts on its own, speeds up with scroll speed, reverses when you scroll up
-const marquee = $('[data-marquee]');
-let mqX = 0, mqDir = -1, mqBoost = 0, lastY = window.scrollY;
-function runMarquee() {
-  if (!marquee) return;
-  const half = marquee.scrollWidth / 2;
-  mqX += mqDir * (0.6 + mqBoost);
-  mqBoost *= 0.92;
-  if (mqX <= -half) mqX += half;
-  if (mqX > 0) mqX -= half;
-  marquee.style.transform = `translate3d(${mqX.toFixed(1)}px,0,0)`;
-  requestAnimationFrame(runMarquee);
+// Finish line: a checkered flag drawn in thin vertical slices, each nudged up or down and
+// shaded by a travelling wave so it reads as cloth. Every beat of the page tempo sends a
+// fresh ripple through it.
+const finish = $('[data-finish]');
+if (finish) {
+  const cv = $('[data-finish-flag]', finish);
+  const ctx = cv.getContext('2d');
+  const tile = document.createElement('canvas');
+  const tctx = tile.getContext('2d');
+  let W = 0, H = 0, dpr = 1, SQ = 24, t0 = performance.now(), kicks = [];
+  const paint = () => { // the flat flag, a little taller than the banner so waves never show an edge
+    tile.width = W; tile.height = H + 2 * SQ;
+    const cols = Math.ceil(W / SQ) + 1, rows = Math.ceil(tile.height / SQ) + 1;
+    tctx.fillStyle = '#F4F4EF'; tctx.fillRect(0, 0, tile.width, tile.height);
+    tctx.fillStyle = '#0A0A0A';
+    for (let r = 0; r < rows; r++) for (let c2 = 0; c2 < cols; c2++) if ((r + c2) % 2) tctx.fillRect(c2 * SQ, r * SQ, SQ, SQ);
+  };
+  const size = () => {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.round(finish.clientWidth * dpr); H = Math.round(finish.clientHeight * dpr);
+    SQ = Math.round((finish.clientWidth < 720 ? 20 : 26) * dpr);
+    cv.width = W; cv.height = H; paint(); draw(performance.now());
+  };
+  const draw = (now) => {
+    const t = (now - t0) / 1000;
+    const strip = Math.max(2, Math.round(2 * dpr));
+    kicks = kicks.filter((k) => t - k < 2.2);
+    ctx.clearRect(0, 0, W, H);
+    for (let x = 0; x < W; x += strip) {
+      const u = x / W;
+      // a slow breeze plus beat ripples that roll from left to right and fade out
+      let wave = Math.sin(u * 7 - t * 0.7) * 0.55 + Math.sin(u * 3.4 - t * 0.4 + 1.2) * 0.45;
+      let slope = Math.cos(u * 7 - t * 0.7) * 0.55 + Math.cos(u * 3.4 - t * 0.4 + 1.2) * 0.45;
+      kicks.forEach((k) => {
+        const age = t - k, front = age * 0.9, d = u - front;
+        const env = Math.exp(-d * d * 60) * Math.exp(-age * 1.6);
+        wave += Math.sin(d * 30) * env * 0.35; slope += Math.cos(d * 30) * env * 0.35;
+      });
+      const dy = wave * SQ * 0.12;
+      ctx.drawImage(tile, x, 0, strip, tile.height, x, dy - SQ, strip, tile.height);
+      const shade = slope * 0.08;
+      ctx.fillStyle = shade > 0 ? `rgba(255,255,255,${shade.toFixed(3)})` : `rgba(0,0,0,${(-shade * 1.6).toFixed(3)})`;
+      ctx.fillRect(x, 0, strip, H);
+    }
+    // a little sag of light along the top and bottom hems
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(0.18, 'rgba(0,0,0,0)'); g.addColorStop(0.82, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.45)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  };
+  size();
+  window.addEventListener('resize', size);
+  watch(finish);
+  if (!reduceMotion) {
+    const loop = (now) => { if (isOn(finish) && !document.hidden) draw(now); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+    onBeat(() => { if (isOn(finish)) kicks.push((performance.now() - t0) / 1000); });
+  }
 }
-if (!reduceMotion) requestAnimationFrame(runMarquee);
+let lastY = window.scrollY;
 
 // how it works: each panel shrinks and dims a little as the next one covers it;
 // panel 03 draws its pace line as it arrives
@@ -696,9 +741,7 @@ function setMetronome() {
 
 function onScroll() {
   const y = window.scrollY;
-  const dy = y - lastY;
   lastY = y;
-  if (dy) { mqDir = dy > 0 ? -1 : 1; mqBoost = Math.min(mqBoost + Math.abs(dy) * 0.08, 18); }
   stackPanels();
   runParallax();
   runRoad();

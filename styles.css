@@ -28,7 +28,7 @@ body {
   margin: 0; font-family: var(--sans); font-size: 1.0625rem; line-height: 1.6;
   color: var(--white); -webkit-font-smoothing: antialiased; /* no body background: html paints the black, so section backgrounds and the staff (negative layers) stay visible */
 }
-main { position: relative; overflow-x: clip; } /* the tilted marquee hangs past both edges */
+main { position: relative; overflow-x: clip; }
 
 /* ------------------------------------------------------------------
    The music staff (staff.js): five lines winding down the page. It sits above section
@@ -237,7 +237,7 @@ button { font: inherit; color: inherit; }
   position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .08; mix-blend-mode: overlay;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-.hero::after { /* fade into the marquee */
+.hero::after { /* fade into the finish line */
   content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 120px; z-index: 1; pointer-events: none;
   background: linear-gradient(transparent, var(--black));
 }
@@ -285,15 +285,17 @@ button { font: inherit; color: inherit; }
 .sv { width: 7px; height: 7px; border-radius: 50%; }
 .sv-spotify { background: var(--spotify); } .sv-apple { background: var(--apple); }
 
-/* MARQUEE ---------------------------------------------------------- */
-.marquee {
-  position: relative; z-index: 3; overflow: hidden; background: var(--yellow); color: var(--ink);
-  padding: 16px 0; rotate: -2deg; margin: -10px -20px 0; box-shadow: 0 20px 60px -20px rgba(232,240,42,.4);
+/* FINISH LINE ------------------------------------------------------- */
+.finish { position: relative; z-index: 3; height: 132px; background: var(--black); overflow: hidden; }
+.finish-flag { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.finish-tag {
+  position: absolute; z-index: 2; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: baseline; gap: 10px;
+  padding: 10px 20px; border-radius: 999px; background: var(--yellow); color: var(--ink); white-space: nowrap;
+  box-shadow: 0 0 0 4px var(--ink), 0 18px 40px -12px rgba(0,0,0,.7);
 }
-.marquee-track { display: flex; width: max-content; align-items: center; gap: 28px; will-change: transform; }
-.marquee span { font-weight: 900; font-stretch: 110%; text-transform: uppercase; letter-spacing: -.02em; font-size: clamp(2rem, 5vw, 3.8rem); line-height: 1; white-space: nowrap; }
-.marquee span.o { color: transparent; -webkit-text-stroke: 1.5px var(--ink); }
-.marquee b { font-size: clamp(1.2rem, 2.4vw, 1.8rem); }
+.finish-tag .mono { font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; }
+.finish-tag b { font-weight: 800; font-size: 1.6rem; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+@media (max-width: 719px) { .finish { height: 104px; } .finish-tag b { font-size: 1.3rem; } }
 
 /* TRY IT ----------------------------------------------------------- */
 .play { padding-top: 150px; }

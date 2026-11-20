@@ -94,12 +94,12 @@
       <a class="scroll-cue mono" href="#play" aria-label="Scroll down"><span>Scroll</span><i></i></a>
     </section>
 
-    <!-- ============ MARQUEE: words slide with your scroll ============ -->
-    <div class="marquee" aria-hidden="true">
-      <div class="marquee-track" data-marquee>
-        <span>Cadence</span><b>✦</b><span class="o">Tempo</span><b>✦</b><span>Haptics</span><b>✦</b><span class="o">Spotify</span><b>✦</b><span>Apple Music</span><b>✦</b><span class="o">Apple Watch</span><b>✦</b><span>Garmin</span><b>✦</b>
-        <span>Cadence</span><b>✦</b><span class="o">Tempo</span><b>✦</b><span>Haptics</span><b>✦</b><span class="o">Spotify</span><b>✦</b><span>Apple Music</span><b>✦</b><span class="o">Apple Watch</span><b>✦</b><span>Garmin</span><b>✦</b>
-      </div>
+    <!-- ============ TEMPO RULER: every cadence from a walk to a sprint ============ -->
+    <!-- Finish line: a checkered flag that ripples like cloth and snaps on every beat of
+         the page tempo. script.js draws it; the tag shows the live cadence. -->
+    <div class="finish" data-finish>
+      <canvas class="finish-flag" data-finish-flag aria-hidden="true"></canvas>
+      <p class="finish-tag"><span class="mono">Finish line</span><b data-bpm>176</b><span class="mono">spm</span></p>
     </div>
 
     <!-- ============ TRY IT: tap your cadence ============ -->
