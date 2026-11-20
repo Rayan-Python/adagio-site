@@ -142,6 +142,91 @@ onBeat(() => {
     .onfinish = () => ring.remove();
 });
 
+// how it works, 02: the track-staff. Two bars of four beats; a playhead runs along at the
+// page tempo, each note hops as it's hit and the footprint under it lights up.
+const ts = $('[data-trackstaff]');
+if (ts) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const xs = [110, 165, 220, 275, 355, 410, 465, 520];
+  const ys = [153, 138, 123, 108, 123, 93, 108, 138]; // a little melody on lines and spaces
+  const notesG = $('.ts-notes', ts), stepsG = $('.ts-steps', ts), head = $('.ts-head', ts);
+  const tsNotes = xs.map((x, i) => {
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'ts-note');
+    g.innerHTML = `<ellipse cx="${x}" cy="${ys[i]}" rx="11" ry="8" transform="rotate(-20 ${x} ${ys[i]})"/><line class="stem" x1="${x + 9.5}" x2="${x + 9.5}" y1="${ys[i] - 3}" y2="${ys[i] - 52}"/>`;
+    notesG.appendChild(g);
+    return g;
+  });
+  const tsSteps = xs.map((x, i) => {
+    const y = i % 2 ? 206 : 190; // left, right, left, right
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'ts-step');
+    g.innerHTML = `<ellipse cx="${x}" cy="${y}" rx="11" ry="5.5"/><ellipse cx="${x - 15}" cy="${y}" rx="5" ry="4.5"/>`;
+    stepsG.appendChild(g);
+    return g;
+  });
+  watch(ts);
+  let last = 0;
+  onBeat((n) => {
+    if (!isOn(ts)) return;
+    last = (n - 1) % xs.length;
+    if (!reduceMotion) tsNotes[last].animate([{ transform: 'translateY(-7px) scale(1.18)' }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    tsSteps.forEach((s, i) => s.classList.toggle('on', i === last));
+  });
+  const playhead = () => {
+    if (isOn(ts)) {
+      const a = xs[last], b = last === xs.length - 1 ? xs[last] + 55 : xs[last + 1];
+      const x = reduceMotion ? a : a + (b - a) * tempo.phase();
+      head.setAttribute('x1', x); head.setAttribute('x2', x);
+    }
+    requestAnimationFrame(playhead);
+  };
+  requestAnimationFrame(playhead);
+}
+
+// how it works, 03: one run, three paces. A runner dot travels the cadence line on a
+// loop; the line draws in behind it, each zone lights up as it's entered, that zone's
+// songs pop in, and the readout shows the cadence right now. The dot pings on the beat.
+const rv = $('[data-runvis]');
+if (rv) {
+  const path = $('[data-rv-path]', rv);
+  const dot = $('[data-rv-dot]', rv);
+  const ring = $('.rv-ring', rv);
+  const clip = $('.rv-clip', rv);
+  const zones = $$('.rv-zone', rv);
+  const songs = $$('.rv-song', rv).map((g) => ({ g, at: +g.dataset.at }));
+  const spmEl = $('[data-rv-spm]', rv);
+  const songEl = $('[data-rv-song]', rv);
+  const names = ['warm-up songs', 'tempo songs', 'cool-down songs'];
+  const total = path.getTotalLength();
+  const LOOP = 9000, HOLD = 1400;
+  const spmAt = (y) => Math.round(150 + (200 - y) * (35 / 170)); // the chart's scale, inverted
+  let start = 0, zoneNow = -1;
+  watch(rv);
+  const frame = (now) => {
+    if (isOn(rv)) {
+      if (!start) start = now;
+      const p = reduceMotion ? 1 : Math.min(1, ((now - start) % (LOOP + HOLD)) / LOOP);
+      const pt = path.getPointAtLength(total * p);
+      dot.setAttribute('transform', `translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`);
+      clip.setAttribute('width', pt.x.toFixed(1));
+      spmEl.textContent = spmAt(pt.y);
+      const z = pt.x < 190 ? 0 : pt.x < 420 ? 1 : 2;
+      if (z !== zoneNow) {
+        zoneNow = z;
+        zones.forEach((r, i) => r.classList.toggle('on', i === z));
+        songEl.textContent = names[z];
+      }
+      songs.forEach((s) => s.g.classList.toggle('on', pt.x >= s.at));
+    } else start = 0;
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+  onBeat(() => {
+    if (isOn(rv) && !reduceMotion) ring.animate([{ transform: 'scale(1)', opacity: 0.7 }, { transform: 'scale(2.6)', opacity: 0 }], { duration: 700, easing: 'ease-out' });
+  });
+}
+
 /* ======================================================================
    Hero: light strands (canvas). A bundle of thin lime strands pinches into a
    bright knot and fans out, swaying slowly. Each beat kicks them outward; the
@@ -281,8 +366,8 @@ function stamp(foot) {
   const p = document.createElement('i');
   p.className = `print ${foot}`;
   lane.appendChild(p);
-  const dist = lane.clientWidth * 0.82 + 30;
-  p.animate([{ transform: 'translateX(0)', opacity: 0.95 }, { transform: `translateX(${-dist}px)`, opacity: 0.25 }], { duration: LANE_MS, easing: 'linear' })
+  const dist = lane.clientWidth + 10;
+  p.animate([{ transform: 'translateX(0) scale(1.25)', opacity: 1 }, { transform: 'translateX(-14px) scale(1)', opacity: 0.95, offset: 0.04 }, { transform: `translateX(${-dist}px)`, opacity: 0.2 }], { duration: LANE_MS, easing: 'linear' })
     .onfinish = () => p.remove();
 }
 function step(foot) {
@@ -295,11 +380,11 @@ function step(foot) {
   if (taps.length && now - taps[taps.length - 1] > 2000) taps = [];
   taps.push(now);
   if (taps.length > 9) taps.shift();
-  if (taps.length < 3) { padStatus.textContent = `Keep stepping… (${taps.length})`; return; }
+  if (taps.length < 3) { padStatus.textContent = 'Keep going…'; return; }
   const gaps = taps.slice(1).map((t, i) => t - taps[i]);
   const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
   setBPM(60000 / avg, { align: true });
-  padStatus.textContent = taps.length < 5 ? 'Finding your rhythm…' : `Locked in: ${tempo.bpm} steps per minute. The whole page runs at your pace now.`;
+  padStatus.textContent = taps.length < 5 ? 'Finding your rhythm…' : `Locked in at ${tempo.bpm} spm. The page now runs at your pace.`;
 }
 if (pad) {
   feetBtns.forEach((b) => {
@@ -320,7 +405,7 @@ if (pad) {
   // the music staff passing through leaves a pair of prints on the lane
   pad.addEventListener('adagio:note-hit', () => { stamp('L'); setTimeout(() => stamp('R'), tempo.len); });
 }
-if (slider) slider.addEventListener('input', () => { taps = []; setBPM(+slider.value); padStatus.textContent = 'Set by slider. Step to match your real stride.'; });
+if (slider) slider.addEventListener('input', () => { taps = []; setBPM(+slider.value); padStatus.textContent = 'Set with the slider.'; });
 
 // "Hear it": a metronome click on each beat (accent every fourth). "Feel it": a vibration
 // on each beat, where the browser supports it (Android).
@@ -442,6 +527,18 @@ if (!reduceMotion && watcher) {
     });
   }, { threshold: 0.35 });
   jobs.forEach((_, el) => typer.observe(el));
+}
+
+// Hero iPhone: cross-fade through the real Adagio screens every few seconds.
+const screens = $$('[data-screen]');
+if (screens.length > 1 && !reduceMotion) {
+  let current = 0;
+  setInterval(() => {
+    if (document.hidden) return;
+    screens[current].classList.remove('on');
+    current = (current + 1) % screens.length;
+    screens[current].classList.add('on');
+  }, 3200);
 }
 
 // Hero video: a faint runner on the track. Plays muted; with reduced motion it stays

@@ -432,16 +432,19 @@ async function loadRealSpike(pivot, url) {
 function initSpike(canvas) {
   const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 28, distance: 20, fitWidth: 12.5, lights: 'studio' });
   const spike = buildSpike();
-  scene.add(spike);
+  // a tilted turntable: the shoe spins steadily on its own axis, angled toward the
+  // viewer and slightly toe-up, like a product shot. No bobbing or hopping.
+  const tilt = new THREE.Group();
+  tilt.rotation.set(0.38, 0, -0.1);
+  tilt.add(spike);
+  scene.add(tilt);
   loadRealSpike(spike, canvas.dataset.glb);
   let spin = -2.55, last = 0; // start at a three-quarter view, toe toward the viewer
   runWhileVisible(canvas, (now) => {
     const dt = last ? Math.min(now - last, 50) : 16;
     last = now;
-    if (!drag.on) { spin += dt * 0.00025; drag.offset *= 0.96; } // slow turntable
-    const kick = reduceMotion ? 0 : Math.exp(-tempo().phase(now) * 6); // a small hop on each beat
-    spike.rotation.set(0.24, spin + drag.offset, 0.05 + Math.sin(now * 0.0009) * 0.03);
-    spike.position.y = Math.sin(now * 0.0012) * 0.15 + kick * 0.12;
+    if (!drag.on) { spin += dt * 0.0004; drag.offset *= 0.96; }
+    spike.rotation.set(0, spin + drag.offset, 0);
   }, () => renderer.render(scene, camera));
 }
 
@@ -726,11 +729,16 @@ function buildAppleWatch() {
   const glass = new THREE.Mesh(glassGeo, new THREE.MeshPhysicalMaterial({ color: 0x050506, roughness: 0.05, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.03 }));
   glass.position.z = front + 0.012;
   watch.add(glass);
+  // the display shows the real Adagio watch app (assets/screens/watch-*.jpg), cycling
+  // through its cue screens; a drawn face stands in until the first one loads
   const faceCanvas = document.createElement('canvas');
   faceCanvas.width = 600; faceCanvas.height = 720;
   drawAppleFace(faceCanvas.getContext('2d'), 600, 720, tempo().bpm);
-  const faceTex = new THREE.CanvasTexture(faceCanvas);
+  let faceTex = new THREE.CanvasTexture(faceCanvas);
   faceTex.colorSpace = THREE.SRGBColorSpace;
+  const loader = new THREE.TextureLoader();
+  const watchScreens = ['assets/screens/watch-1-speed-up.jpg', 'assets/screens/watch-2-try-cues.jpg', 'assets/screens/watch-3-try-cues-more.jpg']
+    .map((src) => { const t = loader.load(src); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; });
   const dispGeo = new THREE.ShapeGeometry(roundedRectShape(W - 0.15, H - 0.15, R - 0.12), 24);
   // map the shape's x/y onto the texture
   const uv = dispGeo.attributes.uv, pos = dispGeo.attributes.position;
@@ -738,6 +746,10 @@ function buildAppleWatch() {
   const display = new THREE.Mesh(dispGeo, new THREE.MeshBasicMaterial({ map: faceTex }));
   display.position.z = front + 0.016;
   watch.add(display);
+  let screenIdx = 0;
+  const showScreen = () => { display.material.map = watchScreens[screenIdx]; display.material.needsUpdate = true; };
+  loader.manager.onLoad = showScreen; // swap in the real screens once they've loaded
+  if (!reduceMotion) setInterval(() => { if (document.hidden) return; screenIdx = (screenIdx + 1) % watchScreens.length; showScreen(); }, 3600);
   const sheen = new THREE.Mesh(glassGeo, new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.06, roughness: 0, clearcoat: 1, envMapIntensity: 2 }));
   sheen.position.z = front + 0.03;
   watch.add(sheen);
@@ -795,7 +807,7 @@ function buildAppleWatch() {
   sensor.position.z = -front + 0.85;
   watch.add(sensor);
 
-  watch.userData.setBPM = (bpm) => { drawAppleFace(faceCanvas.getContext('2d'), 600, 720, bpm); faceTex.needsUpdate = true; };
+  watch.userData.setBPM = () => {}; // the real screens don't follow the page tempo
   return watch;
 }
 
