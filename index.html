@@ -60,9 +60,10 @@
 
     <!-- ============ HERO: the app, over runners on the track ============ -->
     <section class="hero" id="top" data-theme="black">
-      <!-- a runner's feet on the track, low and slow, faint behind the copy (Pexels, free to use) -->
-      <video class="hero-video" muted loop playsinline preload="metadata" poster="assets/video/hero-track-feet.jpg" aria-hidden="true" data-hero-video>
-        <source src="assets/video/hero-track-feet.mp4" type="video/mp4">
+      <!-- footsteps striking the track, faint behind the copy (Pexels, free to use).
+           Preview the other options with ?hero=start, ?hero=headphones, ?hero=pushin or ?hero=behind -->
+      <video class="hero-video" muted loop playsinline preload="metadata" poster="assets/video/hero-feet-strike.jpg" aria-hidden="true" data-hero-video>
+        <source src="assets/video/hero-feet-strike.mp4" type="video/mp4">
       </video>
       <canvas class="strands" aria-hidden="true"></canvas>
       <div class="wrap hero-grid">
@@ -76,52 +77,12 @@
           </div>
         </div>
 
-        <!-- The app itself, on a 3D iPhone (script.js spins it). A small chip shows
-             what it does: your cadence and the song's tempo, matched. -->
+        <!-- The app itself, on a 3D iPhone. A small chip shows what it does: your
+             cadence and the song's tempo, matched. -->
         <div class="hero-device">
-          <!-- 3D iPhone 16 Pro mockup showing real Adagio screens (assets/screens/).
-               It sways, spins, and tilts toward the pointer (script.js). -->
-          <div class="phone-zone">
-            <div class="phone3d-stage" aria-hidden="true">
-              <div class="phone3d">
-                <i class="p-slice" style="--z:-6"></i>
-                <i class="p-slice" style="--z:-5"></i>
-                <i class="p-slice" style="--z:-4"></i>
-                <i class="p-slice" style="--z:-3"></i>
-                <i class="p-slice" style="--z:-2"></i>
-                <i class="p-slice" style="--z:-1"></i>
-                <i class="p-slice" style="--z:0"></i>
-                <i class="p-slice" style="--z:1"></i>
-                <i class="p-slice" style="--z:2"></i>
-                <i class="p-slice" style="--z:3"></i>
-                <i class="p-slice" style="--z:4"></i>
-                <i class="p-slice" style="--z:5"></i>
-                <i class="p-slice" style="--z:6"></i>
-                <i class="p-btn p-btn-left btn-action"></i>
-                <i class="p-btn p-btn-left btn-vol-up"></i>
-                <i class="p-btn p-btn-left btn-vol-down"></i>
-                <i class="p-btn p-btn-right btn-power"></i>
-                <i class="p-btn p-btn-right btn-camera"></i>
-                <div class="p-face p-back">
-                  <div class="cam-bump">
-                    <i class="bump-slice" style="--z:1"></i><i class="bump-slice" style="--z:2"></i><i class="bump-slice" style="--z:3"></i>
-                    <div class="bump-top"><i class="lens l1"></i><i class="lens l2"></i><i class="lens l3"></i><i class="flash"></i><i class="mic"></i></div>
-                  </div>
-                  <span class="back-logo"><svg viewBox="0 0 24 24"><path d="M16.37 12.62c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.97.9-3.76 2.28-1.61 2.79-.41 6.91 1.15 9.17.77 1.1 1.68 2.34 2.87 2.3 1.15-.05 1.59-.75 2.98-.75 1.39 0 1.78.75 3 .72 1.24-.02 2.02-1.12 2.78-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.42-.93-2.44-3.68zM14.1 5.88c.64-.77 1.07-1.84.95-2.9-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.77-.97 2.81 1.02.08 2.07-.52 2.71-1.29z"/></svg></span>
-                </div>
-                <div class="p-face p-front">
-                  <div class="p-display">
-                    <!-- real Adagio screens from the App Store listing; script.js cycles them -->
-                    <img class="p-screen on" src="assets/screens/4-run-on-target.jpg" alt="" width="600" height="1304" data-screen>
-                    <img class="p-screen" src="assets/screens/1-run-speed-up.jpg" alt="" width="600" height="1304" loading="lazy" data-screen>
-                    <img class="p-screen" src="assets/screens/5-set-up-run.jpg" alt="" width="600" height="1304" loading="lazy" data-screen>
-                    <img class="p-screen" src="assets/screens/2-summary.jpg" alt="" width="600" height="1304" loading="lazy" data-screen>
-                    <span class="p-glare"></span>
-                  </div>
-                </div>
-              </div>
-              <div class="phone3d-shadow"></div>
-            </div>
+          <!-- a real 3D iPhone (models.js) showing the actual Adagio screens; drag to turn it -->
+          <div class="iphone-stage" aria-label="The Adagio app on iPhone" role="img">
+            <canvas class="model-canvas" data-model="iphone"></canvas>
           </div>
           <div class="sync-chip glass" aria-label="Your cadence matched to the song's tempo">
             <span><b data-bpm>170</b><small>spm</small></span>
@@ -158,11 +119,11 @@
             </div>
             <div class="lane" aria-hidden="true" data-lane></div>
             <div class="feet">
-              <button class="foot" type="button" data-foot="L" aria-label="Left foot step (key F)">
+              <button class="stepfoot" type="button" data-foot="L" aria-label="Left foot step (key F)">
                 <svg viewBox="0 0 100 200" aria-hidden="true"><path d="M50 6c22 0 36 18 38 44 2 22-6 40-10 60-3 16 2 30 0 46-3 24-14 38-30 38S20 180 18 160c-2-18 4-30 2-46-3-22-12-38-10-62C12 24 28 6 50 6z"/></svg>
                 <span class="foot-key mono">F</span><span class="foot-name">Left</span>
               </button>
-              <button class="foot right" type="button" data-foot="R" aria-label="Right foot step (key J)">
+              <button class="stepfoot right" type="button" data-foot="R" aria-label="Right foot step (key J)">
                 <svg viewBox="0 0 100 200" aria-hidden="true"><path d="M50 6c22 0 36 18 38 44 2 22-6 40-10 60-3 16 2 30 0 46-3 24-14 38-30 38S20 180 18 160c-2-18 4-30 2-46-3-22-12-38-10-62C12 24 28 6 50 6z"/></svg>
                 <span class="foot-key mono">J</span><span class="foot-name">Right</span>
               </button>

@@ -544,6 +544,15 @@ if (screens.length > 1 && !reduceMotion) {
 // Hero video: a faint runner on the track. Plays muted; with reduced motion it stays
 // on its poster (the original runner photo).
 const heroVideo = $('[data-hero-video]');
+// Hero video options to compare: add ?hero=start (or headphones, pushin, behind) to the
+// address. Remove this list once one is chosen.
+const HERO_OPTIONS = { start: 'hero-start-line', headphones: 'hero-headphones', pushin: 'hero-push-in', behind: 'hero-track-feet' };
+const heroPick = HERO_OPTIONS[new URLSearchParams(location.search).get('hero')];
+if (heroVideo && heroPick) {
+  heroVideo.poster = `assets/video/${heroPick}.jpg`;
+  $('source', heroVideo).src = `assets/video/${heroPick}.mp4`;
+  heroVideo.load();
+}
 if (heroVideo) {
   if (reduceMotion) heroVideo.removeAttribute('autoplay');
   else {
