@@ -1,257 +1,619 @@
-// Adagio: scroll effects for everything below the landing photo.
+// Adagio — "keeps time" edition.
+// One tempo runs the page. It starts at 170 steps per minute; tap your own cadence in
+// "Try it" (or drag the slider) and every pulse on the page follows: the hero's light
+// strands, the live-run beat bar, the nav pill, the footsteps, the haptic rings.
 
-// A refresh always starts at the top: no remembered scroll position, and no #section
-// left in the address from a nav click.
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 if (location.hash) history.replaceState(null, '', location.pathname + location.search);
 window.scrollTo(0, 0);
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const hero = document.querySelector('.hero');
-const heroBrand = document.querySelector('.hero-brand');
-const flow = document.getElementById('flow');
-const nav = document.querySelector('.site-nav');
-const themed = [...flow.querySelectorAll('[data-theme]')];
+const $ = (s, root = document) => root.querySelector(s);
+const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
-// The photo dims as the page slides up over it.
-function dimHero() {
-  const progress = Math.min(window.scrollY / window.innerHeight, 1);
-  hero.style.setProperty('--dim', (progress * 0.7).toFixed(3));
+/* ======================================================================
+   Tempo: the page's clock
+   ====================================================================== */
+const tempo = {
+  bpm: 170,
+  next: 0,      // time of the next beat (performance.now ms)
+  count: 0,     // beats since load
+  get len() { return 60000 / this.bpm; },
+  // 0 right on a beat, rising to 1 just before the next one
+  phase(now = performance.now()) { return 1 - clamp((this.next - now) / this.len, 0, 1); },
+};
+const beatListeners = [];
+const onBeat = (fn) => beatListeners.push(fn);
+
+function genresFor(bpm) {
+  if (bpm < 70) return 'ambient, ballads';
+  if (bpm < 90) return 'hip-hop, R&B, reggae';
+  if (bpm < 110) return 'funk, soul, boom-bap';
+  if (bpm < 130) return 'house, disco, pop';
+  if (bpm < 150) return 'techno, pop-rock, punk';
+  if (bpm < 170) return 'indie rock, pop-punk';
+  if (bpm < 190) return 'drum & bass, pop-punk';
+  return 'hardcore, speed punk';
 }
 
-// The nav (and the metronome) appear once the page has covered the big wordmark.
-const metronome = document.querySelector('.metronome');
-const metroDot = metronome.querySelector('.metro-dot');
-const metroTicks = [...metronome.querySelectorAll('a')];
-function toggleNav() {
-  const shown = flow.getBoundingClientRect().top < heroBrand.getBoundingClientRect().top;
-  nav.classList.toggle('is-shown', shown);
-  metronome.classList.toggle('is-shown', shown);
+const slider = $('[data-slider]');
+function setBPM(value, { align = false } = {}) {
+  const bpm = Math.round(clamp(value, 60, 240));
+  tempo.bpm = bpm;
+  if (align) tempo.next = performance.now() + tempo.len;
+  document.documentElement.style.setProperty('--beat', (60 / bpm).toFixed(3) + 's');
+  $$('[data-bpm]').forEach((el) => { el.textContent = bpm; });
+  $$('[data-bpm-half]').forEach((el) => { el.textContent = Math.round(bpm / 2); });
+  $$('[data-genre]').forEach((el) => { el.textContent = genresFor(bpm * parseFloat(el.dataset.genre)); });
+  if (slider && +slider.value !== bpm) slider.value = clamp(bpm, +slider.min, +slider.max);
+  if (slider) slider.style.setProperty('--fill', ((slider.value - slider.min) / (slider.max - slider.min) * 100).toFixed(1) + '%');
+  document.dispatchEvent(new CustomEvent('adagio:bpm', { detail: bpm })); // the 3D watch face listens
+}
+window.adagioTempo = tempo; // shared with the 3D models (models.js)
+setBPM(170, { align: true });
+
+function tick(now) {
+  if (now - tempo.next > tempo.len * 2) tempo.next = now; // came back from a hidden tab
+  if (now >= tempo.next) {
+    tempo.next += tempo.len;
+    tempo.count += 1;
+    beatListeners.forEach((fn) => fn(tempo.count));
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// Which parts of the page are on screen, so off-screen pulses cost nothing.
+const visible = new Set();
+const watcher = 'IntersectionObserver' in window ? new IntersectionObserver((entries) => {
+  entries.forEach((e) => (e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)));
+}) : null;
+function watch(el) { if (!el) return; if (watcher) watcher.observe(el); else visible.add(el); }
+const isOn = (el) => el && visible.has(el);
+
+/* ======================================================================
+   Beat pulses
+   ====================================================================== */
+// Up top, only two things keep the beat: the hero's light strands and the live-run beat
+// bar. The nav and tag dots stay still so the first screen doesn't flicker all over.
+
+// hero live-run beat bar: one cell per beat, four bars of four
+const beatbar = $('[data-beatbar]');
+const cells = beatbar ? $$('i', beatbar) : [];
+watch(beatbar);
+onBeat((n) => {
+  if (!isOn(beatbar)) return;
+  const k = (n - 1) % cells.length;
+  cells.forEach((c, i) => { c.classList.toggle('on', i === k); c.classList.toggle('past', i < k); });
+});
+
+// live-run clock ticks along in real seconds
+const clock = $('[data-clock]');
+let secs = 24 * 60 + 18;
+setInterval(() => {
+  secs += 1;
+  const h = String(Math.floor(secs / 3600)).padStart(2, '0');
+  const m = String(Math.floor(secs / 60) % 60).padStart(2, '0');
+  const s = String(secs % 60).padStart(2, '0');
+  if (clock) clock.textContent = `${h}:${m}:${s}`;
+}, 1000);
+
+// sparklines: a cadence trace that wobbles around the tempo, scrolling left each beat
+const sparks = $$('[data-spark]');
+const sparkData = sparks.map(() => Array.from({ length: 28 }, (_, i) => 0.5 + Math.sin(i / 3) * 0.12 + (Math.random() - 0.5) * 0.18));
+function drawSpark(poly, data) {
+  const w = 200, h = poly.ownerSVGElement.viewBox.baseVal.height;
+  poly.setAttribute('points', data.map((v, i) => `${(i / (data.length - 1) * w).toFixed(1)},${(h - v * h).toFixed(1)}`).join(' '));
+}
+sparks.forEach((p, i) => { drawSpark(p, sparkData[i]); watch(p.ownerSVGElement); });
+onBeat((n) => {
+  if (n % 2) return;
+  sparks.forEach((p, i) => {
+    if (!isOn(p.ownerSVGElement)) return;
+    const d = sparkData[i];
+    const last = d[d.length - 1];
+    d.shift();
+    d.push(clamp(last + (0.5 - last) * 0.25 + (Math.random() - 0.5) * 0.22, 0.12, 0.92));
+    drawSpark(p, d);
+  });
+});
+
+// stat cards: the services and devices take turns lighting up, one every four beats
+const modeSets = $$('[data-modes]').map((el) => ({ el, cells: $$('span', el) }));
+modeSets.forEach((m) => watch(m.el));
+onBeat((n) => {
+  modeSets.forEach(({ el, cells }) => {
+    if (!isOn(el)) return;
+    const k = Math.floor((n - 1) / 4) % cells.length;
+    cells.forEach((c, i) => c.classList.toggle('on', i === k));
+  });
+});
+
+// haptic mode: a ring leaves the watch on every beat
+const rings = $('[data-rings]');
+watch(rings);
+onBeat(() => {
+  if (!isOn(rings) || reduceMotion) return;
+  const ring = document.createElement('i');
+  ring.className = 'ring';
+  rings.appendChild(ring);
+  ring.animate([{ scale: 1, opacity: 0.6 }, { scale: 2.6, opacity: 0 }], { duration: 1800, easing: 'cubic-bezier(.2,.7,.2,1)' })
+    .onfinish = () => ring.remove();
+});
+
+// how it works, 02: the track-staff. A straight of running track whose five white lane
+// lines are a music staff. Engraved like real sheet music: noteheads one staff-space
+// tall, stems 3.5 spaces long (up on the right below the middle line, down on the left
+// above it), eighth notes beamed in pairs. Two bars of 4/4; on every beat the spike
+// print under that beat lights up and its note gives a small nod.
+const ts = $('[data-trackstaff]');
+if (ts) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const art = $('[data-ts-art]', ts);
+  const SP = 26;                         // staff space = lane width
+  const BOTTOM = 184;                    // the bottom staff line
+  const lineY = [0, 1, 2, 3, 4].map((k) => BOTTOM - k * SP);
+  const stepY = (s) => BOTTOM - s * (SP / 2); // s: 0 = bottom line, 1 = first space …
+  const el = (tag, attrs, parent = art) => {
+    const e = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+    parent.appendChild(e);
+    return e;
+  };
+
+  // lane lines (= staff), start line, lane numbers, clef, time signature
+  lineY.forEach((y) => el('line', { class: 'ts-lane', x1: 0, x2: 640, y1: y, y2: y }));
+  [210, 236].forEach((y) => el('line', { class: 'ts-lane', x1: 0, x2: 640, y1: y, y2: y })); // outer lanes
+  el('rect', { class: 'ts-paint', x: 56, y: 54, width: 5, height: 222 }); // start line
+  // lane numbers, painted sideways behind the start line: lane 1 by the curb
+  [67, 93, 119, 145, 171, 197, 223].forEach((y, i) => {
+    const t = el('text', { class: 'ts-lane-no', x: 30, y, transform: `rotate(90 30 ${y})` });
+    t.textContent = String(i + 1);
+  });
+  const clef = el('text', { class: 'ts-glyph', x: 70, y: lineY[1] });
+  clef.textContent = '\u{1D11E}';        // treble clef, sitting on the G line
+  const time = el('text', { class: 'ts-glyph', x: 124, y: lineY[2] });
+  time.textContent = '\u{1D134}';        // common time
+
+  // the melody: [beat x, staff step, beamed group id or null]
+  const beats = [
+    [[192, 2]], [[244, 4]], [[290, 5], [318, 6]], [[358, 4]],
+    [[418, 3], [446, 4]], [[492, 6]], [[540, 5]], [[588, 2]],
+  ];
+  el('line', { class: 'ts-bar', x1: 388, x2: 388, y1: lineY[4], y2: lineY[0] });
+  el('rect', { class: 'ts-paint', x: 618, y: 54, width: 5, height: 222 });   // finish line …
+  el('line', { class: 'ts-bar', x1: 611, x2: 611, y1: lineY[4], y2: lineY[0] }); // … as the final bar line
+
+  const HEAD_RX = 12.6, HEAD_RY = 9.2, STEM = SP * 3.5; // a notehead fills one staff space
+  const noteGroups = beats.map((notes) => {
+    const g = el('g', { class: 'ts-note' });
+    const up = notes.reduce((a, [, s]) => a + s, 0) / notes.length < 4; // below the middle line: stems up
+    const stemX = (x) => x + (up ? HEAD_RX - 0.9 : -HEAD_RX + 0.9);
+    // beam line for pairs: follows the pitch a little, never steeper than half a space
+    const tips = notes.map(([x, s]) => ({ x: stemX(x), y: stepY(s) + (up ? -STEM : STEM) }));
+    if (notes.length > 1) {
+      const slope = clamp((tips[1].y - tips[0].y) * 0.4, -SP / 2, SP / 2);
+      const mid = (tips[0].y + tips[1].y) / 2 + (up ? -4 : 4);
+      tips[0].y = mid - slope / 2; tips[1].y = mid + slope / 2;
+    }
+    notes.forEach(([x, s], i) => {
+      const y = stepY(s);
+      el('ellipse', { cx: x, cy: y, rx: HEAD_RX, ry: HEAD_RY, transform: `rotate(-22 ${x} ${y})` }, g);
+      el('line', { class: 'ts-stem', x1: tips[i].x, x2: tips[i].x, y1: y + (up ? -2 : 2), y2: tips[i].y }, g);
+      if (s === 0 || s >= 10) el('line', { class: 'ts-ledger', x1: x - 19, x2: x + 19, y1: y, y2: y }, g);
+    });
+    if (notes.length > 1) {
+      const t = SP * 0.42; // beam thickness
+      const d = up ? t : -t;
+      el('path', { class: 'ts-beam', d: `M${tips[0].x - 1} ${tips[0].y} L${tips[1].x + 1} ${tips[1].y} L${tips[1].x + 1} ${tips[1].y + d} L${tips[0].x - 1} ${tips[0].y + d} Z` }, g);
+    }
+    return g;
+  });
+
+  // worn spike prints in the outer lane, one per beat, left and right
+  const prints = beats.map((notes, i) => {
+    const x = notes[0][0] + (notes.length > 1 ? 12 : 0);
+    const y = i % 2 ? 223 : 197; // lanes 6 and 7
+    const g = el('g', { class: 'ts-print', transform: `translate(${x} ${y}) rotate(${i % 2 ? 4 : -4})` });
+    el('path', { d: 'M-15 0 C-15 -6 -4 -7.5 6 -6.5 C13 -5.8 16 -3 16 0 C16 3 13 5.8 6 6.5 C-4 7.5 -15 6 -15 0 Z' }, g);
+    [[-8, -2.5], [-2, 3], [4, -3], [10, 1.5], [-11, 2.5], [2, 0]].forEach(([cx, cy]) => el('circle', { class: 'ts-pin', cx, cy, r: 1.3 }, g));
+    return g;
+  });
+
+  watch(ts);
+  onBeat((n) => {
+    if (!isOn(ts)) return;
+    const k = (n - 1) % beats.length;
+    prints.forEach((p, i) => p.classList.toggle('on', i === k));
+    if (!reduceMotion) noteGroups[k].animate([{ transform: 'translateY(-3px)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out' });
+  });
 }
 
-// Metronome: the dot follows your scroll continuously down the rail (no CSS transition,
-// so every browser moves it the same way), resting on a section's tick as that section
-// reaches the middle of the screen. The current tick lights up and the dot pulses when
-// you enter a new section. The footer counts as Contact.
-const metroSections = metroTicks.map((a) => document.querySelector(a.hash));
+/* ======================================================================
+   Hero: light strands (canvas). A bundle of thin lime strands pinches into a
+   bright knot and fans out, swaying slowly. Each beat kicks them outward; the
+   pointer pushes them aside; scrolling away spreads them apart. Sparks run
+   along the strands.
+   ====================================================================== */
+const hero = $('.hero');
+const canvas = $('.strands');
+const ctx = canvas && canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1, strands = [], sparksOnLine = [], heroOn = true;
+const mouse = { x: -9999, y: -9999, tx: -9999, ty: -9999 };
+
+function setupStrands() {
+  if (!ctx) return;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = canvas.clientWidth; H = canvas.clientHeight;
+  canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const n = W < 720 ? 20 : 34;
+  strands = Array.from({ length: n }, (_, i) => ({
+    o: (i / (n - 1)) * 2 - 1 + (Math.random() - 0.5) * 0.08, // place in the bundle, -1..1
+    ph: Math.random() * Math.PI * 2,
+    sp: 0.6 + Math.random() * 0.7,
+    a: 0.35 + Math.random() * 0.65,
+  }));
+  sparksOnLine = Array.from({ length: W < 720 ? 14 : 26 }, () => ({
+    s: Math.floor(Math.random() * n), u: Math.random(), v: 0.0006 + Math.random() * 0.0012, r: 0.8 + Math.random() * 1.6,
+  }));
+}
+
+function strandY(s, x, t, kick, spreadMul) {
+  const knotX = W < 960 ? W * 0.55 : W * 0.6;
+  const cy = W < 960 ? H * 0.74 : H * 0.56;
+  const d = (x - knotX) / W;                       // distance from the knot, in screen widths
+  const fan = 6 + Math.pow(Math.abs(d), 1.25) * H * 1.15 * spreadMul;
+  const twist = Math.sin(d * 6 - t * 0.0005 * s.sp + s.ph);
+  let y = cy - d * H * 0.42                        // rises to the right
+    + Math.sin(d * 3.2 + t * 0.00035) * H * 0.06
+    + s.o * fan * (0.62 + 0.38 * twist)
+    + s.o * fan * kick * 0.07;
+  // pointer pushes strands aside
+  const dx = x - mouse.x, dy = y - mouse.y;
+  const f = Math.exp(-(dx * dx + dy * dy) / (2 * 110 * 110));
+  y += (dy >= 0 ? 1 : -1) * f * 70;
+  return y;
+}
+
+function drawStrands(now) {
+  if (!ctx || !W) return;
+  mouse.x += (mouse.tx - mouse.x) * 0.12;
+  mouse.y += (mouse.ty - mouse.y) * 0.12;
+  const t = reduceMotion ? 0 : now;
+  const kick = reduceMotion ? 0 : Math.exp(-tempo.phase(now) * 5);
+  const scrolled = clamp(window.scrollY / Math.max(H, 1), 0, 1);
+  const spreadMul = 1 + scrolled * 1.6;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'lighter';
+  const grad = ctx.createLinearGradient(0, 0, W, 0);
+  grad.addColorStop(0, 'rgba(166,226,46,0)');
+  grad.addColorStop(W < 960 ? 0.2 : 0.3, 'rgba(166,226,46,.12)'); // dim behind the headline copy
+  grad.addColorStop(W < 960 ? 0.4 : 0.47, 'rgba(166,226,46,.85)');
+  grad.addColorStop(W < 960 ? 0.55 : 0.6, 'rgba(240,246,160,1)');
+  grad.addColorStop(0.85, 'rgba(166,226,46,.9)');
+  grad.addColorStop(1, 'rgba(166,226,46,0)');
+  ctx.strokeStyle = grad;
+  const step = W < 720 ? 18 : 14;
+
+  strands.forEach((s) => {
+    ctx.beginPath();
+    for (let x = -40; x <= W + 40; x += step) {
+      const y = strandY(s, x, t, kick, spreadMul);
+      if (x === -40) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.globalAlpha = 0.04 * s.a * (1 + kick * 0.2);
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    ctx.globalAlpha = 0.42 * s.a;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // the knot glows brighter on each beat
+  const kx = W < 960 ? W * 0.55 : W * 0.6, ky = strandY({ o: 0, ph: 0, sp: 1 }, kx, t, kick, spreadMul);
+  const r = 70 + kick * 14;
+  const g = ctx.createRadialGradient(kx, ky, 0, kx, ky, r);
+  g.addColorStop(0, `rgba(236,244,120,${0.16 + kick * 0.08})`);
+  g.addColorStop(1, 'rgba(166,226,46,0)');
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = g;
+  ctx.fillRect(kx - r, ky - r, r * 2, r * 2);
+
+  // sparks travel along strands
+  ctx.fillStyle = 'rgba(244,248,190,1)';
+  sparksOnLine.forEach((p) => {
+    if (!reduceMotion) p.u += p.v;
+    if (p.u > 1) { p.u = 0; p.s = Math.floor(Math.random() * strands.length); }
+    const x = p.u * (W + 80) - 40;
+    const y = strandY(strands[p.s], x, t, kick, spreadMul);
+    ctx.globalAlpha = Math.sin(p.u * Math.PI) * 0.9;
+    ctx.beginPath(); ctx.arc(x, y, p.r, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+}
+
+function strandLoop(now) {
+  if (heroOn) drawStrands(now);
+  if (!reduceMotion) requestAnimationFrame(strandLoop);
+}
+if (ctx) {
+  setupStrands();
+  if (watcher) new IntersectionObserver(([e]) => { heroOn = e.isIntersecting; }).observe(hero);
+  requestAnimationFrame(strandLoop);
+  hero.addEventListener('pointermove', (e) => {
+    const r = canvas.getBoundingClientRect();
+    mouse.tx = e.clientX - r.left; mouse.ty = e.clientY - r.top;
+    if (mouse.x < -1000) { mouse.x = mouse.tx; mouse.y = mouse.ty; }
+  });
+  hero.addEventListener('pointerleave', () => { mouse.tx = mouse.ty = -9999; });
+}
+
+/* ======================================================================
+   Try it: tap your cadence
+   ====================================================================== */
+const pad = $('[data-pad]');
+const padStatus = $('[data-pad-status]');
+const padRing = pad && $('.pad-ring', pad);
+let taps = [];
+if (padStatus && window.matchMedia('(pointer: coarse)').matches) padStatus.textContent = 'Tap 4+ times in time with your stride';
+function tap() {
+  const now = performance.now();
+  if (taps.length && now - taps[taps.length - 1] > 2000) taps = [];
+  taps.push(now);
+  if (taps.length > 9) taps.shift();
+  pad.classList.add('hit');
+  setTimeout(() => pad.classList.remove('hit'), 90);
+  if (!reduceMotion && padRing) padRing.animate([{ scale: 1, opacity: 0.8 }, { scale: 1.35, opacity: 0 }], { duration: 500, easing: 'ease-out' });
+  if (taps.length < 3) { padStatus.textContent = `Keep going… (${taps.length})`; return; }
+  const gaps = taps.slice(1).map((t, i) => t - taps[i]);
+  const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+  setBPM(60000 / avg, { align: true });
+  padStatus.textContent = taps.length < 5 ? 'Finding your rhythm…' : `Locked in: ${tempo.bpm} steps per minute. The whole page is on your beat now.`;
+}
+if (pad) {
+  pad.addEventListener('pointerdown', (e) => { e.preventDefault(); tap(); });
+  pad.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!e.repeat) tap(); }
+  });
+  // space bar taps anywhere while the Try it section is on screen
+  const play = $('#play');
+  watch(play);
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== ' ' || e.repeat || !isOn(play)) return;
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (['INPUT', 'TEXTAREA', 'BUTTON', 'A', 'SELECT'].includes(tag)) return;
+    e.preventDefault(); tap();
+  });
+  // the music staff passing through rings the pad
+  pad.addEventListener('adagio:note-hit', () => {
+    if (!reduceMotion && padRing) padRing.animate([{ scale: 1, opacity: 0.7 }, { scale: 1.45, opacity: 0 }], { duration: 800, easing: 'ease-out' });
+  });
+  // ambient pulse on the pad when you're not tapping
+  const ring2 = $('.pad-ring.r2', pad);
+  onBeat(() => {
+    if (!isOn(pad) || reduceMotion || performance.now() - (taps[taps.length - 1] || 0) < 1500) return;
+    ring2.animate([{ scale: 1, opacity: 0.45 }, { scale: 1.18, opacity: 0 }], { duration: Math.min(700, tempo.len * 1.6), easing: 'ease-out' });
+  });
+}
+if (slider) slider.addEventListener('input', () => { taps = []; setBPM(+slider.value); padStatus.textContent = 'Set by slider. Tap to match your real stride.'; });
+
+// "Hear it": a metronome click on each beat (accent every fourth). "Feel it": a vibration
+// on each beat, where the browser supports it (Android).
+const soundBtn = $('[data-sound]');
+const vibeBtn = $('[data-vibe]');
+let audio = null;
+function click(n) {
+  if (!audio) return;
+  const t = audio.currentTime;
+  const osc = audio.createOscillator(), gain = audio.createGain();
+  osc.frequency.value = n % 4 === 1 ? 1600 : 1050;
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(0.35, t + 0.002);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+  osc.connect(gain).connect(audio.destination);
+  osc.start(t); osc.stop(t + 0.06);
+}
+if (soundBtn) soundBtn.addEventListener('click', () => {
+  const on = soundBtn.getAttribute('aria-pressed') !== 'true';
+  soundBtn.setAttribute('aria-pressed', on);
+  if (on) { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); }
+  else if (audio) audio.suspend();
+});
+onBeat((n) => { if (soundBtn && soundBtn.getAttribute('aria-pressed') === 'true') click(n); });
+if (vibeBtn && 'vibrate' in navigator && window.matchMedia('(pointer: coarse)').matches) {
+  vibeBtn.hidden = false;
+  vibeBtn.addEventListener('click', () => vibeBtn.setAttribute('aria-pressed', vibeBtn.getAttribute('aria-pressed') !== 'true'));
+  onBeat(() => { if (vibeBtn.getAttribute('aria-pressed') === 'true') navigator.vibrate(35); });
+}
+
+/* ======================================================================
+   Scroll effects
+   ====================================================================== */
+// text slides in as it enters
+const reveals = $$('.reveal');
+if (reduceMotion || !watcher) {
+  reveals.forEach((el) => el.classList.add('is-in'));
+} else {
+  const seen = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) { entry.target.classList.add('is-in'); seen.unobserve(entry.target); }
+    });
+  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+  reveals.forEach((el) => seen.observe(el));
+}
+
+// marquee: drifts on its own, speeds up with scroll speed, reverses when you scroll up
+const marquee = $('[data-marquee]');
+let mqX = 0, mqDir = -1, mqBoost = 0, lastY = window.scrollY;
+function runMarquee() {
+  if (!marquee) return;
+  const half = marquee.scrollWidth / 2;
+  mqX += mqDir * (0.6 + mqBoost);
+  mqBoost *= 0.92;
+  if (mqX <= -half) mqX += half;
+  if (mqX > 0) mqX -= half;
+  marquee.style.transform = `translate3d(${mqX.toFixed(1)}px,0,0)`;
+  requestAnimationFrame(runMarquee);
+}
+if (!reduceMotion) requestAnimationFrame(runMarquee);
+
+// how it works: each panel shrinks and dims a little as the next one covers it;
+// panel 03 draws its pace line as it arrives
+const panels = $$('.panel');
+const pacePath = $('.pace-path');
+function stackPanels() {
+  if (reduceMotion) return;
+  panels.forEach((p, i) => {
+    const next = panels[i + 1];
+    const inner = $('.panel-in', p);
+    if (next) {
+      const c = clamp(1 - next.getBoundingClientRect().top / window.innerHeight, 0, 1);
+      inner.style.setProperty('--cover', c.toFixed(3));
+    }
+  });
+  if (pacePath) {
+    const last = panels[panels.length - 1].getBoundingClientRect();
+    pacePath.style.setProperty('--draw', clamp(1 - last.top / window.innerHeight, 0, 1).toFixed(3));
+  }
+}
+
+// story photo drifts slower than the page
+const parallax = $('[data-parallax]');
+function runParallax() {
+  if (!parallax || reduceMotion) return;
+  const r = parallax.parentElement.getBoundingClientRect();
+  if (r.bottom < 0 || r.top > window.innerHeight) return;
+  const p = (r.top + r.height / 2 - window.innerHeight / 2) / window.innerHeight;
+  parallax.style.transform = `translate3d(0, ${(p * -8).toFixed(2)}%, 0) scale(1.05)`;
+}
+
+// roadmap: the line draws across and each release lights as it's reached
+const road = $('[data-road]');
+const nodes = road ? $$('.node', road) : [];
+function runRoad() {
+  if (!road) return;
+  const r = road.getBoundingClientRect();
+  const p = reduceMotion ? 1 : clamp((window.innerHeight * 0.85 - r.top) / (r.height + window.innerHeight * 0.35), 0, 1);
+  road.style.setProperty('--p', p.toFixed(3));
+  nodes.forEach((n, i) => n.classList.toggle('lit', p >= (i + 0.2) / nodes.length));
+}
+
+// 3D phone: sways gently from side to side, does one full spin the first time it comes
+// into view (and again whenever you tap it), and leans with scroll and toward the pointer.
+const phone = $('.phone3d');
+const phoneZone = $('.phone-zone');
+let phoneRY = -18, phoneRX = 4, px = 0, py = 0;
+let phoneVisible = false, phoneLooping = false, spinStart = -1, spunOnce = false;
+const SPIN_MS = 1700;
+const easeInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+function phoneTarget() {
+  const b = phoneZone.getBoundingClientRect();
+  const p = clamp((window.innerHeight - b.top) / (window.innerHeight + b.height), 0, 1) - 0.5;
+  return { ry: -18 + p * 30 + px * 14, rx: 4 - p * 8 - py * 10 };
+}
+function phoneLoop(now) {
+  if (!phoneVisible) { phoneLooping = false; return; }
+  const t = phoneTarget();
+  const sway = Math.sin(now * 0.0008) * 16; // the gentle side-to-side
+  phoneRY += (t.ry + sway - phoneRY) * 0.08;
+  phoneRX += (t.rx - phoneRX) * 0.08;
+  let spin = 0;
+  if (spinStart >= 0) {
+    const p = clamp((now - spinStart) / SPIN_MS, 0, 1);
+    spin = 360 * easeInOut(p);
+    if (p >= 1) spinStart = -1;
+  }
+  phone.style.setProperty('--ry', (phoneRY + spin).toFixed(2) + 'deg');
+  phone.style.setProperty('--rx', phoneRX.toFixed(2) + 'deg');
+  requestAnimationFrame(phoneLoop);
+}
+function queuePhone() {} // the loop above runs on its own while the phone is on screen
+if (phone && phoneZone && !reduceMotion) {
+  new IntersectionObserver(([e]) => {
+    phoneVisible = e.isIntersecting;
+    if (phoneVisible && !spunOnce && e.intersectionRatio > 0.5) { spunOnce = true; spinStart = performance.now() + 250; }
+    if (phoneVisible && !phoneLooping) { phoneLooping = true; requestAnimationFrame(phoneLoop); }
+  }, { threshold: [0, 0.5] }).observe(phoneZone);
+  phoneZone.addEventListener('pointermove', (e) => {
+    const r = phoneZone.getBoundingClientRect();
+    px = (e.clientX - r.left) / r.width - 0.5; py = (e.clientY - r.top) / r.height - 0.5;
+  });
+  phoneZone.addEventListener('pointerleave', () => { px = py = 0; });
+  phoneZone.addEventListener('click', () => { if (spinStart < 0) spinStart = performance.now(); });
+  phoneZone.addEventListener('adagio:note-hit', () => { if (spinStart < 0 && spunOnce) spinStart = performance.now(); }); // the music staff passed by
+}
+
+// Metronome rail: the dot follows your scroll, resting on a section's tick as that
+// section reaches the middle of the screen; its color follows whatever is behind it.
+const metronome = $('.metronome');
+const metroDot = $('.metro-dot', metronome);
+const metroTicks = $$('a', metronome);
+const metroSections = metroTicks.map((a) => $(a.hash));
 let metroIndex = -1;
 function setMetronome() {
   const middle = window.innerHeight / 2;
+  metronome.classList.toggle('is-shown', window.scrollY > window.innerHeight * 0.6);
   const tops = metroSections.map((s) => s.getBoundingClientRect().top - middle);
   let at = 0;
   tops.forEach((t, k) => { if (t <= 0) at = k; });
   let pos = at;
   if (tops[0] > 0) pos = 0;
-  else if (at < tops.length - 1) pos = at + Math.min(1, -tops[at] / (tops[at] < 0 ? tops[at + 1] - tops[at] : 1));
+  else if (at < tops.length - 1) pos = at + Math.min(1, -tops[at] / (tops[at + 1] - tops[at]));
   metroDot.style.setProperty('--pos', pos.toFixed(3));
-  metronome.querySelector('ol').style.setProperty('--p', pos.toFixed(3));
-  const section = metroSections[at];
-  metronome.dataset.theme = section.getBoundingClientRect().bottom > middle ? section.dataset.theme : 'black';
-  if (at === metroIndex) return;
-  metroIndex = at;
-  metroTicks.forEach((a, k) => a.classList.toggle('is-on', k === at));
-  metroDot.classList.remove('is-pulsing');
-  void metroDot.offsetWidth; // restart the pulse
-  metroDot.classList.add('is-pulsing');
-}
-function setTheme() {
-  setMetronome();
-}
-
-// Text fades and slides in as each section enters.
-const reveals = document.querySelectorAll('.reveal');
-if (reduceMotion || !('IntersectionObserver' in window)) {
-  reveals.forEach((el) => el.classList.add('is-in'));
-} else {
-  const seen = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-in');
-        seen.unobserve(entry.target);
-      }
-    });
-  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.15 });
-  reveals.forEach((el) => seen.observe(el));
-}
-
-// One thick line winds down the whole page and is drawn as you scroll. Each section has
-// its own movement (sweeps, zigzags, loops), routed around the small corner labels; on
-// phones it runs straight down the right edge. The app icon rides the tip, tilting a
-// little with the line's direction.
-const course = flow.querySelector('.course');
-const edge = course && course.querySelector('.course-edge');
-const line = course && course.querySelector('.course-line');
-const grad = course && course.querySelector('#course-grad');
-const runner = flow.querySelector('.runner');
-const blocks = themed.filter((el) => el.classList.contains('block'));
-
-let marks = []; // for each waypoint: scroll position it belongs to, and line length there
-let total = 0;
-
-// S-bends that leave and arrive heading straight down, so the line never swings
-// sideways past its waypoints (and into text).
-function smoothPath(points) {
-  let d = `M${points[0].x},${points[0].y}`;
-  for (let i = 1; i < points.length; i++) {
-    const p = points[i - 1], q = points[i], dy = (q.y - p.y) / 2;
-    d += ` C${p.x},${p.y + dy} ${q.x},${q.y - dy} ${q.x},${q.y}`;
+  $('ol', metronome).style.setProperty('--p', pos.toFixed(3));
+  const behind = document.elementsFromPoint(window.innerWidth - 12, middle).find((el) => !metronome.contains(el));
+  const themed = behind && behind.closest('[data-theme]');
+  metronome.dataset.theme = themed ? themed.dataset.theme : 'black';
+  if (at !== metroIndex) {
+    metroIndex = at;
+    metroTicks.forEach((a, k) => a.classList.toggle('is-on', k === at));
   }
-  return d;
-}
-
-// The line keeps out of all text: through each section it runs down a side margin
-// (alternating left and right, wiggling where there's room), and it only crosses the
-// page inside the empty gradient bands between sections. On phones it runs straight
-// down the right edge.
-function buildLine() {
-  if (!course) return;
-  const box = flow.getBoundingClientRect();
-  const w = box.width, h = box.height;
-  const points = [];
-  if (window.innerWidth < 720) {
-    const end = blocks[blocks.length - 1].getBoundingClientRect().bottom - box.top; // stop before the footer
-    points.push({ x: w - 36, y: 0 }, { x: w - 36, y: end });
-  } else {
-    const half = parseFloat(getComputedStyle(edge).strokeWidth) / 2;
-    const pad = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pad')) || 80;
-    // left margin: between the window edge and the corner labels / text
-    const leftMax = pad - half - 8, leftMin = half + 4;
-    // right margin: between the text / labels and the metronome
-    const metroLeft = w - (window.innerWidth - metronome.getBoundingClientRect().left);
-    const rightMin = w - pad + half + 8, rightMax = Math.min(metroLeft - half - 6, w - half - 4);
-    const lanes = [
-      { a: leftMin, b: Math.max(leftMin, leftMax) },
-      { a: Math.min(rightMin, rightMax), b: Math.max(rightMin, rightMax) },
-    ];
-    let lastBottom = 0;
-    blocks.forEach((block, i) => {
-      const r = block.getBoundingClientRect();
-      const top = r.top - box.top, bottom = r.bottom - box.top;
-      const lane = lanes[i % 2];
-      const steps = Math.max(2, Math.round((bottom - top) / 150));
-      for (let k = 0; k <= steps; k++) {
-        const x = k === 0 || k === steps ? (lane.a + lane.b) / 2 : (k % 2 ? lane.a : lane.b); // wiggle in the margin
-        points.push({ x, y: top + (bottom - top) * k / steps });
-      }
-      lastBottom = bottom;
-    });
-    if (points[0].y > 0) points.unshift({ x: points[0].x, y: 0 });
-    points.push({ x: points[points.length - 1].x, y: Math.min(h, lastBottom + 1) });
-  }
-  const keys = points.map((p) => p.y);
-  course.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  grad.setAttribute('y2', h);
-  const d = smoothPath(points);
-  edge.setAttribute('d', d);
-  line.setAttribute('d', d);
-  total = line.getTotalLength();
-  // line length at each waypoint (measured on growing prefixes of the path)
-  const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  course.appendChild(probe);
-  marks = points.map((p, i) => {
-    if (i === 0) return { key: keys[0], len: 0 };
-    probe.setAttribute('d', smoothPath(points.slice(0, i + 1)));
-    return { key: keys[i], len: probe.getTotalLength() };
-  });
-  probe.remove();
-  [edge, line].forEach((p) => { p.style.strokeDasharray = `${total} ${total}`; });
-}
-
-// How much line to draw: scrolling through a section moves the tip evenly through that
-// section's waypoints, so loops play out smoothly as you scroll.
-function lengthFor(y) {
-  if (y <= 0) return 0;
-  for (let i = 1; i < marks.length; i++) {
-    if (y < marks[i].key) {
-      const a = marks[i - 1], b = marks[i];
-      return a.len + (y - a.key) / (b.key - a.key) * (b.len - a.len);
-    }
-  }
-  return total;
-}
-
-function runLine() {
-  if (!marks.length) return;
-  const len = lengthFor(window.innerHeight * 0.6 - flow.getBoundingClientRect().top);
-  [edge, line].forEach((p) => { p.style.strokeDashoffset = total - len; });
-  const tip = line.getPointAtLength(len);
-  const ahead = line.getPointAtLength(Math.min(len + 4, total));
-  const heading = Math.atan2(ahead.y - tip.y, ahead.x - tip.x) * 180 / Math.PI; // 90 = straight down
-  const tilt = Math.max(-25, Math.min(25, (heading - 90) * 0.35));
-  runner.style.transform = `translate(${tip.x}px, ${tip.y}px) translate(-50%, -50%) rotate(${tilt}deg)`;
-  runner.classList.toggle('is-on', len > 0);
-}
-
-// The 3D phone rests at an angle (-18deg / 4deg) and tilts gently: a little as its
-// section scrolls past, and towards the pointer on hover. Eased each frame.
-const phone = document.querySelector('.phone3d');
-const phoneSection = document.getElementById('features');
-const phoneStage = document.querySelector('.phone3d-stage');
-let phoneRY = -18, phoneRX = 4, phoneFrame = 0, pointerX = 0, pointerY = 0;
-function phoneTarget() {
-  const b = phoneSection.getBoundingClientRect();
-  const p = Math.min(Math.max((window.innerHeight - b.top) / (window.innerHeight + b.height), 0), 1) - 0.5; // -0.5..0.5
-  return { ry: -18 + p * 12 + pointerX * 10, rx: 4 - p * 6 - pointerY * 8 };
-}
-function tiltPhone() {
-  const t = phoneTarget();
-  phoneRY += (t.ry - phoneRY) * 0.12;
-  phoneRX += (t.rx - phoneRX) * 0.12;
-  phone.style.setProperty('--ry', phoneRY.toFixed(2) + 'deg');
-  phone.style.setProperty('--rx', phoneRX.toFixed(2) + 'deg');
-  phoneFrame = Math.abs(t.ry - phoneRY) > 0.02 || Math.abs(t.rx - phoneRX) > 0.02 ? requestAnimationFrame(tiltPhone) : 0;
-}
-function queuePhone() {
-  if (phone && !reduceMotion && !phoneFrame) phoneFrame = requestAnimationFrame(tiltPhone);
-}
-if (phoneStage && !reduceMotion) {
-  phoneStage.addEventListener('pointermove', (e) => {
-    const r = phoneStage.getBoundingClientRect();
-    pointerX = (e.clientX - r.left) / r.width - 0.5;
-    pointerY = (e.clientY - r.top) / r.height - 0.5;
-    queuePhone();
-  });
-  phoneStage.addEventListener('pointerleave', () => { pointerX = 0; pointerY = 0; queuePhone(); });
 }
 
 function onScroll() {
-  dimHero();
-  toggleNav();
-  setTheme();
-  if (!reduceMotion) runLine();
+  const y = window.scrollY;
+  const dy = y - lastY;
+  lastY = y;
+  if (dy) { mqDir = dy > 0 ? -1 : 1; mqBoost = Math.min(mqBoost + Math.abs(dy) * 0.08, 18); }
+  stackPanels();
+  runParallax();
+  runRoad();
+  setMetronome();
   queuePhone();
 }
-
-function onLayout() {
-  if (!reduceMotion) buildLine();
-  onScroll();
-}
-
 window.addEventListener('scroll', onScroll, { passive: true });
-window.addEventListener('resize', onLayout);
-window.addEventListener('load', onLayout);
-document.fonts.ready.then(onLayout);
-onLayout();
+window.addEventListener('resize', () => { setupStrands(); if (reduceMotion) drawStrands(0); onScroll(); });
+onScroll();
 
-// The logo in the nav jumps straight back to the top.
-nav.querySelector('.nav-logo').addEventListener('click', (e) => {
-  e.preventDefault();
-  window.scrollTo({ top: 0, behavior: 'instant' });
-});
-
-// YouTube embed for a future demo section: give #video a data-video-id.
-const video = document.getElementById('video');
-if (video && video.dataset.videoId) {
-  const frame = document.createElement('iframe');
-  frame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(video.dataset.videoId);
-  frame.title = 'Adagio demo video';
-  frame.allow = 'accelerometer; encrypted-media; picture-in-picture; fullscreen';
-  frame.allowFullscreen = true;
-  frame.loading = 'lazy';
-  video.replaceChildren(frame);
-}
+// The logo jumps straight back to the top.
+$('.nav-logo').addEventListener('click', (e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'instant' }); });
 
 // Placeholder links (no address yet) don't jump to the top.
-document.querySelectorAll('a[data-placeholder]').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));
+$$('a[data-placeholder]').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));
 
-document.getElementById('year').textContent = new Date().getFullYear();
+$('#year').textContent = new Date().getFullYear();
+
+// Footer video mosaic: load and play the clips only while the footer is near the screen.
+const reel = $('.foot-reel');
+if (reel) {
+  const clips = $$('video', reel);
+  let reelInView = false;
+  const shown = (v) => getComputedStyle(v).display !== 'none';
+  const playAll = () => clips.forEach((v) => { if (reelInView && !reduceMotion && shown(v) && v.paused && v.src) v.play().catch(() => {}); });
+  clips.forEach((v) => v.addEventListener('canplay', playAll)); // retry once each clip is ready
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) playAll(); });
+  new IntersectionObserver(([e]) => {
+    reelInView = e.isIntersecting;
+    clips.forEach((v) => {
+      if (!shown(v)) return;
+      if (reelInView) {
+        if (!v.src) { v.preload = reduceMotion ? 'metadata' : 'auto'; v.src = v.dataset.src; } // reduced motion: a still frame only
+      } else if (!v.paused) v.pause();
+    });
+    playAll();
+  }, { rootMargin: '300px 0px' }).observe(reel);
+}

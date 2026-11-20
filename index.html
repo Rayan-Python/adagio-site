@@ -5,47 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Adagio — Music that runs at your pace</title>
   <meta name="description" content="Adagio matches your music's tempo to your live running cadence on iPhone, Apple Watch and Garmin, with Spotify and Apple Music. Includes a haptic mode for deaf and hard-of-hearing runners.">
-  <meta name="theme-color" content="#0A0A0A">
-  <link rel="preload" as="image" href="assets/hero.webp">
+  <meta name="theme-color" content="#08090A">
   <meta property="og:title" content="Adagio — Music that runs at your pace">
   <meta property="og:description" content="A running app that matches music BPM to your live cadence.">
   <meta property="og:type" content="website">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="500x500" href="favicon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <!-- Archivo: headlines (heavy) and body.
-       JetBrains Mono: small corner labels. -->
+  <!-- Archivo: headlines and body. Instrument Serif (italic): the soft second half of
+       headlines. JetBrains Mono: small labels and readouts. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Noto+Music&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="no-glass"> <!-- remove "no-glass" to bring the glass panels and color glows back -->
+<body>
   <a class="skip" href="#main">Skip to content</a>
 
-  <!-- Sticky nav: appears once the landing photo is covered (script.js) -->
+  <!-- The whole page keeps one tempo (default 170 steps per minute). Tap your own cadence
+       in "Try it" and every pulse on the page follows it (script.js). -->
+
   <header class="site-nav">
     <a class="nav-logo" href="#top" aria-label="Adagio, back to top"><img src="apple-touch-icon.png" alt="" width="180" height="180"><span>Adagio</span></a>
     <nav class="nav-links" aria-label="Sections">
       <a href="#how">How it works</a>
       <a href="#features">Features</a>
-      <a href="#accessibility">Accessibility</a>
-      <a href="#story">Why we built it</a>
+      <a href="#accessibility">Haptic Mode</a>
+      <a href="#story">Our story</a>
       <a href="#roadmap">What's next</a>
       <a href="#team">Team</a>
-      <a href="#contact">Contact</a>
     </nav>
-    <a class="appstore" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener" aria-label="Download on the App Store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 12.62c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.97.9-3.76 2.28-1.61 2.79-.41 6.91 1.15 9.17.77 1.1 1.68 2.34 2.87 2.3 1.15-.05 1.59-.75 2.98-.75 1.39 0 1.78.75 3 .72 1.24-.02 2.02-1.12 2.78-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.42-.93-2.44-3.68zM14.1 5.88c.64-.77 1.07-1.84.95-2.9-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.77-.97 2.81 1.02.08 2.07-.52 2.71-1.29z"/></svg><span class="appstore-text"><span class="appstore-small">Download on the</span><span class="appstore-big">App Store</span></span></a>
+    <div class="nav-right">
+      <a class="tempo-pill" href="#play" aria-label="Page tempo, tap to set your own"><i class="beat-dot" data-beat-dot></i><span data-bpm>170</span><small>SPM</small></a>
+      <a class="appstore" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener" aria-label="Download on the App Store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 12.62c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.97.9-3.76 2.28-1.61 2.79-.41 6.91 1.15 9.17.77 1.1 1.68 2.34 2.87 2.3 1.15-.05 1.59-.75 2.98-.75 1.39 0 1.78.75 3 .72 1.24-.02 2.02-1.12 2.78-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.42-.93-2.44-3.68zM14.1 5.88c.64-.77 1.07-1.84.95-2.9-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.77-.97 2.81 1.02.08 2.07-.52 2.71-1.29z"/></svg><span class="appstore-text"><span class="appstore-small">Download on the</span><span class="appstore-big">App Store</span></span></a>
+    </div>
   </header>
 
-  <!-- Metronome: a slim rail in the right margin with a tick per section. The dot snaps
-       to the section you're in, like a metronome keeping time (script.js). -->
+  <!-- Metronome: a slim rail on the right with a tick per section; the dot follows you. -->
   <nav class="metronome" aria-label="Page sections">
     <ol>
+      <li><a href="#play" data-label="Try it" aria-label="Try it"></a></li>
       <li><a href="#how" data-label="How it works" aria-label="How it works"></a></li>
       <li><a href="#features" data-label="Features" aria-label="Features"></a></li>
       <li><a href="#accessibility" data-label="Haptic Mode" aria-label="Haptic Mode"></a></li>
-      <li><a href="#story" data-label="Why we built it" aria-label="Why we built it"></a></li>
+      <li><a href="#story" data-label="Our story" aria-label="Our story"></a></li>
       <li><a href="#roadmap" data-label="What's next" aria-label="What's next"></a></li>
       <li><a href="#team" data-label="Team" aria-label="Team"></a></li>
       <li><a href="#contact" data-label="Contact" aria-label="Contact"></a></li>
@@ -54,257 +57,424 @@
   </nav>
 
   <main id="main">
-    <section class="hero" id="top">
-      <!-- The stage keeps the photo's proportions and zooms as one piece, so the
-           wordmark stays locked onto a lane line in the photo. -->
-      <div class="hero-stage">
-        <img class="hero-img" draggable="false" src="assets/hero.webp" width="1696" height="960" alt="A runner seen from above, mid-stride on a track at night, casting a long shadow across the lanes" fetchpriority="high">
-        <h1 class="hero-brand">Adagio</h1>
+
+    <!-- ============ HERO: light strands that pulse on the beat ============ -->
+    <section class="hero" id="top" data-theme="black">
+      <canvas class="strands" aria-hidden="true"></canvas>
+      <div class="hero-grain" aria-hidden="true"></div>
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="tag reveal"><i class="beat-dot" data-beat-dot></i> Now on iPhone, Apple Watch &amp; Garmin</p>
+          <h1 class="display reveal">Music that runs <em class="serif">at your pace.</em></h1>
+          <p class="lead reveal">Adagio reads your live cadence and plays songs whose tempo matches every step, from Spotify or Apple Music.</p>
+          <div class="cta-row reveal">
+            <a class="btn btn-lime" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener">Get Adagio <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-ghost" href="#play"><span class="play-ico" aria-hidden="true"></span> Tap your cadence</a>
+          </div>
+          <p class="micro reveal">Free on the App Store · Works with Spotify &amp; Apple Music</p>
+        </div>
+
+        <!-- A glass "live run" panel, like the app's run screen. Numbers follow the page tempo. -->
+        <div class="live glass reveal" aria-label="Example of a live run in Adagio">
+          <div class="live-head">
+            <span class="mono"><i class="rec"></i> Live run</span>
+            <span class="mono live-time" data-clock>00:24:18</span>
+          </div>
+          <div class="live-main">
+            <div>
+              <p class="mono dim">Cadence</p>
+              <p class="live-num"><span data-bpm>170</span><small>spm</small></p>
+            </div>
+            <svg class="spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><polyline data-spark points=""/></svg>
+          </div>
+          <div class="now">
+            <span class="art" aria-hidden="true"></span>
+            <div class="now-text">
+              <p class="now-title">Up next, in step</p>
+              <p class="mono dim"><span data-bpm>170</span> BPM · 1× match</p>
+            </div>
+            <span class="match-ok mono">✓ on beat</span>
+          </div>
+          <div class="beatbar" aria-hidden="true" data-beatbar>
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="live-foot mono dim">
+            <span><i class="sv sv-spotify"></i>Spotify</span>
+            <span><i class="sv sv-apple"></i>Apple Music</span>
+            <span>⌚ Apple Watch</span>
+          </div>
+        </div>
+      </div>
+      <a class="scroll-cue mono" href="#play" aria-label="Scroll down"><span>Scroll</span><i></i></a>
+    </section>
+
+    <!-- ============ MARQUEE: words slide with your scroll ============ -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track" data-marquee>
+        <span>Cadence</span><b>✦</b><span class="o">Tempo</span><b>✦</b><span>Haptics</span><b>✦</b><span class="o">Spotify</span><b>✦</b><span>Apple Music</span><b>✦</b><span class="o">Apple Watch</span><b>✦</b><span>Garmin</span><b>✦</b>
+        <span>Cadence</span><b>✦</b><span class="o">Tempo</span><b>✦</b><span>Haptics</span><b>✦</b><span class="o">Spotify</span><b>✦</b><span>Apple Music</span><b>✦</b><span class="o">Apple Watch</span><b>✦</b><span>Garmin</span><b>✦</b>
+      </div>
+    </div>
+
+    <!-- ============ TRY IT: tap your cadence ============ -->
+    <section class="block play" id="play" data-theme="black">
+      <div class="glow glow-a" aria-hidden="true"></div>
+      <div class="wrap">
+        <p class="tag reveal">Try it · 30 seconds</p>
+        <h2 class="headline reveal">Most running apps count your steps. <em class="serif lime">Adagio plays along.</em></h2>
+
+        <div class="play-grid">
+          <div class="pad-wrap reveal">
+            <button class="pad" type="button" data-pad aria-describedby="pad-hint">
+              <span class="pad-ring" aria-hidden="true"></span>
+              <span class="pad-ring r2" aria-hidden="true"></span>
+              <span class="pad-label">Tap</span>
+              <span class="pad-sub mono">in time with your stride</span>
+            </button>
+            <p class="mono dim pad-hint" id="pad-hint" data-pad-status>Tap 4+ times, or press the space bar</p>
+          </div>
+
+          <div class="readout glass reveal">
+            <div class="readout-top">
+              <p class="mono dim">Your cadence</p>
+              <div class="toggles">
+                <button class="chip" type="button" data-sound aria-pressed="false">🔊 Hear it</button>
+                <button class="chip" type="button" data-vibe aria-pressed="false" hidden>📳 Feel it</button>
+              </div>
+            </div>
+            <p class="big-bpm" aria-live="polite"><span data-bpm>170</span><small>steps / min</small></p>
+            <label class="slider-label">
+              <span class="visually-hidden">Set cadence</span>
+              <input type="range" min="120" max="210" step="1" value="170" data-slider>
+            </label>
+            <div class="scale mono dim" aria-hidden="true"><span>120 · easy jog</span><span>170 · race pace</span><span>210 · sprint</span></div>
+
+            <p class="mono dim queue-label">What Adagio would queue</p>
+            <ul class="queue">
+              <li>
+                <span class="mult">1×</span>
+                <span class="q-bpm"><b data-bpm>170</b> BPM</span>
+                <span class="q-genre" data-genre="1">drum &amp; bass, pop-punk</span>
+              </li>
+              <li>
+                <span class="mult">½×</span>
+                <span class="q-bpm"><b data-bpm-half>85</b> BPM</span>
+                <span class="q-genre" data-genre="0.5">hip-hop, R&amp;B</span>
+              </li>
+              <li class="widen">
+                <span class="mult">±</span>
+                <span class="q-bpm">Range widens</span>
+                <span class="range-vis" aria-hidden="true"><i></i><i></i><i></i><b></b></span>
+              </li>
+            </ul>
+            <p class="fine dim">Genres are just examples of songs at that tempo. Adagio finds matches in your own playlists.</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- Everything below the photo. It slides up over the pinned photo; each section has
-         its own black, off-white or yellow background (data-theme). -->
-    <div class="flow" id="flow">
-      <!-- One thick line winds down the page, drawn as you scroll, with the app icon on its
-           tip (script.js). Words it passes over flip color. -->
-      <svg class="course" aria-hidden="true">
-        <defs>
-          <linearGradient id="course-grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1000">
-            <stop offset="0" stop-color="#E8F02A"/>
-            <stop offset="1" stop-color="#A6E22E"/>
-          </linearGradient>
-        </defs>
-        <path class="course-edge"/>
-        <path class="course-line"/>
-      </svg>
-      <img class="runner" src="apple-touch-icon.png" alt="" width="180" height="180" aria-hidden="true">
-
-      <section class="block" id="how" data-theme="black">
-      <div class="orbs" aria-hidden="true"><i></i><i></i></div>
-      <p class="corner corner-tl" aria-hidden="true"><span class="acc">01</span> / How it works</p>
-      <p class="corner corner-br" aria-hidden="true">Fig. <span class="acc">01</span> / How it works</p>
-        <div class="wrap">
-          <span class="sec-num" aria-hidden="true">01</span>
-          <h2 class="headline reveal">The course</h2>
-          <ol class="numbered">
-            <li class="glass reveal">
-              <span class="big-num" aria-hidden="true">01</span>
-              <div>
-                <h3>Run</h3>
-                <p>Adagio reads your live cadence (steps per minute) from your iPhone, Apple Watch, or Garmin watch.</p>
-              </div>
-            </li>
-            <li class="glass reveal">
-              <span class="big-num" aria-hidden="true">02</span>
-              <div>
-                <h3>Match</h3>
-                <p>It finds songs from Spotify or Apple Music whose tempo (BPM) fits your cadence.</p>
-              </div>
-            </li>
-            <li class="glass reveal">
-              <span class="big-num" aria-hidden="true">03</span>
-              <div>
-                <h3>Stay in step</h3>
-                <p>When your pace changes, the music adapts so every footstep lands on the beat.</p>
-              </div>
-            </li>
-          </ol>
-        </div>
-      </section>
-
-      <div class="blend blend-dark-paper" aria-hidden="true"></div>
-
-      <section class="block" id="features" data-theme="paper">
-      <div class="orbs" aria-hidden="true"><i></i><i></i></div>
-      <p class="corner corner-tl" aria-hidden="true"><span class="acc">02</span> / Features</p>
-      <p class="corner corner-br" aria-hidden="true">Fig. <span class="acc">02</span> / Features</p>
-        <div class="wrap features">
-          <div>
-            <span class="sec-num" aria-hidden="true">02</span>
-            <h2 class="headline reveal">Smart song matching</h2>
-            <p class="lead reveal">Not every song has tempo data, and Spotify no longer shares it with apps. So we built our own song-tempo lookup that searches several databases. If a playlist doesn't have enough exact matches, Adagio gradually widens the match range, and it also counts half-time and double-time songs, so you always have music that fits your stride.</p>
-            <ol class="numbered numbered-sm">
-              <li class="glass reveal">
-                <span class="big-num" aria-hidden="true">01</span>
-                <div>
-                  <h3>Cadence matching</h3>
-                  <p>Music tempo follows your steps per minute in real time, so every beat lands with your stride.</p>
-                </div>
-              </li>
-              <li class="glass reveal">
-                <span class="big-num" aria-hidden="true">02</span>
-                <div>
-                  <h3>Spotify + Apple Music</h3>
-                  <p>Use the streaming service you already have. Adagio works with both.</p>
-                </div>
-              </li>
-              <li class="glass reveal">
-                <span class="big-num" aria-hidden="true">03</span>
-                <div>
-                  <h3>iPhone, Apple Watch, Garmin</h3>
-                  <p>Run with the device you already wear. Adagio is made for iPhone, Apple Watch and Garmin.</p>
-                </div>
-              </li>
-            </ol>
+    <!-- ============ HOW IT WORKS: three panels stack as you scroll ============ -->
+    <section class="stack" id="how" aria-label="How it works">
+      <article class="panel" data-theme="black">
+        <div class="panel-in wrap">
+          <span class="giant-num" aria-hidden="true">01</span>
+          <div class="panel-copy">
+            <p class="tag">How it works · Step 01</p>
+            <h2 class="panel-title">Run. <em class="serif">Just run.</em></h2>
+            <p class="lead">Adagio reads your live cadence (steps per minute) from your iPhone, Apple Watch, or Garmin watch.</p>
+            <ul class="device-chips mono"><li>iPhone</li><li>Apple Watch</li><li>Garmin</li></ul>
           </div>
+          <div class="spike-stage" aria-hidden="true">
+            <canvas class="model-canvas" data-model="spike"></canvas>
+            <p class="mono model-cap">Drag to spin</p>
+          </div>
+        </div>
+      </article>
+      <article class="panel" data-theme="lime">
+        <div class="panel-in wrap">
+          <span class="giant-num" aria-hidden="true">02</span>
+          <div class="panel-copy">
+            <p class="tag">How it works · Step 02</p>
+            <h2 class="panel-title">Match. <em class="serif">Beat for beat.</em></h2>
+            <p class="lead">It finds songs from Spotify or Apple Music whose tempo (BPM) fits your cadence.</p>
+          </div>
+          <!-- A straight of a real running track seen from above. Its white lane lines are
+               the five lines of a music staff: clef and time signature at the start line,
+               two bars of engraved notes, and the finish line as the final bar line. Spike
+               prints in the outer lane light up on each beat (script.js draws the notes). -->
+          <figure class="trackstaff" aria-hidden="true">
+            <svg viewBox="0 0 640 276" data-trackstaff>
+              <defs>
+                <clipPath id="ts-clip"><rect width="640" height="276" rx="16"/></clipPath>
+                <pattern id="ts-mow" width="64" height="40" patternUnits="userSpaceOnUse">
+                  <rect width="32" height="40" fill="#3C7A35"/><rect x="32" width="32" height="40" fill="#357030"/>
+                </pattern>
+                <filter id="ts-grain" x="0" y="0" width="100%" height="100%">
+                  <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="7"/>
+                  <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 1.35"/>
+                </filter>
+                <linearGradient id="ts-wear" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#fff" stop-opacity=".07"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="1" stop-color="#000" stop-opacity=".12"/>
+                </linearGradient>
+              </defs>
+              <g clip-path="url(#ts-clip)">
+                <rect width="640" height="48" fill="url(#ts-mow)"/>
+                <rect y="48" width="640" height="6" fill="#EEECE4"/>
+                <rect y="54" width="640" height="222" fill="#B44A31"/>
+                <rect y="54" width="640" height="222" fill="#000" filter="url(#ts-grain)" opacity=".5"/>
+                <rect y="54" width="640" height="222" fill="url(#ts-wear)"/>
+                <g data-ts-art></g>
+              </g>
+            </svg>
+            <figcaption class="ts-caption">Lanes are the staff. Each step lands on a beat: <span data-bpm>170</span> steps, <span data-bpm>170</span> beats a minute.</figcaption>
+          </figure>
+        </div>
+      </article>
+      <article class="panel" data-theme="paper">
+        <div class="panel-in wrap">
+          <span class="giant-num" aria-hidden="true">03</span>
+          <div class="panel-copy">
+            <p class="tag">How it works · Step 03</p>
+            <h2 class="panel-title">Stay in step. <em class="serif">Every step.</em></h2>
+            <p class="lead">When your pace changes, the music adapts so every footstep lands on the beat.</p>
+          </div>
+          <div class="pace-vis" aria-hidden="true">
+            <svg viewBox="0 0 400 160" preserveAspectRatio="none">
+              <path class="pace-path" pathLength="1" d="M0,110 C60,110 80,110 120,90 S200,40 260,48 S340,80 400,70"/>
+            </svg>
+            <div class="pace-labels mono"><span>warm-up 158</span><span>tempo 176</span><span>cool-down 164</span></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ FEATURES: giant BPM behind a floating phone ============ -->
+    <section class="block features-sec" id="features" data-theme="black">
+      <div class="glow glow-b" aria-hidden="true"></div>
+      <div class="wrap">
+        <div class="features">
+          <div class="feat-copy">
+            <p class="tag reveal">Features · Smart song matching</p>
+            <h2 class="headline reveal">Every song, <em class="serif lime">on your beat.</em></h2>
+            <p class="lead reveal">Not every song has tempo data, and Spotify no longer shares it with apps. So we built our own song-tempo lookup that searches several databases. If a playlist doesn't have enough exact matches, Adagio gradually widens the match range, and it also counts half-time and double-time songs, so you always have music that fits your stride.</p>
+          </div>
+
           <!-- 3D iPhone 16 Pro mockup. The screen is a normal <img>: swap
                assets/app-screen.svg for a real screenshot (390 x 844 works best).
-               It tilts gently with scroll and with the pointer (script.js). -->
-          <div class="phone3d-stage reveal" aria-hidden="true">
-            <div class="phone3d">
-              <i class="p-slice" style="--z:-6"></i>
-              <i class="p-slice" style="--z:-5"></i>
-              <i class="p-slice" style="--z:-4"></i>
-              <i class="p-slice" style="--z:-3"></i>
-              <i class="p-slice" style="--z:-2"></i>
-              <i class="p-slice" style="--z:-1"></i>
-              <i class="p-slice" style="--z:0"></i>
-              <i class="p-slice" style="--z:1"></i>
-              <i class="p-slice" style="--z:2"></i>
-              <i class="p-slice" style="--z:3"></i>
-              <i class="p-slice" style="--z:4"></i>
-              <i class="p-slice" style="--z:5"></i>
-              <i class="p-slice" style="--z:6"></i>
-              <i class="p-btn p-btn-left btn-action"></i>
-              <i class="p-btn p-btn-left btn-vol-up"></i>
-              <i class="p-btn p-btn-left btn-vol-down"></i>
-              <i class="p-btn p-btn-right btn-power"></i>
-              <i class="p-btn p-btn-right btn-camera"></i>
-              <div class="p-face p-back">
-                <div class="cam-bump">
-                  <i class="bump-slice" style="--z:1"></i><i class="bump-slice" style="--z:2"></i><i class="bump-slice" style="--z:3"></i>
-                  <div class="bump-top"><i class="lens l1"></i><i class="lens l2"></i><i class="lens l3"></i><i class="flash"></i><i class="mic"></i></div>
+               It tilts with scroll and with the pointer (script.js). -->
+          <div class="phone-zone reveal">
+            <span class="behind-word" aria-hidden="true">BPM</span>
+            <div class="phone3d-stage" aria-hidden="true">
+              <div class="phone3d">
+                <i class="p-slice" style="--z:-6"></i>
+                <i class="p-slice" style="--z:-5"></i>
+                <i class="p-slice" style="--z:-4"></i>
+                <i class="p-slice" style="--z:-3"></i>
+                <i class="p-slice" style="--z:-2"></i>
+                <i class="p-slice" style="--z:-1"></i>
+                <i class="p-slice" style="--z:0"></i>
+                <i class="p-slice" style="--z:1"></i>
+                <i class="p-slice" style="--z:2"></i>
+                <i class="p-slice" style="--z:3"></i>
+                <i class="p-slice" style="--z:4"></i>
+                <i class="p-slice" style="--z:5"></i>
+                <i class="p-slice" style="--z:6"></i>
+                <i class="p-btn p-btn-left btn-action"></i>
+                <i class="p-btn p-btn-left btn-vol-up"></i>
+                <i class="p-btn p-btn-left btn-vol-down"></i>
+                <i class="p-btn p-btn-right btn-power"></i>
+                <i class="p-btn p-btn-right btn-camera"></i>
+                <div class="p-face p-back">
+                  <div class="cam-bump">
+                    <i class="bump-slice" style="--z:1"></i><i class="bump-slice" style="--z:2"></i><i class="bump-slice" style="--z:3"></i>
+                    <div class="bump-top"><i class="lens l1"></i><i class="lens l2"></i><i class="lens l3"></i><i class="flash"></i><i class="mic"></i></div>
+                  </div>
+                  <span class="back-logo"><svg viewBox="0 0 24 24"><path d="M16.37 12.62c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.97.9-3.76 2.28-1.61 2.79-.41 6.91 1.15 9.17.77 1.1 1.68 2.34 2.87 2.3 1.15-.05 1.59-.75 2.98-.75 1.39 0 1.78.75 3 .72 1.24-.02 2.02-1.12 2.78-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.42-.93-2.44-3.68zM14.1 5.88c.64-.77 1.07-1.84.95-2.9-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.77-.97 2.81 1.02.08 2.07-.52 2.71-1.29z"/></svg></span>
                 </div>
-                <span class="back-logo"><svg viewBox="0 0 24 24"><path d="M16.37 12.62c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.97.9-3.76 2.28-1.61 2.79-.41 6.91 1.15 9.17.77 1.1 1.68 2.34 2.87 2.3 1.15-.05 1.59-.75 2.98-.75 1.39 0 1.78.75 3 .72 1.24-.02 2.02-1.12 2.78-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.42-.93-2.44-3.68zM14.1 5.88c.64-.77 1.07-1.84.95-2.9-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.77-.97 2.81 1.02.08 2.07-.52 2.71-1.29z"/></svg></span>
-              </div>
-              <div class="p-face p-front">
-                <div class="p-display">
-                  <img class="p-screen" src="assets/app-screen.svg" alt="" width="390" height="844">
-                  <span class="p-island"><i></i></span>
-                  <span class="p-glare"></span>
+                <div class="p-face p-front">
+                  <div class="p-display">
+                    <img class="p-screen" src="assets/app-screen.svg" alt="" width="390" height="844">
+                    <span class="p-island"><i></i></span>
+                    <span class="p-glare"></span>
+                  </div>
                 </div>
               </div>
+              <div class="phone3d-shadow"></div>
             </div>
-            <div class="phone3d-shadow"></div>
           </div>
         </div>
-      </section>
 
-      <div class="blend blend-paper-yellow" aria-hidden="true"></div>
-
-      <section class="block" id="accessibility" data-theme="yellow">
-      <div class="orbs" aria-hidden="true"><i></i><i></i></div>
-      <p class="corner corner-tl" aria-hidden="true"><span class="acc">03</span> / Haptic Mode</p>
-      <p class="corner corner-br" aria-hidden="true">Fig. <span class="acc">03</span> / Haptic Mode</p>
-        <div class="wrap narrow">
-          <span class="sec-num" aria-hidden="true">03</span>
-          <h2 class="headline headline-center headline-oneline reveal">Haptic Mode</h2>
-          <div class="glass glass-pad reveal">
-            <p class="statement">Music shouldn't be the only way to run in rhythm.</p>
-            <p class="lead">Haptic Mode is built for deaf and hard-of-hearing runners. Instead of sound, your phone and watch pulse to the beat of your target tempo, and they cue you when you're above or below your target pace. Everyone can run in rhythm.</p>
+        <!-- Stat cards with small live meters -->
+        <div class="stats">
+          <div class="stat glass reveal">
+            <p class="mono dim">Cadence matching</p>
+            <p class="stat-num">Real&#8209;time</p>
+            <p class="stat-text">Music tempo follows your steps per minute as you run, so every beat lands with your stride.</p>
+            <svg class="spark spark-wide" viewBox="0 0 200 50" preserveAspectRatio="none" aria-hidden="true"><polyline data-spark points=""/></svg>
+          </div>
+          <div class="stat glass reveal">
+            <p class="mono dim">Spotify + Apple Music</p>
+            <p class="stat-num" data-count="2">2</p>
+            <p class="stat-text">Use the streaming service you already have. Adagio works with both.</p>
+            <div class="tempo-modes two mono" aria-hidden="true" data-modes><span>Spotify</span><span>Apple Music</span></div>
+          </div>
+          <div class="devices glass reveal" id="devices">
+            <div class="watch-stage" aria-hidden="true">
+              <canvas class="model-canvas" data-model="watch"></canvas>
+              <p class="mono model-cap">Drag to turn</p>
+            </div>
+            <div class="devices-copy">
+              <p class="mono dim">Compatible devices</p>
+              <h3 class="devices-title">Run with what you <em class="serif lime">already wear.</em></h3>
+              <p class="stat-text">Run with the device you already wear. Adagio is made for iPhone, Apple Watch and Garmin.</p>
+              <ul class="device-list">
+                <li><span class="d-name">iPhone</span><span class="d-badge ok">✓ Supported</span></li>
+                <li><span class="d-name">Apple Watch</span><span class="d-badge ok">✓ Supported</span></li>
+                <li><span class="d-name">Garmin</span><span class="d-badge ok">✓ Supported</span></li>
+                <li class="soon"><span class="d-name">COROS</span><span class="d-badge">Coming soon</span></li>
+              </ul>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <div class="blend blend-yellow-dark" aria-hidden="true"></div>
-
-      <section class="block" id="story" data-theme="black">
-      <div class="orbs" aria-hidden="true"><i></i><i></i></div>
-      <p class="corner corner-tl" aria-hidden="true"><span class="acc">04</span> / Why we built it</p>
-      <p class="corner corner-br" aria-hidden="true">Fig. <span class="acc">04</span> / Why we built it</p>
-        <div class="wrap story">
-          <div class="story-copy">
-          <h2 class="headline headline-center reveal"><span class="nowrap">One idea</span><br><span class="nowrap">two runners</span></h2>
-          <div class="prose glass glass-pad">
-            <p class="reveal">We're both on our school's cross country team, and we see people run with AirPods in all the time. That got us asking: how could we connect mental health and physical fitness?</p>
-            <p class="reveal">Music is one of the best things for your mind. Running is one of the best things for your body. But they usually aren't connected. Adagio changes that by matching your music to your running pace.</p>
-            <p class="reveal">When your music moves with you, runs feel easier, and it's easier to finish them and enjoy them.</p>
-          </div>
-          </div>
-          <div class="shelf-display reveal" aria-hidden="true">
-            <span class="sec-num sec-num-shelf">04</span>
-          </div>
+    <!-- ============ HAPTIC MODE: rings pulse at the tempo ============ -->
+    <section class="block haptic" id="accessibility" data-theme="lime">
+      <div class="wrap haptic-grid">
+        <div>
+          <p class="tag reveal">Accessibility · Haptic Mode</p>
+          <h2 class="headline reveal">Music shouldn't be the only way to run <em class="serif">in rhythm.</em></h2>
+          <p class="lead reveal">Haptic Mode is built for deaf and hard-of-hearing runners. Instead of sound, your phone and watch pulse to the beat of your target tempo, and they cue you when you're above or below your target pace. Everyone can run in rhythm.</p>
         </div>
-      </section>
-
-      <!-- DEMO SECTION (add back when a video exists): a <section class="block" id="demo" data-theme="...">
-           with <div class="video" id="video" data-video-id="YOUR_ID"></div>; script.js embeds it. -->
-
-      <div class="blend blend-dark-paper" aria-hidden="true"></div>
-
-      <section class="block" id="roadmap" data-theme="paper">
-      <div class="orbs" aria-hidden="true"><i></i><i></i></div>
-      <p class="corner corner-tl" aria-hidden="true"><span class="acc">05</span> / What's next</p>
-      <p class="corner corner-br" aria-hidden="true">Fig. <span class="acc">05</span> / What's next</p>
-        <div class="wrap">
-          <span class="sec-num" aria-hidden="true">05</span>
-          <h2 class="headline reveal">What's next</h2>
-          <ul class="roadmap glass">
-            <li class="reveal"><span class="ver">Adagio 1.1</span>Tight timing</li>
-            <li class="reveal"><span class="ver">Adagio 1.3</span>Your music, your sensors</li>
-            <li class="reveal"><span class="ver">Adagio 2.0</span>Train with Adagio</li>
-          </ul>
-        </div>
-      </section>
-
-      <div class="blend blend-paper-yellow" aria-hidden="true"></div>
-
-      <section class="block" id="team" data-theme="yellow">
-      <div class="orbs" aria-hidden="true"><i></i><i></i></div>
-      <p class="corner corner-tl" aria-hidden="true"><span class="acc">06</span> / Team</p>
-      <p class="corner corner-br" aria-hidden="true">Fig. <span class="acc">06</span> / Team</p>
-        <div class="wrap">
-          <span class="sec-num" aria-hidden="true">06</span>
-          <h2 class="headline headline-center reveal">The team</h2>
-          <p class="team-intro reveal">Built by two high school cross country runners</p>
-          <ul class="people glass reveal">
-            <li>
-              <span class="person-name">Ryan Soudkhah</span>
-              <span class="person-role">Co-founder &amp; developer</span>
-              <a class="person-mail" href="mailto:soudkhahr@gmail.com">soudkhahr@gmail.com</a>
-            </li>
-            <li>
-              <span class="person-name">Darren Kapturski</span>
-              <span class="person-role">Co-founder &amp; developer</span>
-              <a class="person-mail" href="mailto:dmkapturski@gmail.com">dmkapturski@gmail.com</a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div class="blend blend-yellow-dark" aria-hidden="true"></div>
-
-      <section class="block" id="contact" data-theme="black">
-      <div class="orbs" aria-hidden="true"><i></i><i></i></div>
-      <p class="corner corner-tl" aria-hidden="true"><span class="acc">07</span> / Contact</p>
-      <p class="corner corner-br" aria-hidden="true">Fig. <span class="acc">07</span> / Contact</p>
-        <div class="wrap contact">
-          <span class="sec-num" aria-hidden="true">07</span>
-          <h2 class="headline headline-oneline reveal">Get in touch with us</h2>
-          <div class="contact-card glass glass-pad reveal">
-            <p class="lead">For questions, feedback and inquiries:</p>
-            <a class="email-big" href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>
+        <div class="rings reveal" aria-hidden="true" data-rings>
+          <div class="watch">
+            <div class="watch-face">
+              <span class="mono">TARGET</span>
+              <b data-bpm>170</b>
+              <span class="mono">SPM</span>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <footer class="site-footer" data-theme="black">
-        <div class="wrap foot">
-          <p class="foot-brand">Adagio <span class="muted">— Made by runners, for runners.</span></p>
-          <!-- PLACEHOLDER LINKS: set the real addresses for these four -->
-          <nav class="foot-links" aria-label="Footer">
-            <a href="#" data-placeholder>Privacy Policy</a>
-            <a href="#" data-placeholder>Terms</a>
-            <a href="#" data-placeholder>Instagram</a>
-            <a href="#" data-placeholder>Strava</a>
-          </nav>
+    <!-- ============ STORY: the runner photo, full bleed ============ -->
+    <section class="story" id="story" data-theme="black">
+      <div class="story-media" aria-hidden="true">
+        <img src="assets/hero.webp" alt="" width="1696" height="960" loading="lazy" data-parallax>
+      </div>
+      <div class="wrap story-in">
+        <p class="tag reveal">Why we built it</p>
+        <h2 class="headline reveal">One idea, <em class="serif lime">two runners.</em></h2>
+        <div class="prose glass">
+          <p class="reveal">We're both on our school's cross country team, and we see people run with AirPods in all the time. That got us asking: how could we connect mental health and physical fitness?</p>
+          <p class="reveal">Music is one of the best things for your mind. Running is one of the best things for your body. But they usually aren't connected. Adagio changes that by matching your music to your running pace.</p>
+          <p class="reveal">When your music moves with you, runs feel easier, and it's easier to finish them and enjoy them.</p>
         </div>
-        <p class="wrap legal">© <span id="year">2026</span> Adagio</p>
-      </footer>
-    </div>
+      </div>
+    </section>
+
+    <!-- ============ ROADMAP: a line that draws through three releases ============ -->
+    <section class="block roadmap-sec" id="roadmap" data-theme="black">
+      <div class="wrap">
+        <p class="tag reveal">Roadmap</p>
+        <h2 class="headline reveal">What's <em class="serif lime">next.</em></h2>
+        <ol class="road" data-road>
+          <li class="node glass">
+            <span class="mono dim">Adagio 1.1</span>
+            <h3>Tight timing</h3>
+          </li>
+          <li class="node glass">
+            <span class="mono dim">Adagio 1.3</span>
+            <h3>Your music, your sensors</h3>
+          </li>
+          <li class="node glass">
+            <span class="mono dim">Adagio 2.0</span>
+            <h3>Train with Adagio</h3>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ TEAM ============ -->
+    <section class="block team-sec" id="team" data-theme="black">
+      <div class="wrap">
+        <p class="tag reveal">Team</p>
+        <h2 class="headline reveal">Built by two high school <em class="serif lime">cross country runners.</em></h2>
+        <ul class="people">
+          <li class="person glass reveal">
+            <span class="avatar" aria-hidden="true">RS</span>
+            <div>
+              <p class="person-name">Ryan Soudkhah</p>
+              <p class="mono dim">Co-founder &amp; developer</p>
+            </div>
+            <a class="person-mail" href="mailto:soudkhahr@gmail.com">soudkhahr@gmail.com</a>
+          </li>
+          <li class="person glass reveal">
+            <span class="avatar" aria-hidden="true">DK</span>
+            <div>
+              <p class="person-name">Darren Kapturski</p>
+              <p class="mono dim">Co-founder &amp; developer</p>
+            </div>
+            <a class="person-mail" href="mailto:dmkapturski@gmail.com">dmkapturski@gmail.com</a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ CONTACT: one lime card ============ -->
+    <section class="block contact-sec" id="contact" data-theme="black">
+      <div class="wrap">
+        <div class="cta-card reveal" data-theme="lime">
+          <div>
+            <p class="tag">Contact</p>
+            <h2 class="headline">Questions, feedback, <em class="serif">ideas?</em></h2>
+            <p class="lead">For questions, feedback and inquiries, write to us. We read everything.</p>
+          </div>
+          <div class="cta-actions">
+            <a class="email-big" href="mailto:adagiorunning.support@gmail.com">adagiorunning.support<wbr>@gmail.com</a>
+            <a class="btn btn-dark" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener">Download on the App Store <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
+  <footer class="site-footer" data-theme="black">
+    <!-- Runners on the track, faint, under the wordmark. Free clips from Pexels, saved in assets/video
+         (pexels.com, free to use); they only load once the footer is near. -->
+    <div class="foot-reel" aria-hidden="true">
+      <video muted loop playsinline preload="none" data-src="assets/video/track-aerial.mp4"></video>
+      <video muted loop playsinline preload="none" data-src="assets/video/track-footrace.mp4"></video>
+      <video muted loop playsinline preload="none" data-src="assets/video/track-sprinter.mp4"></video>
+      <video muted loop playsinline preload="none" data-src="assets/video/track-jog.mp4"></video>
+      <video muted loop playsinline preload="none" data-src="assets/video/track-pair.mp4"></video>
+    </div>
+    <div class="wrap foot">
+      <p class="foot-brand">Adagio <span class="muted">— Made by runners, for runners.</span></p>
+      <!-- PLACEHOLDER LINKS: set the real addresses for these four -->
+      <nav class="foot-links" aria-label="Footer">
+        <a href="#" data-placeholder>Privacy Policy</a>
+        <a href="#" data-placeholder>Terms</a>
+        <a href="#" data-placeholder>Instagram</a>
+        <a href="#" data-placeholder>Strava</a>
+      </nav>
+    </div>
+    <p class="wrap legal mono">© <span id="year">2026</span> Adagio · Keeping time at <span data-bpm>170</span> spm · Footage: Pexels</p>
+    <p class="foot-word" aria-hidden="true">Adagio</p>
+  </footer>
+
   <script src="script.js"></script>
+  <script src="staff.js"></script>
+  <!-- three.js for the 3D track spike and watch (models.js) -->
+  <script type="importmap">
+    { "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    } }
+  </script>
+  <script type="module" src="models.js"></script>
 </body>
 </html>
