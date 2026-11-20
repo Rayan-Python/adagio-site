@@ -76,6 +76,15 @@ h1, h2, h3, p { margin: 0; }
   font-family: var(--sans); font-stretch: 125%;
   font-size: min(18cqw, calc(var(--space) / .725)); font-weight: 900; letter-spacing: .03em; line-height: 1; color: #FFFFFF;
 }
+/* Slogan: centered in the lane just below the wordmark (lane lines at y = 177 and 322 of 960,
+   so its middle is y = 251). The caps' middle sits .47em below the top of the box. */
+.hero-tagline {
+  position: absolute; z-index: 1; margin: 0; white-space: nowrap;
+  left: calc((var(--sw) - 100cqw) * var(--px) + 50cqw); top: 26.15%;
+  transform: translate(-50%, -.47em);
+  font-family: var(--sans); font-stretch: 125%;
+  font-size: min(calc(var(--sh) * .05), 6.5cqw); font-weight: 700; letter-spacing: .04em; line-height: 1; color: #FFFFFF;
+}
 
 /* ------------------------------------------------------------------
    Sticky nav: logo left, links middle, App Store right. Hidden over the photo.
