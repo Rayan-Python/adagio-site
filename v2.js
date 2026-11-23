@@ -4,7 +4,7 @@
 // The page keeps a beat (176 a minute until you tap your own): lime rings spread from the
 // phone on each one, the headline's last word pulses, the shoe lands on one, the watch taps.
 // Along the foot of the screen a music staff doubles as the progress bar: each scene is a note.
-import { THREE, makeStage, buildIPhone, buildAppleWatch, buildWatch, buildRunway } from './v2-models.js?v=2';
+import { THREE, makeStage, buildIPhone, buildAppleWatch, buildWatch, buildRunway } from './v2-models.js?v=1';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (s, root = document) => root.querySelector(s);
@@ -182,7 +182,7 @@ function startStage() {
   const canvas = $('[data-stage]');
   const FOV = 30, DIST = 24;
   const { renderer, scene, camera, drag } = makeStage(canvas, { fov: FOV, distance: DIST, lights: 'studio', shadows: true, autoFit: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
   const glow = new THREE.PointLight(0xe8f02a, 46, 40); // the stage's one coloured light
   glow.position.set(-5, 3, 7);
@@ -200,7 +200,6 @@ function startStage() {
   const garmin = buildWatch();
   document.addEventListener('adagio:bpm', (e) => garmin.userData.setBPM(e.detail));
   scene.add(phone, runway, watch, garmin);
-  renderer.compile(scene, camera); // get every model's shaders ready now, not mid-scroll when it first comes on
 
   // rings on the beat, lime, spreading from whatever the scene is about
   const rings = Array.from({ length: 4 }, () => {
@@ -257,12 +256,6 @@ function startStage() {
     place(runway, A.runway, Bp.runway, t);
     place(watch, A.watch, Bp.watch, t);
     place(garmin, A.garmin, Bp.garmin, t);
-    // only what's on stage is drawn; shadows are only worked out while the shoe is there
-    runway.visible = P > 0.2 && P < 1.8;
-    watch.visible = P > 4.2 && P < 6.8;
-    garmin.visible = P > 5.2 && P < 6.8;
-    phone.visible = !(P > 0.85 && P < 1.15);
-    renderer.shadowMap.autoUpdate = runway.visible;
     // the phone: a turn of the hand, a flip when the cue changes, and the scene's screen
     const flip = clamp((now - flipAt) / 620, 0, 1), flipE = flip < 0.5 ? 4 * flip * flip * flip : 1 - Math.pow(-2 * flip + 2, 3) / 2;
     phone.rotation.y += drag.offset + (sceneNow === 4 && !reduceMotion ? flipE * Math.PI * 2 : 0);
