@@ -1,9 +1,12 @@
 // Adagio — real 3D models (three.js, WebGL), built from code, no model files:
-//   • a distance track spike for "How it works · 01": green-to-gold knit upper, cream laces,
-//     cream heel foam, green plate with salmon traction nubs and silver pins
-//   • a Garmin-style round GPS watch (fenix / Forerunner look) for "Compatible devices";
-//     its screen shows the page tempo and updates when you tap a new cadence
-// Drag either one sideways to turn it. They only render while on screen.
+//   • "How it works": one scene pinned beside the three steps. An iPhone showing the app, and
+//     a distance track spike that steps onto a strip of clay track. Scrolling moves the camera
+//     and changes the phone's screen (on phones the spike gets its own small scene instead)
+//   • an iPhone showing the run summary, for "Every song on your beat"
+//   • a Garmin-style round GPS watch for the devices list; its face shows the page tempo
+//   • an Apple Watch for Pulse Mode, tapping in time and showing the app's cue screens
+// Drag any of them sideways to turn it. Each one is built when it's about to come on screen
+// and only renders while it's on screen. script.js imports this file on demand.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
@@ -37,7 +40,7 @@ function curve(points) {
    ---------------------------------------------------------------------- */
 // fitWidth: the model's width in scene units; on narrow frames the camera backs off so
 // the whole model still fits side to side.
-function makeStage(canvas, { fov = 30, distance = 14, fitWidth = 0, lights = 'neon', shadows = false } = {}) {
+function makeStage(canvas, { fov = 30, distance = 14, fitWidth = 0, lights = 'neon', shadows = false, autoFit = true } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -63,9 +66,9 @@ function makeStage(canvas, { fov = 30, distance = 14, fitWidth = 0, lights = 'ne
     key.shadow.radius = 4;
   }
   if (lights === 'neon') {
-    // a lime rim from behind-left and a pink rim from the right
+    // a lime rim from behind-left and a white rim from the right
     const lime = new THREE.PointLight(0xa6e22e, 60, 30); lime.position.set(-7, 2, -4); scene.add(lime);
-    const pink = new THREE.PointLight(0xff3d8b, 30, 30); pink.position.set(7, -2, -3); scene.add(pink);
+    const cool = new THREE.PointLight(0xffffff, 26, 30); cool.position.set(7, -2, -3); scene.add(cool);
   } else {
     // product-shot studio: less ambient, a strong key from above-left, a soft warm
     // fill, and bright edge lights from behind so the form reads
@@ -81,20 +84,23 @@ function makeStage(canvas, { fov = 30, distance = 14, fitWidth = 0, lights = 'ne
     if (!w || !h) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    const fitZ = fitWidth / 2 / (Math.tan((fov * Math.PI) / 360) * camera.aspect);
-    camera.position.z = Math.max(distance, fitZ);
+    if (autoFit) {
+      const fitZ = fitWidth / 2 / (Math.tan((fov * Math.PI) / 360) * camera.aspect);
+      camera.position.z = Math.max(distance, fitZ);
+    }
     camera.updateProjectionMatrix();
   }
   resize();
   new ResizeObserver(resize).observe(canvas);
 
   // drag sideways to turn the model; it eases back into its own motion when you let go
-  const drag = { on: false, x: 0, offset: 0 };
-  canvas.addEventListener('pointerdown', (e) => { drag.on = true; drag.x = e.clientX; canvas.setPointerCapture(e.pointerId); });
+  const drag = { on: false, x: 0, offset: 0, moved: 0 };
+  canvas.addEventListener('pointerdown', (e) => { drag.on = true; drag.x = e.clientX; drag.moved = 0; canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', (e) => {
     if (!drag.on) return;
     const dx = e.clientX - drag.x; drag.x = e.clientX;
     drag.offset += dx * 0.012;
+    drag.moved += Math.abs(dx);
   });
   const end = () => { drag.on = false; };
   canvas.addEventListener('pointerup', end);
@@ -481,19 +487,14 @@ async function loadRealSpike(pivot, url) {
   }
 }
 
-function initSpike(canvas) {
-  const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 28, distance: 16.5, fitWidth: 11, lights: 'studio', shadows: true });
+// The spike and its strip of clay track, as one group: a white lane line, and a tick mark where
+// the shoe lands. update(d, now) poses it: d runs 0 (high above the track) to 1 (over its mark).
+// The last drop isn't scrolled, it's timed: once d reaches 1 the shoe hovers a hand above the
+// track and comes down on the page's next beat, with a small squash as the tick flashes volt.
+function buildRunway() {
+  const group = new THREE.Group();
   const spike = buildSpike();
-  // a tilted stage, angled toward the viewer like a product shot
-  const tilt = new THREE.Group();
-  tilt.rotation.set(0.3, 0, -0.06);
-  tilt.position.y = -0.9;
-  tilt.add(spike);
-  scene.add(tilt);
-  loadRealSpike(spike, canvas.dataset.glb);
-
-  // a short strip of clay running track under the shoe, with a white lane line and a volt
-  // tick mark where the shoe lands (the track doesn't turn with the shoe)
+  group.add(spike);
   const TRACK_Y = -1.62;
   const track = new THREE.Group();
   const clay = new THREE.Mesh(new THREE.BoxGeometry(9.5, 0.24, 3.4), new THREE.MeshStandardMaterial({ color: 0xb44a31, roughness: 0.92 }));
@@ -502,40 +503,169 @@ function initSpike(canvas) {
   const line = new THREE.Mesh(new THREE.BoxGeometry(9.5, 0.012, 0.08), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }));
   line.position.set(0, 0.126, 1.45);
   track.add(line);
+  const line2 = line.clone(); line2.position.z = -1.45; track.add(line2);
   const tickMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
   const tick = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.014, 3.4), tickMat);
   tick.position.y = 0.127;
   track.add(tick);
   track.position.y = TRACK_Y - 0.12;
-  tilt.add(track);
+  group.add(track);
   const VOLT = new THREE.Color(0xe8f02a), WHITE = new THREE.Color(0xffffff);
-
-  // Scroll drives it: as Step 1 passes through the screen the shoe turns and steps down onto
-  // the track, landing halfway through with a small squash, as the tick flashes volt. Dragging
-  // still turns it on top of that. With reduced motion it simply rests on the track.
-  const section = canvas.closest('section') || canvas;
-  const progress = () => {
-    const r = section.getBoundingClientRect();
-    return clamp((window.innerHeight - r.top) / (window.innerHeight + r.height), 0, 1);
-  };
-  let landed = false, landAt = -1, flash = 0;
-  runWhileVisible(canvas, (now) => {
-    const p = reduceMotion ? 1 : progress();
-    const d = clamp(p / 0.5, 0, 1);                       // 0 high above the track … 1 landed
-    const height = reduceMotion ? 0 : 2.6 * Math.pow(1 - d, 2);
-    if (!landed && d >= 1) { landed = true; landAt = now; }
-    if (landed && d < 0.98) landed = false;               // scrolled back up: it can land again
-    const since = landAt < 0 ? 1e9 : now - landAt;
-    const squash = since < 220 ? 1 - 0.06 * Math.sin((since / 220) * Math.PI) : 1;
+  const HOVER = 0.5, DROP = 170;
+  let state = 'air', landAt = -1, dropAt = 0;
+  group.userData.spike = spike;
+  group.userData.update = (d, now, turn = 0) => {
+    const t = tempo();
+    let height = 0;
+    if (reduceMotion) { state = 'landed'; }
+    else if (state === 'air') {
+      height = HOVER + 2.3 * Math.pow(1 - clamp(d, 0, 1), 2);
+      if (d >= 1) { // arm the drop so it ends exactly on a beat
+        state = 'armed';
+        const len = t.len || 341;
+        dropAt = (t.next || now) - DROP;
+        while (dropAt < now) dropAt += len;
+      }
+    } else if (state === 'armed') {
+      const k = clamp((now - dropAt) / DROP, 0, 1);
+      height = HOVER * (1 - k * k);
+      if (k >= 1) { state = 'landed'; landAt = now; }
+      else if (d < 0.9) state = 'air';
+    } else if (d < 0.9) state = 'air'; // scrolled back up: it can land again
+    const since = landAt < 0 || state !== 'landed' ? 1e9 : now - landAt;
+    const squash = since < 220 ? 1 - 0.07 * Math.sin((since / 220) * Math.PI) : 1;
     spike.position.y = height;
     spike.scale.set(1 + (1 - squash) * 0.5, squash, 1 + (1 - squash) * 0.5);
-    // it turns as it comes down, arriving at its three-quarter view as it lands, then drifts a little further
-    spike.rotation.set(0, -2.55 + (1 - d) * 2.4 - Math.max(0, p - 0.5) * 0.9 + drag.offset, 0);
-    // the tick: flashes volt on landing, and pulses gently on each beat while it's on screen
-    const ph = reduceMotion ? 1 : tempo().phase(now);
-    flash = Math.max(since < 400 ? 1 - since / 400 : 0, ph < 0.15 ? (1 - ph / 0.15) * 0.6 : 0);
-    tickMat.color.copy(WHITE).lerp(VOLT, flash);
-    tick.scale.set(1 + flash * 1.5, 1, 1);
+    // it turns as it comes down, arriving at its three-quarter view as it lands
+    spike.rotation.set(0, -2.55 + (1 - clamp(d, 0, 1)) * 2.4 + turn, 0);
+    // the tick: flashes volt on landing, and while the page keeps your beat it pulses on each one
+    const ph = t.live && !reduceMotion ? t.phase(now) : 1;
+    const flash = Math.max(since < 420 ? 1 - since / 420 : 0, ph < 0.18 ? (1 - ph / 0.18) * 0.7 : 0);
+    tickMat.color.copy(WHITE).lerp(VOLT, reduceMotion ? 1 : flash);
+    tick.scale.set(1 + flash * 1.6, 1, 1);
+  };
+  return group;
+}
+
+// The small scene (phones, tablets, and when nothing is pinned): the spike steps onto its track
+// as Step 1 scrolls into view.
+function initSpike(canvas) {
+  const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 28, distance: 16.5, fitWidth: 11, lights: 'studio', shadows: true });
+  const runway = buildRunway();
+  runway.rotation.set(0.3, 0, -0.06); // tilted toward the viewer, like a product shot
+  runway.position.y = -0.9;
+  scene.add(runway);
+  const section = canvas.closest('.spike-stage') || canvas;
+  runWhileVisible(canvas, (now) => {
+    const r = section.getBoundingClientRect();
+    const d = clamp((window.innerHeight - r.top) / (window.innerHeight * 0.55 + r.height * 0.5), 0, 1);
+    runway.userData.update(d, now, drag.offset);
+  }, () => renderer.render(scene, camera));
+}
+
+/* ----------------------------------------------------------------------
+   How it works, pinned: the phone and the spike in one scene. The scroll position through
+   the three steps (0 to 3) sets everything: the camera's place and aim, the phone's pose,
+   which screen it shows, and the spike's step onto the track.
+     Step 1  a wide shot: the phone shows "Set up run"; the spike comes down beside it
+     Step 2  the camera moves in on the phone: songs match, their BPM numbers ticking into place
+     Step 3  the phone flips between the blue "Speed up" and the green "On target" screens as
+             the chart's cadence line leaves and re-enters the target band
+   ---------------------------------------------------------------------- */
+function initHow(canvas) {
+  const FOV = 30;
+  const { renderer, scene, camera, drag } = makeStage(canvas, { fov: FOV, lights: 'studio', shadows: true, autoFit: false });
+  const phone = buildIPhone(['5-set-up-run', '1-run-speed-up', '4-run-on-target']);
+  const [setUp, speedUp, onTarget] = phone.userData.screens;
+  scene.add(phone);
+  const runway = buildRunway();
+  runway.scale.setScalar(0.8);
+  scene.add(runway);
+
+  // the songs screen is drawn (script.js), so its numbers can tick
+  const songsCanvas = document.createElement('canvas');
+  songsCanvas.width = 600; songsCanvas.height = 1303;
+  const songsCtx = songsCanvas.getContext('2d');
+  const songsTex = new THREE.CanvasTexture(songsCanvas);
+  songsTex.colorSpace = THREE.SRGBColorSpace; songsTex.anisotropy = 8;
+  const drawSongs = (age) => {
+    const fn = window.adagioScreens && window.adagioScreens.songs;
+    const moving = fn ? fn(songsCtx, 600, 1303, tempo().bpm, age) : false;
+    songsTex.needsUpdate = true;
+    return moving;
+  };
+  let songsAt = -1, songsMoving = false;
+  drawSongs(1e6);
+  document.addEventListener('adagio:bpm', () => { songsAt = performance.now(); songsMoving = true; });
+  if (document.fonts) document.fonts.ready.then(() => { if (!songsMoving) drawSongs(1e6); });
+
+  // screens: a cross-fade between steps (a second display on top fades in), a flip within Step 3
+  const display = phone.userData.display;
+  const over = new THREE.Mesh(display.geometry, new THREE.MeshBasicMaterial({ map: setUp, toneMapped: false, transparent: true, opacity: 0 }));
+  over.position.copy(display.position); over.position.z += 0.002;
+  phone.add(over);
+  let shown = setUp, fadeTo = null, fadeAt = 0, flipTo = null, flipAt = -1e9;
+  display.material.map = setUp;
+  const show = (tex, now, flip) => {
+    if (tex === (flipTo || fadeTo || shown)) return;
+    if (flip && !reduceMotion) { flipTo = tex; flipAt = now; fadeTo = null; over.material.opacity = 0; }
+    else { fadeTo = tex; fadeAt = now; over.material.map = tex; over.material.needsUpdate = true; flipTo = null; }
+  };
+
+  const how = document.getElementById('how');
+  const steps = [...how.querySelectorAll('.step')];
+  // where you are in the steps: 0 at the top of Step 1, 1 at the top of Step 2, 3 at the end
+  const progress = () => {
+    const vc = window.innerHeight * 0.55;
+    let s = 0;
+    steps.forEach((el) => { const r = el.getBoundingClientRect(); s += clamp((vc - r.top) / r.height, 0, 1); });
+    return s;
+  };
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const SHOTS = { // camera position, what it looks at, and the phone's place and turn, per step
+    cam: [V(0.2, 1.6, 27.5), V(-1.3, 0.6, 19.6), V(2.3, 0.9, 19.2)],
+    aim: [V(0.2, -1.5, 0), V(0.5, 0.15, 0), V(0.5, 0.15, 0)],
+    pos: [V(2.5, 1.7, -2.2), V(0.5, 0.15, 0), V(0.5, 0.15, 0)],
+    turn: [-0.52, -0.2, 0.24],
+  };
+  const mix3 = (arr, a, b, out) => out.copy(arr[0]).lerp(arr[1], a).lerp(arr[2], b);
+  const camPos = V(0, 0, 0), aim = V(0, 0, 0);
+  let lastStep = -1;
+
+  runWhileVisible(canvas, (now) => {
+    const s = reduceMotion ? 0.6 : progress();
+    const a = smooth(0.68, 1.12, s), b = smooth(1.72, 2.15, s);
+    // camera: on a narrow stage the wide shot backs off so the track still fits
+    mix3(SHOTS.cam, a, b, camPos); mix3(SHOTS.aim, a, b, aim);
+    const back = lerp(Math.max(1, 0.86 / camera.aspect), Math.max(1, 0.6 / camera.aspect), a);
+    camera.position.copy(aim).add(camPos.sub(aim).multiplyScalar(back));
+    camera.lookAt(aim);
+    // phone
+    mix3(SHOTS.pos, a, b, phone.position);
+    const turn = lerp(lerp(SHOTS.turn[0], SHOTS.turn[1], a), SHOTS.turn[2], b);
+    const flipK = clamp((now - flipAt) / 620, 0, 1);
+    if (flipTo && flipK >= 0.5) { shown = flipTo; display.material.map = shown; display.material.needsUpdate = true; flipTo = null; }
+    phone.rotation.set(0.05, turn + drag.offset + easeInOut(flipK) * Math.PI * 2, 0.03 * (1 - a));
+    if (fadeTo) {
+      const k = clamp((now - fadeAt) / 260, 0, 1);
+      over.material.opacity = k;
+      if (k >= 1) { shown = fadeTo; display.material.map = shown; display.material.needsUpdate = true; over.material.opacity = 0; fadeTo = null; }
+    }
+    // which screen
+    const step = s < 0.9 ? 0 : s < 1.9 ? 1 : 2;
+    if (step === 1 && lastStep !== 1) { songsAt = now; songsMoving = true; }
+    lastStep = step;
+    if (songsMoving && step === 1) songsMoving = drawSongs(now - songsAt);
+    if (step === 0) show(setUp, now);
+    else if (step === 1) show(songsTex, now);
+    else show(window.adagioCue === 'target' ? onTarget : speedUp, now, shown === speedUp || shown === onTarget);
+    // the spike steps down as Step 1 arrives, then the track slides away as the camera moves in
+    const r = how.getBoundingClientRect();
+    const d = clamp((window.innerHeight - r.top) / (window.innerHeight * 0.8), 0, 1);
+    runway.visible = a < 0.98;
+    runway.position.set(-0.9 - a * 15, -3.2 - a * 2, 2.4);
+    runway.rotation.set(0.14, 0, -0.04);
+    runway.userData.update(d, now);
   }, () => renderer.render(scene, camera));
 }
 
@@ -747,10 +877,10 @@ function initWatch(canvas) {
 }
 
 /* ----------------------------------------------------------------------
-   Apple Watch (Haptic Mode): midnight aluminum case with rounded edges, an
+   Apple Watch (Pulse Mode): midnight aluminum case with rounded edges, an
    all-glass front, the digital crown (ridged, with its red ring) and the long
-   side button, a sport band with pin holes. It gives a small "haptic" tap on
-   every beat, and turns a full circle when the music staff passes by.
+   side button, a sport band with pin holes. It taps on every beat of the page
+   tempo, rings spreading out from it, and plays the app's cue patterns.
    ---------------------------------------------------------------------- */
 // Apple-style "continuous" corners: each corner is a superellipse that eases into the
 // straight edge (the curvature builds up gradually) instead of a circular arc that snaps
@@ -777,15 +907,15 @@ function roundedRectShape(w, h, r) {
 function drawAppleFace(g, W, H, bpm) {
   g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
   g.textBaseline = 'alphabetic';
-  g.fillStyle = '#A6E22E'; g.font = '600 34px -apple-system, "SF Pro Text", Archivo, sans-serif';
-  g.textAlign = 'left'; g.fillText('Haptic', 46, 78);
+  g.fillStyle = '#E8F02A'; g.font = '600 34px -apple-system, "SF Pro Text", sans-serif';
+  g.textAlign = 'left'; g.fillText('Pulse', 46, 78);
   g.fillStyle = '#fff'; g.textAlign = 'right'; g.fillText('10:09', W - 46, 78);
   // target ring
   const cx = W / 2, cy = H * 0.52, r = W * 0.3;
   g.lineCap = 'round';
-  g.strokeStyle = 'rgba(166,226,46,.22)'; g.lineWidth = 26;
+  g.strokeStyle = 'rgba(232,240,42,.22)'; g.lineWidth = 26;
   g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
-  g.strokeStyle = '#A6E22E';
+  g.strokeStyle = '#E8F02A';
   g.beginPath(); g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, bpm / 200)); g.stroke();
   g.textAlign = 'center';
   g.fillStyle = '#fff'; g.font = '800 120px -apple-system, "SF Pro Display", Archivo, sans-serif';
@@ -827,10 +957,12 @@ function buildAppleWatch() {
   const display = new THREE.Mesh(dispGeo, new THREE.MeshBasicMaterial({ map: faceTex }));
   display.position.z = front + 0.016;
   watch.add(display);
-  let screenIdx = 0;
-  const showScreen = () => { display.material.map = watchScreens[screenIdx]; display.material.needsUpdate = true; };
-  loader.manager.onLoad = showScreen; // swap in the real screens once they've loaded
-  if (!reduceMotion) setInterval(() => { if (document.hidden) return; screenIdx = (screenIdx + 1) % watchScreens.length; showScreen(); }, 3600);
+  let screenIdx = 0, loaded = false;
+  const showScreen = (i = screenIdx) => { screenIdx = i % watchScreens.length; if (!loaded) return; display.material.map = watchScreens[screenIdx]; display.material.needsUpdate = true; };
+  loader.manager.onLoad = () => { loaded = true; showScreen(); }; // swap in the real screens once they've loaded
+  watch.userData.showScreen = showScreen;
+  watch.userData.nextScreen = () => showScreen(screenIdx + 1);
+  watch.userData.size = { W: W + BEV * 2, H: H + BEV * 2, R: R + BEV };
   const sheen = new THREE.Mesh(glassGeo, new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.06, roughness: 0, clearcoat: 1, envMapIntensity: 2 }));
   sheen.position.z = front + 0.03;
   watch.add(sheen);
@@ -895,38 +1027,76 @@ function buildAppleWatch() {
 function initAppleWatch(canvas) {
   const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 30, distance: 15.5, fitWidth: 7.5, lights: 'studio' });
   const watch = buildAppleWatch();
-  scene.add(watch);
-  document.addEventListener('adagio:bpm', (e) => watch.userData.setBPM(e.detail));
-  if (document.fonts) document.fonts.ready.then(() => watch.userData.setBPM(tempo().bpm));
-  // the haptic pulse, the point of this section: on every beat at the page tempo the watch gives a
-  // small scale bump and a thin ring (rubber, the section's ink color) spreads out from it and fades
-  const ringMat = new THREE.MeshBasicMaterial({ color: 0x16110e, transparent: true, opacity: 0, depthWrite: false });
-  const ring = new THREE.Mesh(new THREE.RingGeometry(1, 1.035, 128), ringMat);
-  ring.position.z = -1.2;
-  scene.add(ring);
-  let beatAt = -1, lastCount = -1;
+  const rig = new THREE.Group(); // the watch and its rings turn together
+  rig.add(watch);
+  scene.add(rig);
+  // Each tap sends out a ring in the shape of the watch case (rubber, the section's ink color):
+  // a thin outline that spreads and fades. A small pool is reused, so taps can overlap.
+  const { W, H, R } = watch.userData.size;
+  const outline = (grow) => {
+    const s = roundedRectShape(W + grow, H + grow, R + grow / 2);
+    return s.getPoints(12);
+  };
+  const ringShape = new THREE.Shape(outline(0.1));
+  ringShape.holes.push(new THREE.Path(outline(0).reverse()));
+  const ringGeo = new THREE.ShapeGeometry(ringShape, 12);
+  const rings = Array.from({ length: 6 }, () => {
+    const mat = new THREE.MeshBasicMaterial({ color: 0x16110e, transparent: true, opacity: 0, depthWrite: false });
+    const mesh = new THREE.Mesh(ringGeo, mat);
+    mesh.position.z = -0.5;
+    rig.add(mesh);
+    return { mesh, mat, at: -1e9, life: 900 };
+  });
+  let ringNext = 0;
+  const taps = []; // { at, dur } scale bumps: a beat tap is short, a cue's long buzz is long
+  const tap = (at, dur = 130, life = 900) => {
+    taps.push({ at, dur });
+    const r = rings[ringNext++ % rings.length]; r.at = at; r.life = life;
+  };
+  // the app's cue screens (real screenshots): hover or tap the watch to step through them
+  canvas.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') watch.userData.nextScreen(); });
+  canvas.addEventListener('pointerup', () => { if (drag.moved < 6) watch.userData.nextScreen(); });
+  // a cue button was pressed: play its taps, and show the screen that cue belongs to
+  let quietUntil = 0;
+  document.addEventListener('adagio:cue-demo', (e) => {
+    const { cue, pattern } = e.detail;
+    watch.userData.showScreen({ speed: 0, slow: 1, target: 1, interval: 2 }[cue] || 0);
+    if (reduceMotion) return;
+    let t = performance.now() + 30;
+    pattern.forEach((ms, i) => { if (i % 2 === 0) tap(t, Math.max(ms, 110), ms > 300 ? 1300 : 800); t += ms; });
+    quietUntil = t + 700; // the beat taps wait while a cue plays
+  });
+  let lastCount = -1;
   runWhileVisible(canvas, (now) => {
     const t = tempo();
-    if (!reduceMotion && t.count !== lastCount) { lastCount = t.count; beatAt = now; }
-    const age = beatAt < 0 ? 1 : clamp((now - beatAt) / 900, 0, 1);
-    const bump = reduceMotion ? 0 : Math.max(0, 1 - (now - beatAt) / 140);
-    watch.scale.setScalar(1 + 0.035 * bump);
-    watch.rotation.set(-0.22, 0.5 + drag.offset, 0.08);
-    ring.scale.setScalar(2.3 + age * 2.2);
-    ringMat.opacity = reduceMotion ? 0 : (1 - age) * 0.7;
+    if (!reduceMotion && t.count !== lastCount) { lastCount = t.count; if (now > quietUntil) tap(now); }
+    let bump = 0;
+    for (let i = taps.length - 1; i >= 0; i--) {
+      const k = (now - taps[i].at) / taps[i].dur;
+      if (k > 1.6) { taps.splice(i, 1); continue; }
+      if (k >= 0) bump = Math.max(bump, k < 1 ? 1 : 1 - (k - 1) / 0.6);
+    }
+    watch.scale.setScalar(1 + 0.04 * bump);
+    rig.rotation.set(-0.22, 0.5 + drag.offset, 0.08);
+    rings.forEach((r) => {
+      const age = clamp((now - r.at) / r.life, 0, 1);
+      const on = now >= r.at && age < 1 && !reduceMotion;
+      r.mesh.visible = on;
+      if (!on) return;
+      const e = 1 - Math.pow(1 - age, 2.2);
+      r.mesh.scale.setScalar(1.04 + e * 0.62);
+      r.mat.opacity = (1 - age) * 0.75;
+    });
   }, () => renderer.render(scene, camera));
 }
 
 /* ----------------------------------------------------------------------
-   iPhone (hero): black titanium body with flat edges, black-glass front with the
-   Dynamic Island, the real Adagio screens cycling on the display, the triple-camera
-   plateau and flash on the back, and the side buttons (action, volume, power, camera
-   control). It does one full turn when it first appears, then sways gently and leans
-   toward the pointer; drag to turn it.
+   iPhone: black titanium body with flat edges, black-glass front with the Dynamic
+   Island, real Adagio screenshots on the display, the triple-camera plateau and
+   flash on the back, and the side buttons (action, volume, power, camera control).
+   It holds still; drag to turn it.
    ---------------------------------------------------------------------- */
-const PHONE_SCREENS = ['4-run-on-target', '1-run-speed-up', '5-set-up-run', '2-summary'].map((n) => `assets/screens/${n}.jpg`);
-
-function buildIPhone() {
+function buildIPhone(screenNames) {
   const phone = new THREE.Group();
   const W = 3.6, H = 7.8, R = 0.6, D = 0.3, BEV = 0.07; // iPhone 16 Pro proportions: corner radius about 1/6 of the width
   const titanium = new THREE.MeshPhysicalMaterial({ color: 0x3a3a3d, metalness: 1, roughness: 0.38, clearcoat: 0.3 });
@@ -945,7 +1115,7 @@ function buildIPhone() {
   const uv = dispGeo.attributes.uv, pos = dispGeo.attributes.position;
   for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / dw + 0.5, pos.getY(i) / dh + 0.5);
   const loader = new THREE.TextureLoader();
-  const screens = PHONE_SCREENS.map((src) => { const t = loader.load(src); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; });
+  const screens = screenNames.map((n) => { const t = loader.load(`assets/screens/${n}.jpg`); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; });
   const display = new THREE.Mesh(dispGeo, new THREE.MeshBasicMaterial({ map: screens[0], toneMapped: false }));
   display.position.z = front + 0.008;
   phone.add(display);
@@ -1006,11 +1176,11 @@ function buildIPhone() {
 }
 
 function initIPhone(canvas) {
-  const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 30, distance: 18.5, fitWidth: 6, lights: 'studio' });
-  const phone = buildIPhone();
+  const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 30, distance: 16.6, fitWidth: 6, lights: 'studio' });
+  const phone = buildIPhone(['2-summary']);
   scene.add(phone);
 
-  // it holds still on the run screen and turns only while you drag it
+  // it holds still on the run summary and turns only while you drag it
   runWhileVisible(canvas, () => {
     phone.rotation.set(0.06, -0.38 + drag.offset, 0.04);
   }, () => renderer.render(scene, camera));
@@ -1020,14 +1190,14 @@ function initIPhone(canvas) {
 function supportsWebGL() {
   try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; }
 }
+const BUILDERS = { how: initHow, spike: initSpike, iphone: initIPhone, watch: initWatch, applewatch: initAppleWatch };
 if (supportsWebGL()) {
   document.documentElement.classList.add('has-3d');
-  const spikeCanvas = document.querySelector('[data-model="spike"]');
-  const watchCanvas = document.querySelector('[data-model="watch"]');
-  const appleCanvas = document.querySelector('[data-model="applewatch"]');
-  if (spikeCanvas) initSpike(spikeCanvas);
-  if (watchCanvas) initWatch(watchCanvas);
-  if (appleCanvas) initAppleWatch(appleCanvas);
-  const phoneCanvas = document.querySelector('[data-model="iphone"]');
-  if (phoneCanvas) initIPhone(phoneCanvas);
-}
+  const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+    if (!e.isIntersecting) return;
+    io.unobserve(e.target);
+    try { BUILDERS[e.target.dataset.model](e.target); }
+    catch (err) { console.warn('3D model failed', e.target.dataset.model, err); if (e.target.dataset.model === 'how') document.documentElement.classList.remove('pin3d'); }
+  }), { rootMargin: '500px 0px' });
+  document.querySelectorAll('canvas[data-model]').forEach((c) => { if (BUILDERS[c.dataset.model]) io.observe(c); });
+} else document.documentElement.classList.remove('pin3d');
