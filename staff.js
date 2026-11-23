@@ -2,8 +2,9 @@
 // One continuous five-line staff runs from the top of the page to the Contact section. It starts
 // under the nav, crosses the hero between the headline and the step pad (a treble clef, then
 // three notes that land in time as the page loads), and then winds down the page through the
-// open space of each section. It is always drawn a little past the bottom of the screen, so it
-// never shows a loose end; its engraved notes (Noto Music) pop onto it as they come into view.
+// open space of each section. It draws itself as you scroll: a lead note rides the tip of the
+// line, about two thirds of the way down the screen, and the engraved notes (Noto Music) pop
+// onto the staff as the tip passes them.
 // It ends in Contact like a piece of music: a last note under a fermata, a final barline.
 //
 // It is never cut or masked. It runs behind the content, and it's routed: every block of small
@@ -436,8 +437,9 @@
   }
 
   // ---- drawing: the load sequence, then as you scroll ---------------------------------
-  // The line is drawn to a little below the bottom of the screen, so its end is never in view;
-  // what you see arrive as you scroll is the notes, each popping onto the staff as it comes up.
+  // The line follows your scrolling: it is drawn as far as a point two thirds of the way down the
+  // screen, with a lead note riding its tip, and each note pops on as the tip passes it. (Reduced
+  // motion: the whole line is drawn and nothing moves.)
   // On load (once, about 1.4 s): the hero's stretch of staff draws in from under the nav, and its
   // three notes land on beats one, two and three of a 176 BPM count ("rhythm." lands on the
   // fourth, then the step pad rises: styles.css). After that the staff draws as you scroll.
@@ -449,9 +451,7 @@
     frame = 0;
     if (!built || !pts.length) return;
     const mainTop = docTop(main);
-    const view = window.scrollY - mainTop;
-    const target = reduceMotion ? Infinity : view + window.innerHeight * 1.15; // reduced motion: fully drawn
-    const seen = reduceMotion ? Infinity : view + window.innerHeight * 0.9;    // a note appears once it's this far up the screen
+    const target = reduceMotion ? Infinity : window.scrollY - mainTop + window.innerHeight * 0.66; // reduced motion: fully drawn
     // last point whose base height has been reached (base only ever increases)
     let lo = 0, hi = pts.length - 1;
     while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (pts[mid].base <= target) lo = mid; else hi = mid - 1; }
@@ -469,13 +469,13 @@
     layers.forEach((Ly) => {
       Ly.lines.forEach((path, k) => { path.style.strokeDashoffset = (lens[k] * (1 - frac)).toFixed(1); });
       Ly.clef.style.opacity = i >= clefAt ? 1 : 0;
-      Ly.notes.forEach((el, k) => el.classList.toggle('on', noteAt[k] <= i && (k < heroNotes ? !intro || sinceLoad >= BEAT * (k + 1) : noteY[k] <= seen)));
+      Ly.notes.forEach((el, k) => el.classList.toggle('on', noteAt[k] <= i && (k >= heroNotes || !intro || sinceLoad >= BEAT * (k + 1))));
       Ly.end.style.opacity = done ? 0.9 : 0;
-      Ly.fermata.style.opacity = i >= noteAt[noteAt.length - 1] && noteY[noteY.length - 1] <= seen ? 1 : 0;
+      Ly.fermata.style.opacity = i >= noteAt[noteAt.length - 1] ? 1 : 0;
       if (!p) { Ly.tip.style.opacity = 0; return; }
       const angle = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
       Ly.tip.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${angle.toFixed(1)})`);
-      Ly.tip.style.opacity = intro && i < introEnd ? 1 : 0; // the note riding the tip only shows while the hero's stretch draws in
+      Ly.tip.style.opacity = done || (intro && i >= introEnd) ? 0 : 1; // the lead note rides the tip until the line reaches its final barline
     });
     if (frontAt) { // the front half of the story loop keeps pace with the line beneath it
       const f = clamp((i - frontAt[0]) / (frontAt[1] - frontAt[0]), 0, 1);
