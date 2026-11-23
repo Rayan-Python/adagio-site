@@ -38,8 +38,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900&text=Adagio&display=swap" rel="stylesheet">
   <!-- Runs before the first paint: starts the load sequence and picks the pinned layout
        (a file, not inline code, because the site's security policy only allows script files) -->
-  <script src="boot.js?v=20261128c"></script>
-  <link rel="stylesheet" href="styles.css?v=20261128c">
+  <script src="boot.js?v=20261129c"></script>
+  <link rel="stylesheet" href="styles.css?v=20261129c">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -463,18 +463,15 @@
       </div>
       <p class="wrap legal">© <span id="year">2026</span> Adagio. Footage from Pexels.</p>
     </div>
-    <!-- The wordmark. Each letter has its own clip, placed on that letter's bounds (script.js), so no
-         seam cuts through a letter. A rubber layer is multiplied over the clips, so the footage only
-         shows inside the letters, tinted lime yellow. Clips play muted while the footer is on screen,
-         pause when it isn't, and stay on their posters with reduced motion. (Footage: Pexels.) -->
+    <!-- The wordmark. One video plays behind it: six panels side by side, one per letter, each as
+         wide as its letter (assets/video/wordmark-strip.mp4, built from the Pexels clips), so every
+         letter shows its own footage and the seams fall between letters. A rubber layer is multiplied
+         over it, so the footage only shows inside the letters, tinted lime yellow. It plays muted
+         while the footer is on screen, pauses when it isn't, and stays on its poster with reduced
+         motion. (It was six separate videos; six playing at once halved the frame rate down here.) -->
     <div class="foot-mark" aria-hidden="true">
       <div class="foot-reel" data-foot-reel>
-        <video muted loop playsinline preload="none" poster="assets/video/posters/track-aerial.jpg" data-src="assets/video/track-aerial.mp4" style="object-position: 30% 42%"></video>
-        <video muted loop playsinline preload="none" poster="assets/video/posters/track-footrace.jpg" data-src="assets/video/track-footrace.mp4" style="object-position: 38% 32%"></video>
-        <video muted loop playsinline preload="none" poster="assets/video/hero-feet-strike.jpg" data-src="assets/video/hero-feet-strike.mp4" style="object-position: 84% 78%"></video>
-        <video muted loop playsinline preload="none" poster="assets/video/posters/track-pair.jpg" data-src="assets/video/track-pair.mp4" style="object-position: 30% 62%"></video>
-        <video muted loop playsinline preload="none" poster="assets/video/posters/track-sprinter.jpg" data-src="assets/video/track-sprinter.mp4" style="object-position: 30% 20%"></video>
-        <video muted loop playsinline preload="none" poster="assets/video/posters/track-jog.jpg" data-src="assets/video/track-jog.mp4" style="object-position: 96% 58%"></video>
+        <video muted loop playsinline preload="none" poster="assets/video/wordmark-strip.jpg" data-src="assets/video/wordmark-strip.mp4"></video>
       </div>
       <p class="foot-word" data-foot-word><span>A</span><span>d</span><span>a</span><span>g</span><span>i</span><span>o</span></p>
     </div>
@@ -489,8 +486,8 @@
         "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
     } }
   </script>
-  <script src="script.js?v=20261128c" defer></script>
-  <script src="staff.js?v=20261128c" defer></script>
+  <script src="script.js?v=20261129c" defer></script>
+  <script src="staff.js?v=20261129c" defer></script>
   <!-- Vercel Web Analytics and Speed Insights (plain-HTML setup, no inline code) -->
   <script defer src="/_vercel/insights/script.js"></script>
   <script defer src="/_vercel/speed-insights/script.js"></script>

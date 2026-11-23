@@ -109,8 +109,12 @@ function makeStage(canvas, { fov = 30, distance = 14, fitWidth = 0, lights = 'ne
   return { renderer, scene, camera, drag };
 }
 
+const whenIdle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 2000 }) : setTimeout(fn, 300));
 function runWhileVisible(el, frame, render) {
   let on = false, raf = 0;
+  // one drawing ahead of time, while the browser is idle: the first drawing of a scene prepares its
+  // shaders, which takes long enough to interrupt a scroll if it happens as the scene arrives
+  whenIdle(() => { if (!raf && el.clientWidth) { frame(performance.now()); render(); } });
   const loop = (now) => {
     frame(now);
     render();
@@ -1193,11 +1197,20 @@ function supportsWebGL() {
 const BUILDERS = { how: initHow, spike: initSpike, iphone: initIPhone, watch: initWatch, applewatch: initAppleWatch };
 if (supportsWebGL()) {
   document.documentElement.classList.add('has-3d');
-  const io = new IntersectionObserver((entries) => entries.forEach((e) => {
-    if (!e.isIntersecting) return;
-    io.unobserve(e.target);
-    try { BUILDERS[e.target.dataset.model](e.target); }
-    catch (err) { console.warn('3D model failed', e.target.dataset.model, err); if (e.target.dataset.model === 'how') document.documentElement.classList.remove('pin3d'); }
-  }), { rootMargin: '500px 0px' });
-  document.querySelectorAll('canvas[data-model]').forEach((c) => { if (BUILDERS[c.dataset.model]) io.observe(c); });
+  const built = new Set();
+  const build = (c) => {
+    if (built.has(c)) return;
+    built.add(c);
+    try { BUILDERS[c.dataset.model](c); }
+    catch (err) { console.warn('3D model failed', c.dataset.model, err); if (c.dataset.model === 'how') document.documentElement.classList.remove('pin3d'); }
+  };
+  const canvases = [...document.querySelectorAll('canvas[data-model]')].filter((c) => BUILDERS[c.dataset.model]);
+  // a model is built when it's about to come on screen …
+  const io = new IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); build(e.target); } }), { rootMargin: '500px 0px' });
+  canvases.forEach((c) => io.observe(c));
+  // … or sooner: one at a time, top of the page first, whenever the browser has nothing else to do.
+  // Building one takes about a fifth of a second, which is a visible stall if it lands mid-scroll.
+  const queue = canvases.slice();
+  const next = () => { const c = queue.shift(); if (!c) return; if (c.clientWidth) build(c); whenIdle(next); };
+  whenIdle(next);
 } else document.documentElement.classList.remove('pin3d');
