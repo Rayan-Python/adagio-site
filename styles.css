@@ -346,10 +346,9 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .team-grid { display: grid; gap: 48px; margin-top: 8px; align-items: start; }
 .people { list-style: none; margin: 0; padding: 0; display: grid; gap: 28px; }
 .schools { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 520px; }
-.school { display: grid; gap: 10px; justify-items: center; text-align: center; }
-/* both logos sit in boxes of the same height, so the pair reads as balanced */
-.logo-slot { width: 100%; height: 120px; display: grid; place-items: center; border: 2px dashed rgba(22,17,14,.35); border-radius: 6px; color: var(--fg-2); font-size: var(--t-14); font-weight: 700; }
-.school img { height: 120px; width: auto; max-width: 100%; object-fit: contain; }
+.school { display: grid; gap: 10px; justify-items: center; align-content: start; text-align: center; }
+/* both logos at the same visual height, so the pair reads as balanced */
+.school img { height: 120px; width: 100%; object-fit: contain; } /* same box for both, so the names line up */
 .school-name { font-size: var(--t-16); color: var(--fg); }
 .person { display: grid; gap: 2px; }
 .person-name { font-size: var(--t-28); font-weight: 700; line-height: 1.2; }
