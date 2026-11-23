@@ -1,11 +1,9 @@
 // Adagio — the music staff.
 // A five-line staff winds and loops down the page, drawn as you scroll, starting with a
 // treble clef, with engraved notes (Noto Music) popping onto it as the drawing passes
-// them and a note riding the tip. It's lime over dark sections and the track's red over
-// the light ones (two copies of the drawing, each clipped to its sections).
-// It plays with the page as it goes: headlines do a little word-wave when the tip
-// crosses them, cards light up while the tip is inside them, and the iPhone, the watch
-// and the tap pad each react (they listen for "adagio:note-hit").
+// them and a note riding the tip (two copies of the drawing, each clipped to its sections).
+// It's volt over dark sections and rubber over the volt and white ones. It's the page's
+// one ambient animation: nothing else reacts to it.
 (() => {
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const main = document.getElementById('main');
@@ -24,8 +22,8 @@
   // engraved glyphs (Unicode musical symbols, drawn with the Noto Music font)
   const CLEF = '\u{1D11E}';
   const GLYPHS = ['\u{1D160}', '♫', '\u{1D15F}', '\u{1D160}', '♫', '\u{1D161}'];
-  // sections where the page is light: the staff turns track-red there
-  const LIGHT = ['#how', '#accessibility'];
+  // sections where the page is volt or white: the staff turns rubber there
+  const LIGHT = ['#step-1', '#step-2', '#step-3', '#accessibility', '#team', '#contact'];
 
   // ---- the SVG: two identical layers, one per color ---------------------------------
   const svg = make('svg', { class: 'staff', 'aria-hidden': 'true' });
@@ -78,11 +76,13 @@
     // each section gets its own way of moving: where the staff centers, how wide it
     // sways, and how loopy it gets (loops happen when "loop" pushes past the pitch)
     const zones = [
-      ['#play', 0.5, 0.36, 1.0],
-      ['#how', mobile ? 0.972 : 0.955, 0.0, 0.0], // hugs the right edge past the stacked panels
-      ['#features', 0.5, 0.38, 0.8],
-      ['#accessibility', 0.5, 0.34, 1.0],
       ['#story', 0.62, 0.26, 0.85],
+      ['#step-1', 0.5, 0.36, 0.9],
+      ['#step-2', 0.5, 0.38, 1.0],
+      ['#step-3', 0.5, 0.36, 0.8],
+      ['#features', 0.5, 0.38, 0.8],
+      ['#devices', 0.5, 0.3, 0.6],
+      ['#accessibility', 0.5, 0.34, 1.0],
       ['#roadmap', 0.5, 0.38, 0.7],
       ['#team', 0.5, 0.36, 0.9],
       ['#contact', 0.5, 0.18, 0.0],
@@ -93,7 +93,7 @@
       return v;
     };
 
-    const start = docTop(document.getElementById('play')) - mainTop + 110;
+    const start = docTop(document.getElementById('story')) - mainTop + 110;
     const end = docTop(document.getElementById('contact')) - mainTop + 30;
     const A = mobile ? 52 : 82;            // vertical pitch per radian of the loop
     const B = mobile ? 72 : 118;           // loop radius at full loopiness
@@ -194,8 +194,8 @@
     });
     return words;
   }
-  const heads = [...document.querySelectorAll('main .headline, main .devices-title')].map((el) => ({ el, words: splitWords(el), armed: true }));
-  const cards = [...document.querySelectorAll('main .glass, main .steppad, main .cta-card, main .watch-stage, main .aw-stage')];
+  const heads = []; // headlines no longer wave as the tip passes
+  const cards = []; // and nothing lights up: the staff is the only thing moving
 
   function wave(head) {
     head.words.forEach((w, i) => {

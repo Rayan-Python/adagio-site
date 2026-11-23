@@ -494,7 +494,7 @@ function initSpike(canvas) {
   runWhileVisible(canvas, (now) => {
     const dt = last ? Math.min(now - last, 50) : 16;
     last = now;
-    if (!drag.on) { spin += dt * 0.0004; drag.offset *= 0.96; }
+    // no auto-spin: it rests at a three-quarter view and turns only while you drag it
     if (canvas.dataset.angle) spin = +canvas.dataset.angle; // a fixed angle, e.g. for screenshots
     spike.rotation.set(0, spin + drag.offset, 0);
   }, () => renderer.render(scene, camera));
@@ -512,7 +512,7 @@ function drawFace(g, size, bpm) {
   arc(Math.PI * 0.78, Math.PI * 1.22, 'rgba(255,255,255,.12)');
   arc(Math.PI * 0.78, Math.PI * 1.08, '#38b6ff');
   arc(Math.PI * 1.78, Math.PI * 2.22, 'rgba(255,255,255,.12)');
-  arc(Math.PI * 1.78, Math.PI * 1.78 + Math.PI * 0.44 * clamp(bpm / 210, 0, 1), '#A6E22E');
+  arc(Math.PI * 1.78, Math.PI * 1.78 + Math.PI * 0.44 * clamp(bpm / 210, 0, 1), '#E8F02A');
   // minute ticks
   for (let i = 0; i < 60; i++) {
     const a = (i / 60) * Math.PI * 2, long = i % 5 === 0;
@@ -527,30 +527,30 @@ function drawFace(g, size, bpm) {
   g.textBaseline = 'alphabetic';
   // date
   g.fillStyle = 'rgba(255,255,255,.7)';
-  g.font = '600 34px "JetBrains Mono", ui-monospace, monospace';
+  g.font = '600 34px ui-monospace, "SF Mono", Menlo, monospace';
   g.fillText('SAT 01', m, m - 150);
   // big two-tone time, the Garmin signature
-  g.font = 'italic 800 205px Archivo, Helvetica, Arial, sans-serif';
+  g.font = '700 205px "Atkinson Hyperlegible", Helvetica, Arial, sans-serif';
   g.textAlign = 'right'; g.fillStyle = '#ffffff'; g.fillText('10', m - 6, m + 60);
-  g.textAlign = 'left'; g.fillStyle = '#A6E22E'; g.fillText('10', m + 6, m + 60);
+  g.textAlign = 'left'; g.fillStyle = '#E8F02A'; g.fillText('10', m + 6, m + 60);
   // three data complications: heart rate, cadence (highlighted), music tempo
   const comp = (x, label, value, accent) => {
     g.lineWidth = 6;
-    g.strokeStyle = accent ? '#A6E22E' : 'rgba(255,255,255,.3)';
+    g.strokeStyle = accent ? '#E8F02A' : 'rgba(255,255,255,.3)';
     g.beginPath(); g.arc(x, m + 165, 58, 0, Math.PI * 2); g.stroke();
     g.textAlign = 'center';
-    g.fillStyle = accent ? '#A6E22E' : '#ffffff';
-    g.font = '800 46px Archivo, Helvetica, Arial, sans-serif';
+    g.fillStyle = accent ? '#E8F02A' : '#ffffff';
+    g.font = '800 46px "Atkinson Hyperlegible", Helvetica, Arial, sans-serif';
     g.fillText(value, x, m + 172);
     g.fillStyle = 'rgba(255,255,255,.6)';
-    g.font = '600 20px "JetBrains Mono", ui-monospace, monospace';
+    g.font = '600 20px ui-monospace, "SF Mono", Menlo, monospace';
     g.fillText(label, x, m + 200);
   };
   comp(m - 140, '♥ BPM', '148', false);
   comp(m, 'SPM', String(bpm), true);
   comp(m + 140, '♪ BPM', String(bpm), false);
   g.fillStyle = 'rgba(255,255,255,.55)';
-  g.font = '600 22px "JetBrains Mono", ui-monospace, monospace';
+  g.font = '600 22px ui-monospace, "SF Mono", Menlo, monospace';
   g.fillText('ADAGIO', m, m - 112);
 }
 
@@ -561,7 +561,7 @@ function bezelLabels() {
   const g = c.getContext('2d');
   g.clearRect(0, 0, size, size);
   g.fillStyle = 'rgba(235,235,235,.8)';
-  g.font = '700 30px Archivo, Helvetica, Arial, sans-serif';
+  g.font = '700 30px "Atkinson Hyperlegible", Helvetica, Arial, sans-serif';
   g.textAlign = 'center'; g.textBaseline = 'middle';
   // labels sit next to the buttons, written around the ring
   const r = m * 0.905;
@@ -574,7 +574,7 @@ function bezelLabels() {
     g.restore();
   });
   // small minute numerals at the top and bottom
-  g.font = '700 26px Archivo, Helvetica, Arial, sans-serif';
+  g.font = '700 26px "Atkinson Hyperlegible", Helvetica, Arial, sans-serif';
   [['60', -90], ['30', 90]].forEach(([t, deg]) => {
     const a = (deg * Math.PI) / 180;
     g.fillText(t, m + Math.cos(a) * r, m + Math.sin(a) * r);
@@ -646,7 +646,7 @@ function buildWatch() {
     b.rotation.z = a - Math.PI / 2;
     watch.add(b);
     if (accent) {
-      const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.215, 0.215, 0.08, 28), new THREE.MeshStandardMaterial({ color: 0xa6e22e, emissive: 0x4a5a00, roughness: 0.4 }));
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.215, 0.215, 0.08, 28), new THREE.MeshStandardMaterial({ color: 0xe8f02a, emissive: 0x4a4d00, roughness: 0.4 }));
       ring.position.set(Math.cos(a) * (R + 0.3), Math.sin(a) * (R + 0.3), 0.02);
       ring.rotation.z = a - Math.PI / 2;
       watch.add(ring);
@@ -700,31 +700,10 @@ function initWatch(canvas) {
   document.addEventListener('adagio:bpm', (e) => watch.userData.setBPM(e.detail));
   if (document.fonts) document.fonts.ready.then(() => watch.userData.setBPM(tempo().bpm)); // redraw once fonts load
 
-  // tilt toward the pointer over the panel; a full turn when the music staff passes by
-  const zone = canvas.closest('.devices') || canvas;
-  let px = 0, py = 0, tx = 0, ty = 0, turnStart = -1;
-  zone.addEventListener('pointermove', (e) => {
-    const r = zone.getBoundingClientRect();
-    tx = (e.clientX - r.left) / r.width - 0.5; ty = (e.clientY - r.top) / r.height - 0.5;
-  });
-  zone.addEventListener('pointerleave', () => { tx = ty = 0; });
-  const stage = canvas.closest('.watch-stage');
-  if (stage) stage.addEventListener('adagio:note-hit', () => { if (turnStart < 0) turnStart = performance.now(); });
-
-  runWhileVisible(canvas, (now) => {
-    if (!drag.on) drag.offset *= 0.95;
-    px += (tx - px) * 0.08; py += (ty - py) * 0.08;
-    const t = reduceMotion ? 0 : now;
-    let turn = 0;
-    if (turnStart >= 0) {
-      const p = clamp((now - turnStart) / 1500, 0, 1);
-      turn = Math.PI * 2 * easeInOut(p);
-      if (p >= 1) turnStart = -1;
-    }
-    watch.rotation.y = -0.4 + Math.sin(t * 0.0006) * 0.3 + px * 0.6 + drag.offset + turn;
-    watch.rotation.x = -0.3 + Math.sin(t * 0.0005 + 1) * 0.07 + py * 0.4;
-    watch.rotation.z = 0.1;
-    watch.position.y = Math.sin(t * 0.001) * 0.12;
+  // it holds still at a three-quarter view and turns only while you drag it; the face
+  // keeps showing the live SPM and BPM
+  runWhileVisible(canvas, () => {
+    watch.rotation.set(-0.3, -0.4 + drag.offset, 0.1);
   }, () => renderer.render(scene, camera));
 }
 
@@ -880,23 +859,12 @@ function initAppleWatch(canvas) {
   scene.add(watch);
   document.addEventListener('adagio:bpm', (e) => watch.userData.setBPM(e.detail));
   if (document.fonts) document.fonts.ready.then(() => watch.userData.setBPM(tempo().bpm));
-  let turnStart = -1;
-  const stage = canvas.closest('.aw-stage');
-  if (stage) stage.addEventListener('adagio:note-hit', () => { if (turnStart < 0) turnStart = performance.now(); });
   runWhileVisible(canvas, (now) => {
-    if (!drag.on) drag.offset *= 0.95;
-    const t = reduceMotion ? 0 : now;
-    // the haptic tap: a quick little buzz at the start of every beat
+    // the haptic tap, the point of this section: a quick small buzz at the start of every beat
     const ph = reduceMotion ? 1 : tempo().phase(now);
     const buzz = ph < 0.12 ? Math.sin(ph * 160) * 0.035 * (1 - ph / 0.12) : 0;
-    let turn = 0;
-    if (turnStart >= 0) {
-      const p = clamp((now - turnStart) / 1500, 0, 1);
-      turn = Math.PI * 2 * easeInOut(p);
-      if (p >= 1) turnStart = -1;
-    }
-    watch.rotation.set(-0.22 + Math.sin(t * 0.0005) * 0.06, 0.5 + Math.sin(t * 0.0006) * 0.35 + drag.offset + turn, 0.08 + buzz);
-    watch.position.set(buzz * 2, Math.sin(t * 0.001) * 0.1, 0);
+    watch.rotation.set(-0.22, 0.5 + drag.offset, 0.08 + buzz);
+    watch.position.set(buzz * 2, 0, 0);
   }, () => renderer.render(scene, camera));
 }
 
@@ -993,37 +961,9 @@ function initIPhone(canvas) {
   const phone = buildIPhone();
   scene.add(phone);
 
-  // cycle through the real app screens
-  let idx = 0;
-  if (!reduceMotion) setInterval(() => {
-    if (document.hidden) return;
-    idx = (idx + 1) % phone.userData.screens.length;
-    phone.userData.display.material.map = phone.userData.screens[idx];
-  }, 3200);
-
-  // lean toward the pointer over the hero
-  const zone = canvas.closest('.hero') || canvas;
-  let px = 0, py = 0, tx = 0, ty = 0, spinStart = -1;
-  zone.addEventListener('pointermove', (e) => {
-    const r = zone.getBoundingClientRect();
-    tx = (e.clientX - r.left) / r.width - 0.5; ty = (e.clientY - r.top) / r.height - 0.5;
-  });
-  zone.addEventListener('pointerleave', () => { tx = ty = 0; });
-  canvas.addEventListener('dblclick', () => { if (spinStart < 0) spinStart = performance.now(); });
-
-  runWhileVisible(canvas, (now) => {
-    if (spinStart === -1 && !reduceMotion) spinStart = now + 300; // one full turn when it first appears
-    if (!drag.on) drag.offset *= 0.95;
-    px += (tx - px) * 0.06; py += (ty - py) * 0.06;
-    const t = reduceMotion ? 0 : now;
-    let turn = 0;
-    if (spinStart >= 0) {
-      const p = clamp((now - spinStart) / 1800, 0, 1);
-      turn = Math.PI * 2 * easeInOut(p);
-      if (p >= 1) spinStart = -2;
-    }
-    phone.rotation.set(0.06 + py * 0.25, -0.38 + Math.sin(t * 0.0006) * 0.22 + px * 0.5 + drag.offset + turn, 0.04);
-    phone.position.y = Math.sin(t * 0.0009) * 0.08;
+  // it holds still on the run screen and turns only while you drag it
+  runWhileVisible(canvas, () => {
+    phone.rotation.set(0.06, -0.38 + drag.offset, 0.04);
   }, () => renderer.render(scene, camera));
 }
 
