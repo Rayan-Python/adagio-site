@@ -1,7 +1,8 @@
 // Adagio
-// One tempo runs the page. It starts at 176 steps per minute (the hero runner's cadence);
-// tap your own on the step pad (or drag the slider) and everything that keeps time
-// follows: the Step 2 playhead, the Step 3 runner, the 3D watch and the click.
+// One tempo runs the page. It starts at 176 steps per minute (the hero runner's cadence).
+// Tap your own on the step pad, or turn on the click, and the page keeps your beat: the
+// staff's notes bob, "rhythm." pulses, the Step 2 clip runs at your cadence and the watches
+// tap along, until you stop it (the pad's button, or "Stop the beat" in the nav).
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
@@ -15,6 +16,7 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
    ====================================================================== */
 const tempo = {
   bpm: 176,
+  live: false,  // true while the page is keeping the visitor's beat
   next: 0,      // time of the next beat (performance.now ms)
   count: 0,     // beats since load
   get len() { return 60000 / this.bpm; },
@@ -67,6 +69,8 @@ function setBPM(value, { align = false } = {}) {
 }
 window.adagioTempo = tempo; // shared with the 3D models (models.js)
 setBPM(176, { align: true });
+if (window.adagioIntroT0) tempo.next = window.adagioIntroT0 + tempo.len; // the load sequence counts the same beats
+window.adagioOnBeat = onBeat; // the staff bobs its notes on the beat (staff.js)
 
 function tick(now) {
   if (now - tempo.next > tempo.len * 2) tempo.next = now; // came back from a hidden tab
@@ -79,6 +83,26 @@ function tick(now) {
 }
 requestAnimationFrame(tick);
 
+// Keeping the beat. It starts when you tap a cadence or turn on the click, and from then on
+// the page follows your tempo. It ends when you stop the click or press "Stop the beat".
+const root = document.documentElement;
+const beatChip = $('[data-beat-stop]');
+const accent = $('.display .accent');
+function setLive(on) {
+  if (tempo.live === on) return;
+  tempo.live = on;
+  root.classList.toggle('beating', on);
+  if (beatChip) beatChip.hidden = !on;
+  document.dispatchEvent(new CustomEvent('adagio:live', { detail: on }));
+}
+if (beatChip) beatChip.addEventListener('click', () => { setClick(false); setLive(false); });
+const pulse = (el, scale, ms = 190) => el && el.animate([{ transform: `scale(${scale})` }, { transform: 'scale(1)' }], { duration: ms, easing: 'ease-out' });
+onBeat(() => {
+  if (!tempo.live || reduceMotion || document.hidden) return;
+  if (isOn(accent)) pulse(accent, 1.035);
+  pulse(beatChip && beatChip.firstElementChild, 1.7);
+});
+
 // Which parts of the page are on screen, so off-screen work costs nothing.
 const visible = new Set();
 const watcher = 'IntersectionObserver' in window ? new IntersectionObserver((entries) => {
@@ -86,6 +110,7 @@ const watcher = 'IntersectionObserver' in window ? new IntersectionObserver((ent
 }) : null;
 function watch(el) { if (!el) return; if (watcher) watcher.observe(el); else visible.add(el); }
 const isOn = (el) => el && visible.has(el);
+watch(accent);
 
 /* ======================================================================
    Step pad: tap left, right, left, right like running in place (or press F
@@ -138,10 +163,13 @@ function showStride() {
     b.className = Math.abs(g - avg) / avg < 0.12 ? 'on' : 'off';
   });
 }
+// a small footprint: sole and heel, toe pointing the way the runner is heading (left)
+const FOOTPRINT = '<svg viewBox="0 0 40 20"><path d="M3 10c0-5 5-8 12-8 6 0 9 2 12 4l-1 8c-3 2-6 4-11 4C8 18 3 15 3 10z"/><ellipse cx="33" cy="10" rx="5.5" ry="6"/></svg>';
 function stamp(foot) {
   if (!lane || reduceMotion) return;
   const p = document.createElement('i');
   p.className = `print ${foot}`;
+  p.innerHTML = FOOTPRINT;
   lane.appendChild(p);
   const dist = lane.clientWidth + 10;
   p.animate([{ transform: 'translateX(0)', opacity: 1 }, { transform: `translateX(${-dist}px)`, opacity: 0.25 }], { duration: LANE_MS, easing: 'linear' })
@@ -151,7 +179,7 @@ function step(foot) {
   foot = foot || (lastFoot === 'L' ? 'R' : 'L');
   lastFoot = foot;
   const btn = feetBtns.find((b) => b.dataset.foot === foot);
-  if (btn) { btn.classList.add('hit'); setTimeout(() => btn.classList.remove('hit'), 100); }
+  if (btn) { btn.classList.add('hit'); setTimeout(() => btn.classList.remove('hit'), 110); }
   stamp(foot);
   const now = performance.now();
   if (taps.length && now - taps[taps.length - 1] > 2000) { taps = []; strideGaps = []; }
@@ -164,6 +192,7 @@ function step(foot) {
   const gaps = taps.slice(1).map((t, i) => t - taps[i]);
   const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
   setBPM(60000 / avg, { align: true });
+  if (!reduceMotion) setLive(true);
   padStatus.textContent = taps.length < 5 ? 'Finding your rhythm.' : `Locked in at ${tempo.bpm} steps per minute.`;
 }
 if (pad) {
@@ -209,8 +238,13 @@ function setClick(on) {
   else if (audio) audio.suspend();
 }
 if (soundBtn) {
-  soundBtn.addEventListener('click', () => setClick(soundBtn.getAttribute('aria-pressed') !== 'true'));
-  // the click stops when you scroll away from the pad (it never starts on its own)
+  // pressing it starts the beat for the whole page; pressing it again makes everything still
+  soundBtn.addEventListener('click', () => {
+    const on = soundBtn.getAttribute('aria-pressed') !== 'true';
+    setClick(on);
+    if (!reduceMotion || !on) setLive(on);
+  });
+  // the sound stops when you scroll away from the pad (it never starts on its own); the page keeps the beat
   if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {
     if (!e.isIntersecting && soundBtn.getAttribute('aria-pressed') === 'true') setClick(false);
   }).observe(pad);
@@ -266,23 +300,23 @@ if (ts) {
   if (!reduceMotion) requestAnimationFrame(playhead);
 }
 
-// Step 3: one run, three paces. A runner dot travels the cadence line on a loop; the
-// line draws in behind it, each zone lights up as it's entered, that zone's songs come
-// in, and the readout shows the cadence right now. With reduced motion it rests at the end.
+// Step 3: one run against its target. A dot travels the cadence line on a loop and the line
+// draws in behind it. While the cadence is outside the target band (170, give or take 5) the
+// readout says "Speed up"; back inside it says "On target". The phone's screen follows: the
+// 3D phone listens for "adagio:cue", and the inline screens cross-fade. With reduced motion
+// it rests at the end of the run, on target.
 const rv = $('[data-runvis]');
 if (rv) {
   const path = $('[data-rv-path]', rv);
   const dot = $('[data-rv-dot]', rv);
   const clip = $('.rv-clip', rv);
-  const zones = $$('.rv-zone', rv);
-  const songs = $$('.rv-song', rv).map((g) => ({ g, at: +g.dataset.at }));
   const spmEl = $('[data-rv-spm]', rv);
-  const songEl = $('[data-rv-song]', rv);
-  const names = ['warm-up songs', 'tempo songs', 'cool-down songs'];
+  const stateEl = $('[data-rv-state]', rv);
+  const flip = $('[data-cue-screens]');
   const total = path.getTotalLength();
-  const LOOP = 9000, HOLD = 1400;
-  const spmAt = (y) => Math.round(150 + (200 - y) * (35 / 170)); // the chart's scale, inverted
-  let start = 0, zoneNow = -1;
+  const LOOP = 10000, HOLD = 1600;
+  const spmAt = (y) => Math.round(150 + (205 - y) / 5.5); // the chart's scale, inverted
+  let start = 0, cue = '';
   watch(rv);
   const frame = (now) => {
     if (isOn(rv) || reduceMotion) {
@@ -291,30 +325,97 @@ if (rv) {
       const pt = path.getPointAtLength(total * p);
       dot.setAttribute('transform', `translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`);
       clip.setAttribute('width', pt.x.toFixed(1));
-      spmEl.textContent = spmAt(pt.y);
-      const z = pt.x < 190 ? 0 : pt.x < 420 ? 1 : 2;
-      if (z !== zoneNow) {
-        zoneNow = z;
-        zones.forEach((r, i) => r.classList.toggle('on', i === z));
-        songEl.textContent = names[z];
+      const spm = spmAt(pt.y);
+      spmEl.textContent = spm;
+      const next = Math.abs(spm - 170) <= 5 ? 'target' : 'speed';
+      if (next !== cue) {
+        cue = next;
+        stateEl.textContent = cue === 'target' ? 'On target' : 'Speed up';
+        stateEl.classList.toggle('on', cue === 'target');
+        if (flip) flip.classList.toggle('on-target', cue === 'target');
+        window.adagioCue = cue;
+        document.dispatchEvent(new CustomEvent('adagio:cue', { detail: cue }));
       }
-      songs.forEach((s) => s.g.classList.toggle('on', pt.x >= s.at));
     } else start = 0;
     if (!reduceMotion) requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
 }
 
+// Step 2's phone screen, drawn here (there's no screenshot of matching in the App Store set):
+// your cadence, and example songs whose BPM numbers tick into place as they match. The 3D
+// phone uses the same drawing as its screen (models.js). Returns true while it's still moving.
+function drawSongsScreen(g, W, H, bpm, age) {
+  const near = (target) => SONGS.slice().sort((a, b) => Math.abs(a[2] - target) - Math.abs(b[2] - target));
+  const same = near(bpm).slice(0, 3).map((s) => [...s, '1×']);
+  const half = near(bpm / 2).filter((s) => !same.includes(s)).slice(0, 2).map((s) => [...s, '½×']);
+  const rows = [...same, ...half];
+  const F = '"Atkinson Hyperlegible", -apple-system, Helvetica, Arial, sans-serif';
+  const M = 'ui-monospace, "SF Mono", Menlo, monospace';
+  g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+  g.textBaseline = 'alphabetic';
+  g.fillStyle = '#16110E'; g.textAlign = 'left'; g.font = `700 30px ${F}`; g.fillText('9:41', 56, 64);
+  g.textAlign = 'center'; g.font = `700 32px ${F}`; g.fillText('Matching', W / 2, 150);
+  // your cadence
+  const rr = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
+  g.fillStyle = '#16110E'; rr(32, 196, W - 64, 300, 28); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.74)'; g.font = `700 26px ${F}`; g.fillText('Your cadence', W / 2, 256);
+  g.fillStyle = '#E8F02A'; g.font = `700 150px ${M}`; g.fillText(String(bpm), W / 2, 400);
+  g.fillStyle = '#fff'; g.font = `400 28px ${F}`; g.fillText('steps per minute', W / 2, 456);
+  g.textAlign = 'left'; g.fillStyle = 'rgba(22,17,14,.72)'; g.font = `700 24px ${F}`; g.fillText('From your playlist', 40, 566);
+  let moving = false;
+  rows.forEach(([title, artist, sbpm, match], i) => {
+    const y = 596 + i * 124;
+    const t = clamp((age - 250 - i * 260) / 700, 0, 1); // each row settles a beat after the one above
+    if (t < 1) moving = true;
+    const e = 1 - Math.pow(1 - t, 3);
+    const shown = Math.round(sbpm + (1 - e) * (i % 2 ? 23 : -19));
+    g.fillStyle = 'rgba(22,17,14,.06)'; rr(32, y, W - 64, 108, 20); g.fill();
+    g.fillStyle = '#16110E'; g.font = `700 30px ${F}`; g.fillText(title, 56, y + 46);
+    g.fillStyle = 'rgba(22,17,14,.72)'; g.font = `400 25px ${F}`; g.fillText(artist, 56, y + 84);
+    g.textAlign = 'right';
+    g.fillStyle = '#16110E'; g.font = `700 40px ${M}`; g.fillText(String(shown), W - 150, y + 52);
+    g.font = `400 22px ${F}`; g.fillStyle = 'rgba(22,17,14,.72)'; g.fillText('BPM', W - 150, y + 84);
+    // the match mark arrives when the number settles
+    g.fillStyle = t >= 1 ? '#E8F02A' : 'rgba(22,17,14,.08)'; rr(W - 132, y + 28, 76, 52, 26); g.fill();
+    if (t >= 1) { g.fillStyle = '#16110E'; g.textAlign = 'center'; g.font = `700 26px ${F}`; g.fillText(match, W - 94, y + 63); }
+    g.textAlign = 'left';
+  });
+  g.textAlign = 'center'; g.fillStyle = 'rgba(22,17,14,.72)'; g.font = `400 23px ${F}`;
+  g.fillText('Example songs, made up for this page', W / 2, 596 + rows.length * 124 + 40);
+  return moving;
+}
+window.adagioScreens = { songs: drawSongsScreen };
+// the inline copy (phones, tablets, reduced motion): redraws when it comes on screen and when the tempo changes
+const songsCanvas = $('canvas[data-screen="songs"]');
+if (songsCanvas) {
+  const g = songsCanvas.getContext('2d');
+  let t0 = 0, raf = 0;
+  const draw = (now) => {
+    raf = 0;
+    const moving = drawSongsScreen(g, songsCanvas.width, songsCanvas.height, tempo.bpm, reduceMotion ? 1e6 : now - t0);
+    if (moving && isOn(songsCanvas)) raf = requestAnimationFrame(draw);
+  };
+  const restart = () => { t0 = performance.now(); if (!raf) raf = requestAnimationFrame(draw); };
+  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { if (e.isIntersecting) { visible.add(songsCanvas); restart(); } else visible.delete(songsCanvas); }).observe(songsCanvas);
+  document.addEventListener('adagio:bpm', () => { if (isOn(songsCanvas)) restart(); });
+  if (document.fonts) document.fonts.ready.then(() => { if (isOn(songsCanvas)) restart(); });
+}
+
 /* ======================================================================
    Media
    ====================================================================== */
-// Hero video: footsteps striking the track, dim behind the copy. With reduced motion it
-// stays on its poster frame.
+// Hero video: footsteps striking the track, dim behind the copy. It loads after the page
+// and its load sequence are done. With reduced motion it stays on its poster frame.
 const heroVideo = $('[data-hero-video]');
 if (heroVideo && !reduceMotion) {
-  const playHero = () => heroVideo.play().catch(() => {});
-  heroVideo.addEventListener('canplay', playHero, { once: true });
-  playHero();
+  const startHero = () => setTimeout(() => { heroVideo.src = heroVideo.dataset.src; heroVideo.play().catch(() => {}); }, 1500);
+  if (document.readyState === 'complete') startHero(); else window.addEventListener('load', startHero, { once: true });
+  // and it rests while the hero is off screen
+  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {
+    if (!heroVideo.src) return;
+    if (e.isIntersecting) heroVideo.play().catch(() => {}); else heroVideo.pause();
+  }).observe(heroVideo);
 }
 
 // Lazy video: load a clip once it's near the screen, play it while it's on screen, pause it
@@ -332,12 +433,15 @@ function lazyVideo(v, onPlayable) {
 
 // Step 2: feet striking the track, with a strip of ticks underneath. The clip is slow motion:
 // a foot lands every 0.675 s of playback, first at 0.2 s (measured from the footage), which is
-// about 176 steps a minute at full speed. The ticks scroll so one crosses the mark on every strike.
+// about 176 steps a minute at full speed. The ticks scroll so one crosses the mark on every
+// strike. While the page keeps your beat the clip speeds up or slows down so its footstrikes
+// land on your beat (the playback rate is steered until the two line up).
 const beatClip = $('[data-beat-clip]');
 if (beatClip) {
   const v = $('video', beatClip);
   const ticksEl = $('[data-beat-ticks]', beatClip);
   const mark = $('[data-beat-mark]', beatClip);
+  const cap = $('[data-beat-cap]', beatClip);
   const STEP = 0.675, FIRST = 0.2, GAP = 64, N = 40, K = 20; // seconds per step, first strike, px between ticks
   ticksEl.innerHTML = Array.from({ length: N }, (_, k) => `<i style="left:${k * GAP}px"></i>`).join('');
   const place = (phase) => {
@@ -347,6 +451,9 @@ if (beatClip) {
   place(0); // reduced motion: still ticks, one on the mark
   window.addEventListener('resize', () => place(0));
   lazyVideo(v);
+  const caption = () => { cap.innerHTML = tempo.live ? `At your tempo: every footstrike lands on your beat, <span class="num">${tempo.bpm}</span> a minute.` : 'Slowed down: every footstrike lands on a tick.'; };
+  document.addEventListener('adagio:live', caption);
+  document.addEventListener('adagio:bpm', () => { if (tempo.live) caption(); });
   if (!reduceMotion) {
     let lastPhase = 0;
     const frame = () => {
@@ -355,6 +462,13 @@ if (beatClip) {
         place(phase);
         if (phase < lastPhase) { mark.classList.add('hit'); setTimeout(() => mark.classList.remove('hit'), 120); } // a strike
         lastPhase = phase;
+        let rate = 1;
+        if (tempo.live) {
+          let err = phase - tempo.phase();           // how far the clip's step is ahead of the beat
+          err -= Math.round(err);
+          rate = clamp((STEP * tempo.bpm / 60) * (1 - 0.8 * err), 0.3, 4);
+        }
+        if (Math.abs(v.playbackRate - rate) > 0.01) v.playbackRate = rate;
       }
       requestAnimationFrame(frame);
     };
@@ -364,6 +478,81 @@ if (beatClip) {
 
 // Footer: the track clips play muted while the footer is on screen and pause when it isn't.
 $$('.foot-reel video').forEach((v) => lazyVideo(v));
+
+/* ======================================================================
+   Pulse Mode cues: each button plays its tap pattern. Phones that can vibrate do
+   (Android); everywhere, the 3D watch taps the same pattern (models.js listens).
+   ====================================================================== */
+const cueNote = $('[data-cue-note]');
+const canVibrate = 'vibrate' in navigator && window.matchMedia('(pointer: coarse)').matches;
+if (cueNote && canVibrate) cueNote.textContent = 'Press a cue to feel it: your phone vibrates the same pattern.';
+$$('.cue').forEach((btn) => btn.addEventListener('click', () => {
+  const pattern = btn.dataset.pattern.split(',').map(Number); // on, off, on… in milliseconds
+  if (canVibrate) navigator.vibrate(pattern);
+  const total = pattern.reduce((a, b) => a + b, 0);
+  $$('.cue').forEach((b) => b.classList.toggle('on', b === btn));
+  setTimeout(() => btn.classList.remove('on'), Math.max(total, 450));
+  document.dispatchEvent(new CustomEvent('adagio:cue-demo', { detail: { cue: btn.dataset.cue, pattern } }));
+}));
+
+/* ======================================================================
+   Roadmap flyover: on wide screens (960px and up) with motion allowed, the lanes become a track in
+   perspective and the section pins. Scrolling runs you down the track: each release,
+   painted on its lane, comes toward you and passes underfoot (styles.css, --run).
+   ====================================================================== */
+const road = $('[data-roadmap]');
+const lanesEl = $('[data-lanes]');
+const footReel = $('.foot-reel');
+if (road && lanesEl) {
+  const marks = $$('.lane-text', lanesEl).map((el, i) => ({ el, at: 360 + i * 300 }));
+  const nos = $$('.lane-no', lanesEl);
+  const END = 590; // it ends with the next release at your feet and the one after ahead of you
+  const fly = () => !reduceMotion && window.innerWidth >= 960;
+  let flying = null;
+  const layout = () => {
+    if (fly() === flying) return;
+    flying = fly();
+    road.classList.toggle('flyover', flying);
+    if (!flying) { lanesEl.style.removeProperty('--run'); [...marks.map((m) => m.el), ...nos].forEach((el) => el.classList.remove('gone')); }
+    window.dispatchEvent(new Event('adagio:layout')); // the staff re-routes
+  };
+  let ticking = false;
+  const onScroll = () => {
+    ticking = false;
+    if (flying) {
+      const r = road.getBoundingClientRect();
+      const span = r.height - (window.innerHeight - 64);
+      const q = clamp((64 - r.top) / span, 0, 1);
+      const run = q * END;
+      lanesEl.style.setProperty('--run', `${run.toFixed(1)}px`);
+      marks.forEach((m) => m.el.classList.toggle('gone', m.at - run < -60));
+      nos.forEach((el) => el.classList.toggle('gone', 60 - run < -60));
+    }
+    // footer: the wordmark's letters brighten as the bottom of the page arrives
+    if (footReel) {
+      const fr = footReel.getBoundingClientRect();
+      if (fr.top < window.innerHeight) footReel.style.setProperty('--lift', clamp((window.innerHeight - fr.top) / fr.height, 0, 1).toFixed(3));
+    }
+  };
+  layout();
+  window.addEventListener('resize', layout);
+  window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  onScroll();
+}
+if (footReel && reduceMotion) footReel.style.setProperty('--lift', '1');
+
+/* ======================================================================
+   3D (models.js, three.js): fetched only when the first model is about to come on screen
+   ====================================================================== */
+const modelCanvases = $$('canvas[data-model]');
+if (modelCanvases.length && 'IntersectionObserver' in window) {
+  const io = new IntersectionObserver((entries) => {
+    if (!entries.some((e) => e.isIntersecting)) return;
+    io.disconnect();
+    import(`./models.js?v=${window.ADAGIO_V || ''}`).catch(() => root.classList.remove('pin3d'));
+  }, { rootMargin: '900px 0px' });
+  modelCanvases.forEach((c) => io.observe(c));
+}
 
 // Placeholder links (no address yet) don't jump to the top.
 $$('a[data-placeholder]').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));
