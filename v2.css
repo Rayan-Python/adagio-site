@@ -30,6 +30,8 @@ img { display: block; max-width: 100%; }
 .nav { position: fixed; inset: 0 0 auto; z-index: 20; display: flex; align-items: center; gap: 14px; height: 64px; padding: 0 var(--pad); }
 .nav-logo { display: flex; align-items: center; gap: 10px; margin-right: auto; text-decoration: none; font-weight: 700; }
 .nav-logo img { border-radius: 7px; }
+.nav-back { font-size: 1rem; color: var(--dim); text-decoration: none; }
+.nav-back:hover { color: var(--white); text-decoration: underline; text-underline-offset: 5px; }
 .chip { min-height: 38px; padding: 4px 14px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,.6); background: transparent; font-weight: 700; font-size: 1rem; cursor: pointer; white-space: nowrap; }
 .chip[aria-pressed="true"] { background: var(--volt); border-color: var(--volt); color: var(--rubber); }
 .badge { display: inline-block; line-height: 0; border-radius: 9px; }
