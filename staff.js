@@ -2,8 +2,9 @@
 // One continuous five-line staff runs from the top of the page to the Contact section. It starts
 // under the nav, crosses the hero between the headline and the step pad (a treble clef, then
 // three notes that land in time as the page loads), and then winds down the page through the
-// open space of each section, drawn as you scroll, with engraved notes (Noto Music) popping onto
-// it as the drawing passes them. It ends with a final barline, like a piece of music.
+// open space of each section. It is always drawn a little past the bottom of the screen, so it
+// never shows a loose end; its engraved notes (Noto Music) pop onto it as they come into view.
+// It ends in Contact like a piece of music: a last note under a fermata, a final barline.
 //
 // It is never cut or masked. It runs behind the content, and it's routed: every block of small
 // text (paragraphs, captions, labels, lists, buttons, figures) is an obstacle with clear space
@@ -277,49 +278,28 @@
     const zones = (wide ? [
       ['#top', xr, 0], ['#story', orbit ? orbit.xb / W : 0.76, orbit ? 0 : 0.1], ['#step-1', 0.72, 0.11], ['#step-2', 0.76, 0.1], ['#step-3', 0.72, 0.11],
       ['#features', 0.74, 0.1], ['.facts', 0.5, 0], ['#devices', 0.75, 0.1], ['#pulse', 0.77, 0.08],
-      ['#roadmap', road ? 0.93 : 0.8, road ? 0.012 : 0.04], ['#team', 0.56, 0.02], ['#contact', 0.74, 0.03],
+      ['#roadmap', road ? 0.93 : 0.8, road ? 0.012 : 0.04], ['#team', 0.52, 0.01], ['#contact', 0.74, 0.03],
     ] : [
       ['#top', Rt, 0], ['#story', Rt, 0], ['#step-1', L, 0], ['#step-2', Rt, 0], ['#step-3', L, 0], ['#features', Rt, 0],
       ['#devices', L, 0], ['#pulse', Rt, 0], ['#roadmap', L, 0], ['#team', L, 0], ['#contact', L, 0],
     ]).map(([sel, cx, amp]) => ({ top: top(sel), cx, amp }));
     zones[0].top = 0;
     // It ends the way it began: a turn, then a closing phrase across the open space at the top of
-    // Contact, finishing on a final barline.
+    // Contact, finishing on a final barline that stops just short of the "Play the page" button,
+    // on the button's own line.
     const cTop = top('#contact');
     const cr = wide ? 44 : 26;
-    const yCoda = cTop + (wide ? 62 : 54);
-    const xEnd = wide ? Math.round(W * 0.46) : P.XMIN + 1;      // where it comes down into Contact
-    const xCoda = wide ? W - copy.x0 : W - P.XMIN - 14;         // where the barline stands
+    const playBox = document.querySelector('[data-play-page]') && boxOf(document.querySelector('[data-play-page]'), false, mainTop);
+    const yCoda = playBox ? (playBox.y0 + playBox.y1) / 2 : cTop + 62;
+    const xEnd = wide ? Math.round(W * 0.46) : P.XMIN + 1;                          // where it comes down into Contact
+    const xCoda = playBox ? playBox.x0 - (wide ? 20 : 12) : W - copy.x0;            // where the barline stands
     const yEnd = yCoda - cr;
     zones[zones.length - 1].cx = xEnd / W;
     const y0 = band + r;
     const pins = orbit ? [{ y0: orbit.ys - 90, y1: orbit.ye + 90, x: orbit.xb }] : [];
     const path = route({ W, y0, y1: yEnd, xStart: xR, xEnd, hard, soft, tunnels, zones, pins, P });
 
-    // flourishes: a full loop where there's open room for one (wide screens)
-    const loops = [];
-    if (wide) {
-      const A = 40, RAD = 60, need = P.half + P.clear;
-      // a loop half hidden behind a 3D model reads as a glitch, so the models' stages block loops (not the route)
-      const stages = [...document.querySelectorAll('.pin3d .how-pin, .iphone-stage, .watch-stage, .aw-stage, .flyover.roadmap')].map((el) => boxOf(el, false, mainTop)).filter(Boolean);
-      [['#story', 0.5], ['#features', 0.74], ['#devices', 0.86], ['#pulse', 0.82], ['#team', 0.08]].forEach(([sel, at]) => {
-        if (orbit && sel === '#story') return; // the story has its loop already
-        const el = document.querySelector(sel);
-        const ys = docTop(el) - mainTop + el.offsetHeight * at, ye = ys + Math.PI * 2 * A;
-        if (ys < y0 + 100 || ye > yEnd - 100) return;
-        const r0 = Math.round((ys - y0) / P.DY), r1 = Math.round((ye - y0) / P.DY);
-        let lo = Infinity, hi = -Infinity;
-        for (let q = r0; q <= r1; q++) { lo = Math.min(lo, path.xs[q]); hi = Math.max(hi, path.xs[q]); }
-        for (const dir of [-1, 1]) {
-          const bx0 = dir < 0 ? lo - 2 * RAD : lo, bx1 = dir < 0 ? hi : hi + 2 * RAD;
-          const free = bx0 - need > 20 && bx1 + need < W - 20 && !hard.some((b) => bx0 - need < b.x1 && bx1 + need > b.x0 && ys - RAD - need < b.y1 && ye + RAD + need > b.y0)
-            && ![...soft, ...stages].some((b) => bx0 - P.half < b.x1 && bx1 + P.half > b.x0 && ys - RAD < b.y1 && ye + RAD > b.y0);
-          if (free) { loops.push({ ys, ye, dir, A, RAD }); break; }
-        }
-      });
-    }
-
-    // ---- sample the whole line: hero, then the route (finely, with any loops) ----
+    // ---- sample the whole line: hero, then the route (finely, with the turn around the runner) ----
     pts = hero.map((p) => ({ x: p.x, y: p.y, base: p.y }));
     introEnd = pts.length - 1;
     const xAt = (y) => { const f = clamp((y - y0) / P.DY, 0, path.R - 1), i = Math.floor(f), t = f - i; // smooth between rows
@@ -338,10 +318,7 @@
         y = orbit.ye;
         continue;
       }
-      const lp = loops.find((l) => y >= l.ys && y <= l.ye);
-      if (!lp) { pts.push({ x: xAt(y), y, base: y }); continue; }
-      const th = (y - lp.ys) / lp.A;
-      pts.push({ x: xAt(y) + lp.dir * lp.RAD * (1 - Math.cos(th)), y: y + lp.RAD * Math.sin(th), base: y });
+      pts.push({ x: xAt(y), y, base: y });
     }
     for (let a = 0.06; a <= 1.0001; a += 0.06) pts.push({ x: xEnd + cr - cr * Math.cos(a * Math.PI / 2), y: yEnd + cr * Math.sin(a * Math.PI / 2), base: yEnd + cr * a });
     const codaSpan = xCoda - (xEnd + cr);
@@ -453,12 +430,14 @@
       el.style.top = `${y.toFixed(1)}px`;
       hits.appendChild(el);
     });
-    debug = { hard, soft, tunnels, loops, P, W };
+    debug = { hard, soft, tunnels, P, W };
     built = true;
     update();
   }
 
   // ---- drawing: the load sequence, then as you scroll ---------------------------------
+  // The line is drawn to a little below the bottom of the screen, so its end is never in view;
+  // what you see arrive as you scroll is the notes, each popping onto the staff as it comes up.
   // On load (once, about 1.4 s): the hero's stretch of staff draws in from under the nav, and its
   // three notes land on beats one, two and three of a 176 BPM count ("rhythm." lands on the
   // fourth, then the step pad rises: styles.css). After that the staff draws as you scroll.
@@ -470,7 +449,9 @@
     frame = 0;
     if (!built || !pts.length) return;
     const mainTop = docTop(main);
-    const target = reduceMotion ? Infinity : window.scrollY + window.innerHeight * 0.62 - mainTop; // reduced motion: fully drawn
+    const view = window.scrollY - mainTop;
+    const target = reduceMotion ? Infinity : view + window.innerHeight * 1.15; // reduced motion: fully drawn
+    const seen = reduceMotion ? Infinity : view + window.innerHeight * 0.9;    // a note appears once it's this far up the screen
     // last point whose base height has been reached (base only ever increases)
     let lo = 0, hi = pts.length - 1;
     while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (pts[mid].base <= target) lo = mid; else hi = mid - 1; }
@@ -488,13 +469,13 @@
     layers.forEach((Ly) => {
       Ly.lines.forEach((path, k) => { path.style.strokeDashoffset = (lens[k] * (1 - frac)).toFixed(1); });
       Ly.clef.style.opacity = i >= clefAt ? 1 : 0;
-      Ly.notes.forEach((el, k) => el.classList.toggle('on', noteAt[k] <= i && (!intro || k >= heroNotes || sinceLoad >= BEAT * (k + 1))));
+      Ly.notes.forEach((el, k) => el.classList.toggle('on', noteAt[k] <= i && (k < heroNotes ? !intro || sinceLoad >= BEAT * (k + 1) : noteY[k] <= seen)));
       Ly.end.style.opacity = done ? 0.9 : 0;
-      Ly.fermata.style.opacity = i >= noteAt[noteAt.length - 1] ? 1 : 0;
+      Ly.fermata.style.opacity = i >= noteAt[noteAt.length - 1] && noteY[noteY.length - 1] <= seen ? 1 : 0;
       if (!p) { Ly.tip.style.opacity = 0; return; }
       const angle = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
       Ly.tip.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${angle.toFixed(1)})`);
-      Ly.tip.style.opacity = done || (intro && i >= introEnd) ? 0 : 1;
+      Ly.tip.style.opacity = intro && i < introEnd ? 1 : 0; // the note riding the tip only shows while the hero's stretch draws in
     });
     if (frontAt) { // the front half of the story loop keeps pace with the line beneath it
       const f = clamp((i - frontAt[0]) / (frontAt[1] - frontAt[0]), 0, 1);
@@ -598,7 +579,7 @@
         const f = clamp((el - starts[k]) / (tune[k].beats * beat), 0, 1);
         const i = Math.round(lerp(noteAt[k], next, f));
         setPlayhead(i);
-        y = lerp(y, viewFor(i), 0.18); // follow, without jumping around the loops
+        y = lerp(y, viewFor(i), 0.18); // follow, without jumping around the turns
       }
       window.scrollTo(0, y);
       playing.raf = requestAnimationFrame(frame);
@@ -633,7 +614,7 @@
       if (d < min) min = d;
       if (d < P.clear - 1) { const k = b.el; if (!near.has(k) || near.get(k) > d) near.set(k, d); }
     }));
-    return { width: debug.W, clearAsked: P.clear, closest: Math.round(min), loops: debug.loops.length, orbit: !!frontAt, notes: noteAt.length, points: pts.length,
+    return { width: debug.W, clearAsked: P.clear, closest: Math.round(min), orbit: !!frontAt, notes: noteAt.length, points: pts.length,
       tooClose: [...near].map(([el, d]) => `${Math.round(d)}px ${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} "${(el.textContent || '').trim().slice(0, 28)}"`) };
   };
 })();

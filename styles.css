@@ -316,30 +316,31 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .how-pin { display: none; }
 
 /* Step 2: the track-staff, then the clip */
+/* the track drawing and the clip are the same size and shape (2:1), captions on one baseline */
 .step2-visuals { display: grid; gap: 32px; }
-.visual { display: grid; gap: 12px; }
+.visual { display: grid; gap: 12px; align-content: start; }
+.visual .frame { aspect-ratio: 2 / 1; min-width: 0; }
 .visual figcaption, .runvis figcaption { font-size: var(--t-16); color: var(--fg); }
 .visual figcaption { font-weight: 700; }
 /* Step 2: a running track whose lane lines are a music staff */
-.trackstaff svg { width: 100%; height: auto; display: block; overflow: visible; }
+.trackstaff svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .ts-lanes line { stroke: #fff; stroke-width: 3; stroke-linecap: round; opacity: .92; }
 .ts-bars line { stroke: #fff; stroke-width: 2.5; opacity: .92; }
 .ts-bars line.thick { stroke-width: 6; }
-.ts-time text { fill: #fff; font-family: var(--display); font-weight: 800; font-size: 66px; text-anchor: middle; }
+.ts-time text { fill: #fff; font-family: var(--display); font-weight: 800; font-size: 90px; text-anchor: middle; }
 .ts-note { fill: var(--rubber); transform-box: fill-box; transform-origin: 30% 85%; }
-.ts-note .stem { stroke: var(--rubber); stroke-width: 3; }
+.ts-note .stem { stroke: var(--rubber); stroke-width: 3.6; }
 .ts-step { fill: #fff; opacity: .3; transform-box: fill-box; transform-origin: center; }
 .ts-step.on { opacity: 1; }
 .ts-head { stroke: var(--volt); stroke-width: 4; stroke-linecap: round; }
 
 /* Step 2: a running clip with a beat strip; a tick crosses the mark on every footstrike */
-.beat-clip { gap: 0; }
-.beat-clip figcaption { margin-top: 12px; }
-.beat-clip video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px 10px 0 0; background: var(--rubber); }
-.beat-strip { position: relative; height: 44px; overflow: hidden; background: var(--rubber); border-radius: 0 0 10px 10px; }
+.beat-clip .frame { display: grid; grid-template-rows: minmax(0, 1fr) 18%; border-radius: 12px; overflow: hidden; background: var(--rubber); }
+.beat-clip video { width: 100%; height: 100%; object-fit: cover; object-position: 50% 76%; }
+.beat-strip { position: relative; overflow: hidden; background: var(--rubber); }
 .beat-ticks { position: absolute; left: 0; top: 0; bottom: 0; will-change: transform; }
-.beat-ticks i { position: absolute; top: 12px; bottom: 12px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: rgba(255,255,255,.7); }
-.beat-mark { position: absolute; left: 50%; top: 4px; bottom: 4px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--volt); }
+.beat-ticks i { position: absolute; top: 26%; bottom: 26%; width: 3px; margin-left: -1.5px; border-radius: 2px; background: rgba(255,255,255,.7); }
+.beat-mark { position: absolute; left: 50%; top: 10%; bottom: 10%; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--volt); }
 .beat-mark.hit { transform: scaleX(2.6); }
 
 /* Step 3: one run against its target band */
@@ -380,16 +381,16 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .services .soon img { opacity: .5; }
 
 /* Devices: a plain list */
-.devices { padding: 0 0 120px; }
-.devices-grid { display: grid; gap: 32px; align-items: center; padding-top: 96px; }
+.devices { padding: 0 0 clamp(48px, 8vh, 120px); } /* the section fits one screen at laptop sizes */
+.devices-grid { display: grid; gap: 32px; align-items: center; padding-top: clamp(40px, 6.5vh, 96px); }
 .devices-grid::before { content: ""; position: absolute; left: var(--pad); right: var(--pad); top: 0; border-top: 1px solid var(--rule); }
-.device-list { list-style: none; margin: 32px 0 0; padding: 0; max-width: 34em; }
+.device-list { list-style: none; margin: 20px 0 0; padding: 0; max-width: 34em; }
 .watch-stage { position: relative; height: min(62vh, 500px); min-height: 360px; padding-bottom: 34px; }
-.device-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
+.device-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--rule); }
 .dev { display: grid; gap: 2px; }
 .dev b { font-size: var(--t-22); line-height: 1.3; }
 .dev small { font-size: var(--t-16); color: var(--fg-2); }
-.device-note { margin-top: 20px; max-width: 34em; font-size: var(--t-16); color: var(--fg-2); }
+.device-note { margin-top: 12px; max-width: 34em; font-size: var(--t-16); color: var(--fg-2); }
 .device-list li:first-child { border-top: 1px solid var(--rule); }
 .device-list .status { font-size: var(--t-16); font-weight: 700; color: var(--volt); white-space: nowrap; }
 .device-list .soon, .device-list .soon .status { color: var(--fg-2); }
@@ -422,84 +423,107 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
    along the top edge, all lit.
    Wide screens (.road3d): the same list becomes a track in perspective, sized to fit the screen
    whole (its lengths are in cqh, hundredths of the view's height). The unlit track is dark clay;
-   each pair of poles throws a pool of light that shows the clay at full strength, so the lane
-   text reads the same lit or unlit. With motion allowed (.flyover) the section pins and scrolling
-   runs you down the track (script.js sets --run): each release comes into focus in turn, and the
-   poles beside it flicker on. The lanes sit on the background layer, so the staff passes over the
-   edge of the scene, beside the track.
+   each pole's lamps throw a broad pool of light that shows the clay at full strength, so the lane
+   text reads the same lit or unlit. The poles stand upright in a layer of their own (.lights):
+   script.js works out where each one's foot falls on the track's perspective and how big it is
+   there, so they stay vertical and only shrink with distance. With motion allowed (.flyover) the
+   section pins and scrolling runs you down the track (script.js sets --run): each release comes
+   into focus in turn, and the poles beside it flicker on. The scene sits on the background layer,
+   so the staff passes over its edge, beside the track.
    ------------------------------------------------------------------ */
 .roadmap { padding: 104px 0; }
-.road-view { position: relative; z-index: -2; margin-top: 76px; }
+.road-view { position: relative; z-index: -2; margin-top: 112px; }
 .track { position: relative; }
 .lanes { list-style: none; margin: 0; padding: 0; background: var(--clay); border-block: 3px solid #fff; }
 .lane-row { --stagger: 0vw; display: flex; align-items: center; min-height: 124px; padding: 16px var(--pad) 16px calc(var(--pad) + var(--stagger)); }
 .lane-row + .lane-row { border-top: 3px solid #fff; }
 .lane-row:nth-child(2) { --stagger: 8vw; }
 .lane-row:nth-child(3) { --stagger: 16vw; }
-.lane-mark { display: flex; align-items: center; gap: 20px; }
+.lane-mark { display: flex; align-items: center; gap: 20px; min-width: 0; }
 .lane-no { padding-left: 18px; border-left: 4px solid #fff; color: #fff; font-size: clamp(var(--t-48), 6vw, var(--t-88)); line-height: .8; }
-.lane-text { display: grid; gap: 2px; color: #fff; }
+.lane-text { display: grid; gap: 2px; min-width: 0; color: #fff; }
 .lane-ver { font-size: var(--t-18); font-weight: 700; }
 .lane-name { font-size: clamp(var(--t-28), 3.6vw, var(--t-48)); font-weight: 700; line-height: 1.1; }
-/* light poles: a thin pole with a bank of lamps on top (script.js makes them) */
 .pools { display: none; }
-.poles { position: absolute; left: 0; right: 0; bottom: 100%; height: 56px; pointer-events: none; }
-.pole { position: absolute; bottom: 0; left: var(--x); width: 3px; height: 100%; background: rgba(255,255,255,.5); }
-.pole::before { content: ""; position: absolute; left: 50%; top: 0; width: 26px; height: 9px; margin-left: -13px; border-radius: 2px; background: #FFF6DC; }
+/* A light pole (script.js builds them): a tall thin steel pole, a short crossarm, and a bank of
+   eight square floodlight heads, two rows of four, angled down toward the track. Lit, the heads
+   turn warm white with a faint haze around them. Sizes are in --u, so one drawing serves the row
+   on phones and the scaled poles on the track. */
+.lights { --u: 1.9px; position: absolute; left: 0; right: 0; bottom: 100%; height: calc(46 * var(--u)); pointer-events: none; }
+.pole { position: absolute; left: var(--x); bottom: 0; width: 0; height: calc(38 * var(--u)); }
+.pole::before { content: ""; position: absolute; left: calc(-.32 * var(--u)); bottom: 0; width: max(2px, calc(.64 * var(--u))); height: 100%; background: #8E8A86; } /* steel */
+.bank { position: absolute; left: 50%; bottom: calc(100% - .4 * var(--u)); width: calc(8 * var(--u)); margin-left: calc(-4 * var(--u)); padding: calc(.5 * var(--u));
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(.42 * var(--u)); background: #3B3531; border-radius: calc(.3 * var(--u));
+  transform: skewY(var(--lean, 0deg)); }
+.bank::before { content: ""; position: absolute; left: -10%; right: -10%; top: 100%; height: max(2px, calc(.55 * var(--u))); background: #8E8A86; } /* the crossarm */
+.bank::after { content: ""; position: absolute; inset: -110% -55%; z-index: -1; border-radius: 50%; opacity: 0; /* haze */
+  background: radial-gradient(closest-side, rgba(255,243,214,.2), rgba(255,243,214,0)); }
+.bank b { aspect-ratio: 1; border-radius: 1px; background: #6F6A66; }
+.pole.lit .bank b { background: #FFF6DC; }
+.pole.lit .bank::after { opacity: 1; }
 .pole.r { display: none; }
 
 .road3d.roadmap { padding: 96px 0 0; }
 .road3d .road-view { margin: 16px 0 0; height: min(68vh, 620px); height: min(68svh, 620px); overflow: hidden; perspective: 1100px; perspective-origin: 43% -6%; container-type: size; }
-.road3d .track { position: absolute; left: 0; right: 14%; bottom: 0; height: 178cqh; transform-origin: 50% 100%; transform: rotateX(63deg); transform-style: preserve-3d;
+.road3d .track { position: absolute; left: 0; right: 14%; bottom: 0; height: 128cqh; transform-origin: 50% 100%; transform: rotateX(63deg);
   border-inline: 5px solid #fff;
   /* unlit clay, with faint marks across the track that slide toward you so the ground reads as moving */
-  background: repeating-linear-gradient(to bottom, transparent 0 21.4cqh, rgba(255,255,255,.14) 21.4cqh 22cqh) 0 calc(var(--run, 0) * 1cqh) / 100% 22cqh, #5E2819; }
-.road3d .pools { display: block; position: absolute; inset: 0; }
-.pool { position: absolute; left: 0; right: 0; bottom: 0; height: 36cqh; opacity: 0; transform: translateY(calc((var(--run, 0) - var(--d)) * 1cqh + 18cqh));
-  background: radial-gradient(ellipse 64% 50% at 6% 50%, var(--clay) 0%, rgba(180,74,49,.6) 52%, rgba(180,74,49,0) 100%),
-              radial-gradient(ellipse 64% 50% at 94% 50%, var(--clay) 0%, rgba(180,74,49,.6) 52%, rgba(180,74,49,0) 100%); }
+  background: repeating-linear-gradient(to bottom, transparent 0 17.5cqh, rgba(255,255,255,.12) 17.5cqh 18cqh) 0 calc(var(--run, 0) * 1cqh) / 100% 18cqh, #5E2819; }
+/* the pools: one broad soft oval from each pole, wide enough to overlap the next */
+.road3d .pools { display: block; position: absolute; inset: 0; overflow: hidden; }
+.pool { position: absolute; left: 0; right: 0; bottom: 0; height: 64cqh; opacity: 0; transform: translateY(calc((var(--run, 0) - var(--d)) * 1cqh + 32cqh));
+  background: radial-gradient(ellipse 30% 22% at 50% 50%, rgba(255,240,210,.07), rgba(255,240,210,0)),
+              radial-gradient(ellipse 78% 50% at 14% 50%, var(--clay) 0%, rgba(180,74,49,.7) 46%, rgba(180,74,49,0) 100%),
+              radial-gradient(ellipse 78% 50% at 86% 50%, var(--clay) 0%, rgba(180,74,49,.7) 46%, rgba(180,74,49,0) 100%); }
 .pool.lit { opacity: 1; }
-.road3d .lanes { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); background: none; border: 0; }
-.road3d .lane-row { position: relative; display: block; min-height: 0; padding: 0; }
+.road3d .lanes { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: none; border: 0; }
+.road3d .lane-row { position: relative; display: block; min-height: 0; min-width: 0; padding: 0; overflow: hidden; } /* each release keeps to its own lane */
 .road3d .lane-row + .lane-row { border-top: 0; border-left: 5px solid #fff; }
 /* each release: its lane number with its title beside it, painted on the lane (stretched lengthwise, as road paint is) */
-.road3d .lane-mark { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 3.4cqh; gap: 2.6cqh; align-items: flex-end; opacity: .7;
+.road3d .lane-mark { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 3cqh; gap: 2.2cqh; align-items: flex-end; opacity: .7;
   transform-origin: 0 100%; transform: translateY(calc((var(--run, 0) - var(--at)) * 1cqh)) scaleY(1.7); transition: opacity 320ms; will-change: transform; }
 .road3d .lane-mark.now { opacity: 1; }
 .road3d .lane-mark.gone { opacity: 0; }
-.road3d .pole.gone { visibility: hidden; }
-.road3d .lane-row:nth-child(1) .lane-mark { --at: 34; }
-.road3d .lane-row:nth-child(2) .lane-mark { --at: 78; }
-.road3d .lane-row:nth-child(3) .lane-mark { --at: 122; }
-.road3d .lane-no { padding: 0; border: 0; font-size: 17cqh; line-height: .8; }
-.road3d .lane-text { gap: .6cqh; }
-.road3d .lane-ver { font-size: max(3.5cqh, 16px); }
-.road3d .lane-name { font-size: 6.2cqh; line-height: 1.04; }
-.road3d .poles { inset: 0; height: auto; transform-style: preserve-3d; }
-.road3d .pole, .road3d .pole.r { display: block; left: -4.5cqh; width: .6cqh; height: 36cqh; transform-origin: 50% 100%;
-  transform: translateY(calc((var(--run, 0) - var(--d)) * 1cqh)) rotateX(-90deg); }
-.road3d .pole.r { left: auto; right: -4.5cqh; }
-.road3d .pole::before { width: 5.8cqh; height: 2.3cqh; margin-left: -2.9cqh; border-radius: .3cqh; background: rgba(255,255,255,.3); }
-.road3d .pole.lit::before { background: #FFF6DC; }
+.road3d .lane-row:nth-child(1) .lane-mark { --at: 30; }
+.road3d .lane-row:nth-child(2) .lane-mark { --at: 66; }
+.road3d .lane-row:nth-child(3) .lane-mark { --at: 102; }
+.road3d .lane-no { padding: 0; border: 0; font-size: 15cqh; line-height: .8; }
+.road3d .lane-text { gap: .5cqh; }
+.road3d .lane-ver { font-size: max(3.2cqh, 15px); }
+.road3d .lane-name { font-size: 5.2cqh; line-height: 1.04; overflow-wrap: break-word; }
+.road3d .lights { --u: 1cqh; inset: 0; height: auto; }
+.road3d .pole, .road3d .pole.r { display: block; left: calc(var(--sx, 0) * 1px); bottom: calc(var(--sb, 0) * 1px); transform: scale(var(--s, 1)); transform-origin: 50% 100%; }
+.road3d .pole.l { --lean: 9deg; }
+.road3d .pole.r { --lean: -9deg; }
+.road3d .pole { transition: opacity 240ms; }
+.road3d .pole.gone { opacity: 0; }
 
 .flyover.roadmap { padding: 0; height: 265vh; height: 265svh; }
 .flyover .road-pin { position: sticky; top: 64px; z-index: -2; height: calc(100vh - 64px); height: calc(100svh - 64px); display: grid; grid-template-rows: auto 1fr; padding: 52px 0 36px; }
 .flyover .road-view { z-index: auto; height: auto; margin: 8px 0 0; }
 /* lights warming up: a quick flicker, then full */
-.flyover .pool.lit, .flyover .pole.lit::before { animation: lights-on 560ms steps(1, end) both; }
+.flyover .pool.lit, .flyover .pole.lit .bank b, .flyover .pole.lit .bank::after { animation: lights-on 560ms steps(1, end) both; }
 @keyframes lights-on { 0% { opacity: 0; } 10% { opacity: 1; } 22% { opacity: .15; } 36% { opacity: .9; } 48% { opacity: .3; } 62%, 100% { opacity: 1; } }
 
 /* ------------------------------------------------------------------
    Team
    ------------------------------------------------------------------ */
-.team { padding: 96px 0; }
+.team { padding: 96px 0 64px; }
 .team-grid { display: grid; gap: 48px; margin-top: 8px; align-items: start; }
 .people { list-style: none; margin: 0; padding: 0; display: grid; gap: 28px; }
-.schools { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 400px; }
-.school { display: grid; gap: 10px; justify-items: center; align-content: start; text-align: center; }
+/* both logos in the same box, centered, at the same height; captions break the same way */
+.schools { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, 176px); gap: 36px; }
+.school { display: grid; gap: 12px; justify-items: center; align-content: start; text-align: center; }
+.logo-box { display: grid; place-items: center; width: 176px; height: 104px; }
 /* both logos at the same visual height, so the pair reads as balanced */
-.school img { height: 112px; width: 100%; object-fit: contain; } /* same box for both, so the names line up */
-.school-name { font-size: var(--t-16); line-height: 1.35; color: var(--fg); text-wrap: balance; }
+.logo-box img { height: 104px; width: auto; max-width: 100%; }
+.school-name { font-size: var(--t-16); line-height: 1.35; color: var(--fg); white-space: nowrap; }
+@media (max-width: 479px) { /* phones: the pair shares the width */
+  .schools { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .logo-box { width: 100%; height: 88px; }
+  .logo-box img { height: 88px; }
+  .school-name { font-size: .8125rem; }
+}
 .person { display: grid; gap: 2px; }
 .person-name { font-size: var(--t-28); font-weight: 700; line-height: 1.2; }
 .person-role { color: var(--fg-2); }
@@ -508,11 +532,13 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 /* ------------------------------------------------------------------
    Contact
    ------------------------------------------------------------------ */
-.contact { padding: 164px 0 120px; }
-/* stands just under the staff's final barline */
-.play-page { position: absolute; z-index: 1; top: 98px; right: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); display: inline-flex; align-items: center; gap: 8px;
-  min-height: 40px; padding: 6px 16px; border-radius: 999px; border: 1.5px solid var(--rubber); background: transparent; color: var(--rubber); font-weight: 700; font-size: var(--t-16); cursor: pointer;
-  transition: transform 120ms ease-out; }
+.contact { padding: 148px 0 112px; }
+/* The staff ends on this line: last note, fermata, final barline, then the play button (staff.js
+   stops the barline just short of it), with a line under the button saying what it does. */
+.play-end { position: absolute; z-index: 1; top: 42px; right: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); display: grid; justify-items: end; gap: 6px; }
+.play-page { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 16px; border-radius: 999px; border: 1.5px solid var(--rubber); background: transparent; color: var(--rubber);
+  font-weight: 700; font-size: var(--t-16); cursor: pointer; white-space: nowrap; transition: transform 120ms ease-out; }
+.play-note { max-width: 11.5em; font-size: var(--t-14); line-height: 1.35; text-align: right; color: var(--fg-2); }
 .play-page:active { transform: scale(.96); }
 .play-page svg { width: 12px; height: 12px; fill: currentColor; }
 .play-page .ico-stop, .play-page[aria-pressed="true"] .ico-play { display: none; }
@@ -573,7 +599,6 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
   .facts { grid-template-columns: 1fr 1fr; gap: 56px 128px; }
   .foot { grid-template-columns: 1fr auto; align-items: center; }
   .people { grid-template-columns: repeat(2, max-content); gap: 56px; }
-  .schools { width: 100%; }
   .step-inline { grid-template-columns: 1fr auto; align-items: center; }
   .step-inline > :only-child { grid-column: 1 / -1; }
 }
@@ -591,21 +616,22 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
   /* each step is exactly one screen under the nav, so nothing is sliced when it lands */
   .pin3d .step { min-height: calc(100vh - 64px); min-height: calc(100svh - 64px); display: grid; align-items: center; padding: clamp(20px, 3.6vh, 48px) 0; }
   .pin3d .step .headline { font-size: clamp(var(--t-48), min(6.6vw, 9.4vh), var(--t-88)); margin-bottom: 16px; }
-  .pin3d .step2-visuals { grid-template-columns: 1fr 1fr; gap: 24px; width: 124%; align-items: start; }
-  .pin3d .visual figcaption, .pin3d .runvis figcaption { font-size: var(--t-14); }
+  .pin3d .step2-visuals { grid-template-columns: 1fr 1fr; gap: 24px; width: 124%; align-items: start; margin-top: 4px; }
+  .pin3d .visual figcaption { font-size: var(--t-14); white-space: nowrap; }
+  .pin3d .runvis figcaption { font-size: var(--t-14); }
   .pin3d .step-in > .step-inline { display: none; }
   .pin3d .how-pin { display: block; position: absolute; top: 0; bottom: 0; right: 0; width: 50%; pointer-events: none; }
   .pin3d .how-stage { position: sticky; top: 64px; height: calc(100vh - 64px); height: calc(100svh - 64px); pointer-events: auto; }
-  .pin3d .how-stage .model-cap { bottom: 20px; color: rgba(22,17,14,.72); }
+  .pin3d .how-stage .model-cap { display: none; } /* the staff scrolls behind the pinned stage, and would run through it */
   .feat-top { grid-template-columns: 1.1fr .9fr; gap: 56px; }
   .devices-grid { grid-template-columns: 1fr 1fr; gap: 64px; }
   .pulse { min-height: calc(100vh - 64px); min-height: calc(100svh - 64px); display: grid; align-items: center; }
   .pulse-grid { grid-template-columns: 1.2fr .8fr; gap: 56px; }
   .contact-grid { grid-template-columns: 1.2fr 1fr; gap: 56px; }
 }
-@media (min-width: 1100px) {
+@media (min-width: 1200px) {
   .team-grid { grid-template-columns: auto 1fr; gap: 72px; }
-  .schools { justify-self: end; }
+  .schools { justify-self: center; } /* centered in the space beside the names */
 }
 
 /* ------------------------------------------------------------------
@@ -614,5 +640,5 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .staff .note { transform: none; transition: none; }
-  .btn, .store-badge img, .toggle, .cue, .beat-chip, .play-page, .stepfoot svg, .cue-flip img, .foot-mark video, .road3d .lane-mark { transition: none; }
+  .road3d .pole, .btn, .store-badge img, .toggle, .cue, .beat-chip, .play-page, .stepfoot svg, .cue-flip img, .foot-mark video, .road3d .lane-mark { transition: none; }
 }

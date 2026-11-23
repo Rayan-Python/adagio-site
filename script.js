@@ -324,19 +324,19 @@ const ts = $('[data-trackstaff]');
 if (ts) {
   const NS = 'http://www.w3.org/2000/svg';
   const xs = [110, 165, 220, 275, 355, 410, 465, 520];
-  const ys = [153, 138, 123, 108, 123, 93, 108, 138]; // a little melody on lines and spaces
+  const ys = [210, 190, 170, 150, 170, 130, 150, 190]; // a little melody on lines and spaces
   const notesG = $('.ts-notes', ts), stepsG = $('.ts-steps', ts), head = $('.ts-head', ts);
   xs.forEach((x, i) => {
     const g = document.createElementNS(NS, 'g');
     g.setAttribute('class', 'ts-note');
-    g.innerHTML = `<ellipse cx="${x}" cy="${ys[i]}" rx="11" ry="8" transform="rotate(-20 ${x} ${ys[i]})"/><line class="stem" x1="${x + 9.5}" x2="${x + 9.5}" y1="${ys[i] - 3}" y2="${ys[i] - 52}"/>`;
+    g.innerHTML = `<ellipse cx="${x}" cy="${ys[i]}" rx="14" ry="10" transform="rotate(-20 ${x} ${ys[i]})"/><line class="stem" x1="${x + 12}" x2="${x + 12}" y1="${ys[i] - 4}" y2="${ys[i] - 68}"/>`;
     notesG.appendChild(g);
   });
   const tsSteps = xs.map((x, i) => {
-    const y = i % 2 ? 206 : 190; // left, right, left, right
+    const y = i % 2 ? 274 : 254; // left, right, left, right
     const g = document.createElementNS(NS, 'g');
     g.setAttribute('class', 'ts-step');
-    g.innerHTML = `<ellipse cx="${x}" cy="${y}" rx="11" ry="5.5"/><ellipse cx="${x - 15}" cy="${y}" rx="5" ry="4.5"/>`;
+    g.innerHTML = `<ellipse cx="${x}" cy="${y}" rx="13" ry="6.5"/><ellipse cx="${x - 18}" cy="${y}" rx="6" ry="5.5"/>`;
     stepsG.appendChild(g);
     return g;
   });
@@ -510,9 +510,8 @@ if (beatClip) {
   place(0); // reduced motion: still ticks, one on the mark
   window.addEventListener('resize', () => place(0));
   lazyVideo(v);
-  const caption = () => { cap.innerHTML = tempo.live ? `At your tempo: every footstrike lands on your beat, <span class="num">${tempo.bpm}</span> a minute.` : 'Slowed down: every footstrike lands on a tick.'; };
+  const caption = () => { cap.textContent = tempo.live ? 'Every footstrike lands on your beat.' : 'Every footstrike lands on a tick.'; };
   document.addEventListener('adagio:live', caption);
-  document.addEventListener('adagio:bpm', () => { if (tempo.live) caption(); });
   if (!reduceMotion) {
     let lastPhase = 0;
     const frame = () => {
@@ -562,15 +561,20 @@ $$('.cue').forEach((btn) => btn.addEventListener('click', () => {
             stops, one per release: the release in focus is at full strength, and the poles beside
             that stretch of track flicker on as you reach it (the stretches behind you stay lit)
    Lengths along the track are in cqh (hundredths of the track view's height).
+   The poles stand upright on the screen, as verticals do in a photograph: each is placed where its
+   foot falls on the track's perspective, and scaled by how far away that is. The numbers below
+   repeat the track's perspective from styles.css (.road3d .road-view and .road3d .track).
    ====================================================================== */
 const road = $('[data-roadmap]');
 const track = $('[data-track]');
 const footReel = $('[data-foot-reel]');
 const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 if (road && track) {
-  const AT = [34, 78, 122], STEP = 31;               // where each release is painted, and how far each stop carries you
-  const POLES = [12, 34, 56, 78, 100, 122, 144, 166]; // a pair of poles every 22
-  const stretch = (d) => (d <= 56 ? 0 : d <= 100 ? 1 : 2); // which release a pole stands beside
+  const AT = [30, 66, 102], STEP = 27;      // where each release is painted, and how far each stop carries you
+  const POLES = [18, 54, 90, 126, 162];     // a pole each side every 36, the last pair beyond the end of the track
+  const stretch = (d) => (d < 40 ? 0 : d < 76 ? 1 : 2); // which release a pole stands beside
+  const PERSP = 1100, ORIGIN = [0.43, -0.06], TILT = (63 * Math.PI) / 180, TRACK_W = 0.86, OUT = 3; // OUT: how far outside the lane line a pole stands
+  const view = $('.road-view', road), lightsEl = $('[data-lights]', road);
   const marks = $$('.lane-mark', track);
   const lights = [];
   POLES.forEach((d, i) => {
@@ -582,43 +586,65 @@ if (road && track) {
     ['l', 'r'].forEach((side) => {
       const p = document.createElement('i');
       p.className = `pole ${side}`;
-      p.style.setProperty('--d', d);
+      p.innerHTML = `<i class="bank">${'<b></b>'.repeat(8)}</i>`;
       p.style.setProperty('--x', `${(((i + 0.5) / POLES.length) * 100).toFixed(1)}%`); // flat: spread along the top edge
-      $('.poles', track).appendChild(p);
-      lights.push({ el: p, d, pole: true });
+      lightsEl.appendChild(p);
+      lights.push({ el: p, d, side });
     });
   });
   const light = (upTo) => lights.forEach((o) => o.el.classList.toggle('lit', stretch(o.d) <= upTo));
-  let mode = '', lit = -2;
+  // where each pole's foot falls on screen, and how big the pole is there
+  let G = null;
+  const setPoles = (run) => {
+    if (!G) { const v = view.getBoundingClientRect(); G = { W: v.width, H: v.height, u: v.height / 100 }; }
+    const ox = G.W * ORIGIN[0], oy = G.H * ORIGIN[1];
+    lights.forEach((o) => {
+      if (!o.side) return;
+      const d = (o.d - run) * G.u;                          // along the track, from its near edge
+      const s = PERSP / (PERSP + d * Math.sin(TILT));       // how much smaller things are at that distance
+      const x = o.side === 'l' ? -OUT * G.u : G.W * TRACK_W + OUT * G.u;
+      o.el.style.setProperty('--sx', (ox + (x - ox) * s).toFixed(1));
+      o.el.style.setProperty('--sb', (G.H - (oy + (G.H - d * Math.cos(TILT) - oy) * s)).toFixed(1));
+      o.el.style.setProperty('--s', s.toFixed(4));
+      o.el.classList.toggle('gone', o.d - run < 11);        // it's about to pass you: it fades before the screen's edge can cut it
+    });
+  };
+  let mode = '', lit = -2, runNow = 0;
   const layout = () => {
     const next = window.innerWidth < 960 ? 'flat' : reduceMotion ? 'still' : 'fly';
-    if (next === mode) return;
-    mode = next;
-    road.classList.toggle('road3d', mode !== 'flat');
-    road.classList.toggle('flyover', mode === 'fly');
-    track.style.removeProperty('--run');
-    marks.forEach((m) => { m.classList.remove('gone'); m.classList.toggle('now', mode !== 'fly'); });
-    lights.forEach((o) => o.el.classList.remove('gone'));
-    lit = mode === 'fly' ? -1 : 2;
-    light(lit);
-    window.dispatchEvent(new Event('adagio:layout')); // the staff re-routes
+    G = null;
+    if (next !== mode) {
+      mode = next;
+      road.classList.toggle('road3d', mode !== 'flat');
+      road.classList.toggle('flyover', mode === 'fly');
+      track.style.removeProperty('--run');
+      runNow = 0;
+      marks.forEach((m) => { m.classList.remove('gone'); m.classList.toggle('now', mode !== 'fly'); });
+      lights.forEach((o) => o.el.classList.remove('gone'));
+      lit = mode === 'fly' ? -1 : 2;
+      light(lit);
+      window.dispatchEvent(new Event('adagio:layout')); // the staff re-routes
+    }
+    if (mode !== 'flat') setPoles(runNow);
   };
   let ticking = false;
   const onScroll = () => {
     ticking = false;
     if (mode === 'fly') {
       const r = road.getBoundingClientRect();
-      const q = clamp((64 - r.top) / (r.height - (window.innerHeight - 64)), 0, 1);
-      const run = STEP * (smoothstep(0.12, 0.44, q) + smoothstep(0.56, 0.88, q)); // hold, move, hold, move, hold
-      track.style.setProperty('--run', run.toFixed(2));
-      const k = Math.round(run / STEP);
-      const upTo = r.top < window.innerHeight * 0.45 ? k : -1; // the first stretch lights as the track arrives
-      if (upTo !== lit) { lit = upTo; light(lit); }
-      marks.forEach((m, i) => { m.classList.toggle('now', i === k); m.classList.toggle('gone', AT[i] - run < -3); }); // it fades as it reaches your feet
-      lights.forEach((o) => { if (o.pole) o.el.classList.toggle('gone', o.d - run < 5); });
+      if (r.bottom > 0 && r.top < window.innerHeight) {
+        const q = clamp((64 - r.top) / (r.height - (window.innerHeight - 64)), 0, 1);
+        runNow = STEP * (smoothstep(0.12, 0.44, q) + smoothstep(0.56, 0.88, q)); // hold, move, hold, move, hold
+        track.style.setProperty('--run', runNow.toFixed(2));
+        setPoles(runNow);
+        const k = Math.round(runNow / STEP);
+        const upTo = r.top < window.innerHeight * 0.45 ? k : -1; // the first stretch lights as the track arrives
+        if (upTo !== lit) { lit = upTo; light(lit); }
+        marks.forEach((m, i) => { m.classList.toggle('now', i === k); m.classList.toggle('gone', AT[i] - runNow < -3); }); // it fades as it reaches your feet
+      }
     }
     // footer: the wordmark's letters brighten as the bottom of the page arrives
-    const mark = footReel && footReel.closest('.foot-mark') || $('.foot-mark');
+    const mark = $('.foot-mark');
     if (mark) {
       const fr = mark.getBoundingClientRect();
       if (fr.top < window.innerHeight) mark.style.setProperty('--lift', clamp((window.innerHeight - fr.top) / fr.height, 0, 1).toFixed(3));
@@ -626,6 +652,7 @@ if (road && track) {
   };
   layout();
   window.addEventListener('resize', layout);
+  window.addEventListener('load', layout);
   window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
   onScroll();
 }

@@ -24,7 +24,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900&text=Adagio&display=swap" rel="stylesheet">
   <!-- the load sequence plays once, and not at all with reduced motion -->
   <script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { document.documentElement.classList.add('intro'); window.adagioIntroT0 = performance.now(); if (window.WebGL2RenderingContext) document.documentElement.classList.add('pin3d'); }</script>
-  <link rel="stylesheet" href="styles.css?v=20261126h">
+  <link rel="stylesheet" href="styles.css?v=20261127e">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -79,13 +79,13 @@
             </div>
             <div class="lane" aria-hidden="true" data-lane></div>
             <div class="feet">
-              <button class="stepfoot" type="button" data-foot="L" aria-label="F Left foot: take a step (plays a kick drum)">
+              <button class="stepfoot" type="button" data-foot="L">
                 <svg viewBox="0 0 100 200" aria-hidden="true"><path d="M50 6c22 0 36 18 38 44 2 22-6 40-10 60-3 16 2 30 0 46-3 24-14 38-30 38S20 180 18 160c-2-18 4-30 2-46-3-22-12-38-10-62C12 24 28 6 50 6z"/></svg>
-                <span class="foot-key">F</span><span class="foot-name">Left</span>
+                <span class="foot-key">F</span> <span class="foot-name">Left</span> <span class="visually-hidden">foot: take a step, plays a kick drum</span>
               </button>
-              <button class="stepfoot right" type="button" data-foot="R" aria-label="J Right foot: take a step (plays a snare drum)">
+              <button class="stepfoot right" type="button" data-foot="R">
                 <svg viewBox="0 0 100 200" aria-hidden="true"><path d="M50 6c22 0 36 18 38 44 2 22-6 40-10 60-3 16 2 30 0 46-3 24-14 38-30 38S20 180 18 160c-2-18 4-30 2-46-3-22-12-38-10-62C12 24 28 6 50 6z"/></svg>
-                <span class="foot-key">J</span><span class="foot-name">Right</span>
+                <span class="foot-key">J</span> <span class="foot-name">Right</span> <span class="visually-hidden">foot: take a step, plays a snare drum</span>
               </button>
             </div>
             <p class="pad-status" data-pad-status aria-live="polite">Step left, right at your running pace.</p>
@@ -172,35 +172,40 @@
             <h2 class="headline" id="step-2-title">Match. Beat for beat.</h2>
             <p class="lead">Adagio finds the songs in your Apple Music playlists whose tempo, in beats per minute, fits your target cadence.</p>
           </div>
+          <!-- two figures, the same size and shape (2:1), side by side beside the pinned phone -->
           <div class="step2-visuals">
             <!-- a running track whose lane lines are also a music staff: every footstep on the
                  track lands on a note in the bar; the playhead moves at the page tempo -->
             <figure class="visual trackstaff" aria-hidden="true">
-              <svg viewBox="0 0 600 236" data-trackstaff>
-                <defs>
-                  <pattern id="rubber" width="6" height="6" patternUnits="userSpaceOnUse">
-                    <rect width="6" height="6" fill="#B44A31"/>
-                    <circle cx="1.5" cy="1.5" r=".7" fill="#C65A40"/><circle cx="4.5" cy="4" r=".6" fill="#9C3F2A"/>
-                  </pattern>
-                </defs>
-                <rect x="6" y="8" width="588" height="220" rx="110" fill="url(#rubber)"/>
-                <g class="ts-lanes">
-                  <line x1="40" x2="560" y1="48" y2="48"/><line x1="30" x2="570" y1="78" y2="78"/><line x1="26" x2="574" y1="108" y2="108"/>
-                  <line x1="30" x2="570" y1="138" y2="138"/><line x1="40" x2="560" y1="168" y2="168"/>
-                </g>
-                <g class="ts-bars"><line x1="318" x2="318" y1="48" y2="168"/><line x1="556" x2="556" y1="48" y2="168"/><line x1="562" x2="562" y1="48" y2="168" class="thick"/></g>
-                <g class="ts-time"><text x="62" y="102">4</text><text x="62" y="162">4</text></g>
-                <g class="ts-notes"></g>
-                <g class="ts-steps"></g>
-                <line class="ts-head" x1="0" x2="0" y1="20" y2="216"/>
-              </svg>
-              <figcaption>Footsteps land on the beat: <span class="num" data-bpm>176</span> steps per minute, <span class="num" data-bpm>176</span> BPM.</figcaption>
+              <div class="frame">
+                <svg viewBox="0 0 600 300" data-trackstaff>
+                  <defs>
+                    <pattern id="rubber" width="6" height="6" patternUnits="userSpaceOnUse">
+                      <rect width="6" height="6" fill="#B44A31"/>
+                      <circle cx="1.5" cy="1.5" r=".7" fill="#C65A40"/><circle cx="4.5" cy="4" r=".6" fill="#9C3F2A"/>
+                    </pattern>
+                  </defs>
+                  <rect x="4" y="4" width="592" height="292" rx="132" fill="url(#rubber)"/>
+                  <g class="ts-lanes">
+                    <line x1="50" x2="550" y1="70" y2="70"/><line x1="36" x2="564" y1="110" y2="110"/><line x1="30" x2="570" y1="150" y2="150"/>
+                    <line x1="36" x2="564" y1="190" y2="190"/><line x1="50" x2="550" y1="230" y2="230"/>
+                  </g>
+                  <g class="ts-bars"><line x1="318" x2="318" y1="70" y2="230"/><line x1="546" x2="546" y1="70" y2="230"/><line x1="553" x2="553" y1="70" y2="230" class="thick"/></g>
+                  <g class="ts-time"><text x="70" y="146">4</text><text x="70" y="226">4</text></g>
+                  <g class="ts-notes"></g>
+                  <g class="ts-steps"></g>
+                  <line class="ts-head" x1="0" x2="0" y1="28" y2="278"/>
+                </svg>
+              </div>
+              <figcaption><span class="num" data-bpm>176</span> steps per minute = <span class="num" data-bpm>176</span> BPM.</figcaption>
             </figure>
             <!-- feet on the track, with a strip of ticks underneath scrolling at the runner's cadence -->
             <figure class="visual beat-clip" data-beat-clip>
-              <video muted loop playsinline preload="none" poster="assets/video/hero-feet-strike.jpg" data-src="assets/video/hero-feet-strike.mp4" aria-hidden="true"></video>
-              <div class="beat-strip" aria-hidden="true"><div class="beat-ticks" data-beat-ticks></div><span class="beat-mark" data-beat-mark></span></div>
-              <figcaption data-beat-cap>Slowed down: every footstrike lands on a tick.</figcaption>
+              <div class="frame">
+                <video muted loop playsinline preload="none" poster="assets/video/hero-feet-strike.jpg" data-src="assets/video/hero-feet-strike.mp4" aria-hidden="true"></video>
+                <div class="beat-strip" aria-hidden="true"><div class="beat-ticks" data-beat-ticks></div><span class="beat-mark" data-beat-mark></span></div>
+              </div>
+              <figcaption data-beat-cap>Every footstrike lands on a tick.</figcaption>
             </figure>
           </div>
           <div class="step-inline">
@@ -362,8 +367,9 @@
               <li class="lane-row"><span class="lane-mark"><span class="lane-no" aria-hidden="true">2</span><span class="lane-text"><span class="lane-ver">Adagio 1.3</span><span class="lane-name">Your music, your sensors</span></span></span></li>
               <li class="lane-row"><span class="lane-mark"><span class="lane-no" aria-hidden="true">3</span><span class="lane-text"><span class="lane-ver">Adagio 2.0</span><span class="lane-name">Train with Adagio</span></span></span></li>
             </ol>
-            <div class="poles" aria-hidden="true"></div>
           </div>
+          <!-- light poles (script.js): upright, in front of the track; each one's place and size follow the track's perspective -->
+          <div class="lights" aria-hidden="true" data-lights></div>
         </div>
       </div>
     </section>
@@ -387,12 +393,12 @@
         </ul>
         <ul class="schools" aria-label="Our schools">
           <li class="school">
-            <img src="assets/schools/bergen-county-technical.png" alt="Bergen County Technical High School logo" width="199" height="159" loading="lazy">
-            <p class="school-name">Bergen County Technical HS, Teterboro</p>
+            <span class="logo-box"><img src="assets/schools/bergen-county-technical.png" alt="Bergen County Technical High School logo" width="182" height="142" loading="lazy"></span>
+            <p class="school-name">Bergen County<br>Technical HS, Teterboro</p>
           </li>
           <li class="school">
-            <img src="assets/schools/northern-highlands.png" alt="Northern Highlands Regional High School logo" width="310" height="262" loading="lazy">
-            <p class="school-name">Northern Highlands Regional HS</p>
+            <span class="logo-box"><img src="assets/schools/northern-highlands.png" alt="Northern Highlands Regional High School logo" width="246" height="208" loading="lazy"></span>
+            <p class="school-name">Northern Highlands<br>Regional HS</p>
           </li>
         </ul>
         </div>
@@ -401,8 +407,12 @@
 
     <!-- ============ CONTACT ============ -->
     <section class="contact" id="contact" data-theme="volt">
-      <!-- the staff ends here on a final barline; this plays its notes, start to finish, at your cadence -->
-      <button class="play-page" type="button" data-play-page aria-pressed="false"><svg viewBox="0 0 12 12" aria-hidden="true"><path class="ico-play" d="M2.5 1.2 10.5 6l-8 4.8z"/><path class="ico-stop" d="M2 2h8v8H2z"/></svg><span data-play-label>Play the page</span></button>
+      <!-- the staff ends here: last note, fermata, final barline, then this, on the same line.
+           It plays the staff's notes, start to finish, at your cadence -->
+      <div class="play-end">
+        <button class="play-page" type="button" data-play-page aria-pressed="false"><svg viewBox="0 0 12 12" aria-hidden="true"><path class="ico-play" d="M2.5 1.2 10.5 6l-8 4.8z"/><path class="ico-stop" d="M2 2h8v8H2z"/></svg><span data-play-label>Play the page</span></button>
+        <p class="play-note">Play the melody you scrolled past</p>
+      </div>
       <div class="wrap contact-grid">
         <div>
           <h2 class="headline">Questions, feedback, ideas?</h2>
@@ -461,8 +471,8 @@
         "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
     } }
   </script>
-  <script>window.ADAGIO_V = "20261126h";</script>
-  <script src="script.js?v=20261126h" defer></script>
-  <script src="staff.js?v=20261126h" defer></script>
+  <script>window.ADAGIO_V = "20261127e";</script>
+  <script src="script.js?v=20261127e" defer></script>
+  <script src="staff.js?v=20261127e" defer></script>
 </body>
 </html>
