@@ -24,15 +24,32 @@ const tempo = {
 const beatListeners = [];
 const onBeat = (fn) => beatListeners.push(fn);
 
-function genresFor(bpm) {
-  if (bpm < 70) return 'ambient, ballads';
-  if (bpm < 90) return 'hip-hop, R&B, reggae';
-  if (bpm < 110) return 'funk, soul, boom-bap';
-  if (bpm < 130) return 'house, disco, pop';
-  if (bpm < 150) return 'techno, pop-rock, punk';
-  if (bpm < 170) return 'indie rock, pop-punk';
-  if (bpm < 190) return 'drum & bass, pop-punk';
-  return 'hardcore, speed punk';
+
+// Example songs for the queue preview. Every title and artist here is made up.
+// Same-tempo songs cover running cadences; half-time songs (one beat every two steps) sit at half of them.
+const SONGS = [
+  ['Gravel Hymn', 'Paloma Reyes-Hart', 124], ['Lamplight Laps', 'The Overpass Choir', 130], ['Cotton Weather', 'Juno Vale', 136],
+  ['Mile Marker Blue', 'Harbor & Pine', 142], ['Second Lane Over', 'Kit Moreland', 148], ['Easy Breathing', 'Lowfield Radio', 154],
+  ['Brickyard Morning', 'Ostrander', 158], ['Split the Wind', 'Talia North', 162], ['Ribbon of Road', 'The Quiet Pacers', 166],
+  ['Paper Spikes', 'Fern Arcade', 170], ['Out and Back', 'Milo Ashgrove', 173], ['Bell Lap', 'The Split Times', 176],
+  ['Chalk Lines', 'Ivy Calloway', 179], ['Kick at the Bend', 'Saltmarsh', 182], ['Tempo Tuesday', 'Rowan Kade', 186],
+  ['Last Four Hundred', 'Neon Orchard', 190], ['Rubber and Rain', 'Dessa Holm', 195], ['Finish Line Static', 'The Bright Intervals', 200],
+  ['Overdrive Mile', 'Cass Merriweather', 206], ['Fast Feet Fever', 'Vela Club', 212], ['Sprint Theory', 'Arlo Penhallow', 220],
+  ['Slow Burn Sunday', 'Willa Ferro', 62], ['Porchlight', 'Elm & Ember', 66], ['Low Tide Radio', 'Nico Ashby', 70],
+  ['Backroad Glow', 'The Hollow Pines', 75], ['Velvet Commute', 'Sunny Marchetti', 79], ['Long Shadows', 'Okoro Wells', 83],
+  ['Steady Hands', 'Fable Season', 86], ['Late Train Home', 'Mira Ostrowski', 88], ['Cool Concrete', 'The Pale Dials', 91],
+  ['Window Seat', 'Jules Harrow', 95], ['Night Swim', 'Bellweather', 98], ['Golden Hour Loop', 'Rafe Calder', 102],
+  ['Easy Does It', 'Linden Ray', 106], ['Wide Awake Avenue', 'The Small Hours', 110],
+];
+const songsEl = $('[data-songs]');
+function showSongs(bpm) {
+  if (!songsEl) return;
+  const near = (target) => SONGS.slice().sort((a, b) => Math.abs(a[2] - target) - Math.abs(b[2] - target));
+  const same = near(bpm).slice(0, 2).map((s) => [...s, '1×']);
+  const half = near(bpm / 2).filter((s) => !same.includes(s)).slice(0, 1).map((s) => [...s, '½×']);
+  songsEl.innerHTML = [...same, ...half].map(([title, artist, sbpm, match]) =>
+    `<li class="song"><span class="song-title">${title}</span><span class="song-artist">${artist}</span>` +
+    `<span class="song-bpm"><span class="num">${sbpm}</span> BPM</span><span class="song-match">${match} match</span></li>`).join('');
 }
 
 const slider = $('[data-slider]');
@@ -43,7 +60,7 @@ function setBPM(value, { align = false } = {}) {
   document.documentElement.style.setProperty('--beat', (60 / bpm).toFixed(3) + 's');
   $$('[data-bpm]').forEach((el) => { el.textContent = bpm; });
   $$('[data-bpm-half]').forEach((el) => { el.textContent = Math.round(bpm / 2); });
-  $$('[data-genre]').forEach((el) => { el.textContent = genresFor(bpm * parseFloat(el.dataset.genre)); });
+  showSongs(bpm);
   if (slider && +slider.value !== bpm) slider.value = clamp(bpm, +slider.min, +slider.max);
   if (slider) slider.style.setProperty('--fill', ((slider.value - slider.min) / (slider.max - slider.min) * 100).toFixed(1) + '%');
   document.dispatchEvent(new CustomEvent('adagio:bpm', { detail: bpm })); // the 3D watch face listens
@@ -183,12 +200,21 @@ function click(n) {
   osc.connect(gain).connect(audio.destination);
   osc.start(t); osc.stop(t + 0.06);
 }
-if (soundBtn) soundBtn.addEventListener('click', () => {
-  const on = soundBtn.getAttribute('aria-pressed') !== 'true';
+const soundLabel = soundBtn && $('[data-sound-label]', soundBtn);
+function setClick(on) {
+  if (!soundBtn) return;
   soundBtn.setAttribute('aria-pressed', on);
+  soundLabel.textContent = on ? 'Stop the click' : 'Play a click';
   if (on) { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); }
   else if (audio) audio.suspend();
-});
+}
+if (soundBtn) {
+  soundBtn.addEventListener('click', () => setClick(soundBtn.getAttribute('aria-pressed') !== 'true'));
+  // the click stops when you scroll away from the pad (it never starts on its own)
+  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {
+    if (!e.isIntersecting && soundBtn.getAttribute('aria-pressed') === 'true') setClick(false);
+  }).observe(pad);
+}
 onBeat((n) => { if (soundBtn && soundBtn.getAttribute('aria-pressed') === 'true') click(n); });
 if (vibeBtn && 'vibrate' in navigator && window.matchMedia('(pointer: coarse)').matches) {
   vibeBtn.hidden = false;
@@ -291,21 +317,53 @@ if (heroVideo && !reduceMotion) {
   playHero();
 }
 
-// Footer: still frames from the track clips, loaded only once the footer is near.
-const reel = $('.foot-reel');
-if (reel && 'IntersectionObserver' in window) {
-  const clips = $$('video', reel);
-  const io = new IntersectionObserver(([e]) => {
-    if (!e.isIntersecting) return;
-    io.disconnect();
-    clips.forEach((v) => {
-      if (getComputedStyle(v).display === 'none') return;
-      v.preload = 'metadata';
-      v.src = `${v.dataset.src}#t=1`; // a frame one second in
-    });
-  }, { rootMargin: '400px 0px' });
-  io.observe(reel);
+// Lazy video: load a clip once it's near the screen, play it while it's on screen, pause it
+// when it isn't. With reduced motion nothing loads and the poster image stays.
+function lazyVideo(v, onPlayable) {
+  if (!v || reduceMotion || !('IntersectionObserver' in window)) return;
+  new IntersectionObserver(([e]) => {
+    if (getComputedStyle(v).display === 'none') return;
+    if (e.isIntersecting) {
+      if (!v.src) { v.preload = 'auto'; v.src = v.dataset.src; if (onPlayable) v.addEventListener('playing', onPlayable, { once: true }); }
+      v.play().catch(() => {});
+    } else if (!v.paused) v.pause();
+  }, { rootMargin: '200px 0px' }).observe(v);
 }
+
+// Step 2: feet striking the track, with a strip of ticks underneath. The clip is slow motion:
+// a foot lands every 0.675 s of playback, first at 0.2 s (measured from the footage), which is
+// about 176 steps a minute at full speed. The ticks scroll so one crosses the mark on every strike.
+const beatClip = $('[data-beat-clip]');
+if (beatClip) {
+  const v = $('video', beatClip);
+  const ticksEl = $('[data-beat-ticks]', beatClip);
+  const mark = $('[data-beat-mark]', beatClip);
+  const STEP = 0.675, FIRST = 0.2, GAP = 64, N = 40, K = 20; // seconds per step, first strike, px between ticks
+  ticksEl.innerHTML = Array.from({ length: N }, (_, k) => `<i style="left:${k * GAP}px"></i>`).join('');
+  const place = (phase) => {
+    const centre = ticksEl.parentElement.clientWidth / 2;
+    ticksEl.style.transform = `translateX(${(centre - (K + phase) * GAP).toFixed(1)}px)`;
+  };
+  place(0); // reduced motion: still ticks, one on the mark
+  window.addEventListener('resize', () => place(0));
+  lazyVideo(v);
+  if (!reduceMotion) {
+    let lastPhase = 0;
+    const frame = () => {
+      if (!v.paused && v.readyState >= 2) {
+        const phase = ((((v.currentTime - FIRST) / STEP) % 1) + 1) % 1;
+        place(phase);
+        if (phase < lastPhase) { mark.classList.add('hit'); setTimeout(() => mark.classList.remove('hit'), 120); } // a strike
+        lastPhase = phase;
+      }
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }
+}
+
+// Footer: the track clips play muted while the footer is on screen and pause when it isn't.
+$$('.foot-reel video').forEach((v) => lazyVideo(v));
 
 // Placeholder links (no address yet) don't jump to the top.
 $$('a[data-placeholder]').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));
