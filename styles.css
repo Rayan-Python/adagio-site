@@ -135,30 +135,25 @@ button { font: inherit; color: inherit; }
 .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 /* partner logos under the hero buttons */
 .logo { width: 18px; height: 18px; flex: none; }
-/* app bundle: the Adagio icon, a lime wire that carries the beat, and the partner app icons */
-.app-bundle { display: flex; align-items: center; margin-top: 30px; }
-.bundle-hub { width: 60px; height: 60px; border-radius: 23%; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 10px 30px -8px rgba(166,226,46,.55); }
-.bundle-wire { position: relative; flex: 0 0 34px; height: 2px; margin: 0 6px; background: linear-gradient(90deg, var(--lime), rgba(166,226,46,.25)); border-radius: 2px; }
-.bundle-wire i { position: absolute; top: 50%; left: 0; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px var(--lime);
-  animation: wire var(--beat, .34s) linear infinite; }
-@keyframes wire { from { left: 0; opacity: 1; } to { left: calc(100% - 6px); opacity: .2; } }
+/* app bundle: one quiet tray with the Adagio icon first, a hairline, then the partner apps */
+.app-bundle { display: flex; margin-top: 30px; }
 .bundle-apps { list-style: none; display: flex; align-items: center; gap: 10px; margin: 0; padding: 10px 12px; border-radius: 20px;
   background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
 .bundle-apps li { display: grid; transition: transform .2s var(--ease); }
 .bundle-apps li:hover { transform: translateY(-3px); }
-.bundle-apps svg { display: block; border-radius: 10px; box-shadow: 0 6px 16px -6px rgba(0,0,0,.6); }
+.bundle-apps svg, .bundle-hub { display: block; width: 44px; height: 44px; border-radius: 10px; box-shadow: 0 6px 16px -6px rgba(0,0,0,.6); }
+.bundle-hub { box-shadow: 0 0 0 1px rgba(166,226,46,.35), 0 6px 16px -6px rgba(0,0,0,.6); }
 .bundle-apps li.sep { width: 1px; height: 30px; margin: 0 2px; background: repeating-linear-gradient(rgba(255,255,255,.3) 0 3px, transparent 3px 6px); }
+.bundle-apps li.sep.plain { background: rgba(255,255,255,.14); }
 .bundle-apps li.soon { opacity: .45; filter: saturate(.6); }
 .bundle-note { margin: 12px 0 0; font-size: .62rem; letter-spacing: .08em; }
 @media (max-width: 719px) {
-  .bundle-hub { width: 48px; height: 48px; }
-  .bundle-wire { flex-basis: 16px; margin: 0 4px; }
   .bundle-apps { gap: 6px; padding: 8px; border-radius: 16px; }
-  .bundle-apps svg { width: 36px; height: 36px; border-radius: 8px; }
+  .bundle-apps svg, .bundle-hub { width: 34px; height: 34px; border-radius: 8px; }
   .bundle-apps li.sep { height: 24px; margin: 0; }
 }
-@media (prefers-reduced-motion: reduce) { .bundle-wire i { animation: none; } }
 .foot-links a.with-logo { display: inline-flex; align-items: center; gap: 7px; }
+.legal-ico { opacity: .75; }
 .chip {
   display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 calc(14px - .08em) 0 12px;
   border-radius: 999px; border: 1px solid var(--line); background: transparent; cursor: pointer; white-space: nowrap;

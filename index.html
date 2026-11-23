@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Noto+Music&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261122d">
+  <link rel="stylesheet" href="styles.css?v=20261122e">
 </head>
 <body>
   <!-- Partner marks (shapes from Simple Icons, CC0), drawn once and reused with <use>.
@@ -135,12 +135,12 @@
             <a class="btn btn-lime" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener">Get Adagio <span aria-hidden="true">↗</span></a>
             <a class="btn btn-ghost" href="#play">Find your cadence</a>
           </div>
-          <!-- Adagio and the apps it plays with: our icon, a line carrying the beat, and their
-               icons. The two at the end are coming soon. -->
+          <!-- Adagio and the apps it plays with, in one tray: our icon first, a hairline, then
+               theirs. The two at the end are coming soon. -->
           <div class="app-bundle reveal">
-            <img class="bundle-hub" src="favicon.png" alt="Adagio" width="60" height="60">
-            <span class="bundle-wire" aria-hidden="true"><i></i></span>
-            <ul class="bundle-apps" aria-label="Works with">
+            <ul class="bundle-apps" aria-label="Adagio works with">
+              <li class="hub"><img class="bundle-hub" src="favicon.png" alt="Adagio" width="44" height="44"></li>
+              <li class="sep plain" aria-hidden="true"></li>
               <li><svg width="44" height="44" role="img" aria-label="Spotify"><use href="#tile-spotify"/></svg></li>
               <li><svg width="44" height="44" role="img" aria-label="Apple Music"><use href="#tile-applemusic"/></svg></li>
               <li><svg width="44" height="44" role="img" aria-label="Strava"><use href="#tile-strava"/></svg></li>
@@ -561,8 +561,8 @@
       <p class="foot-brand">Adagio <span class="muted">— Made by runners, for runners.</span></p>
       <!-- PLACEHOLDER LINKS: set the real addresses for these four -->
       <nav class="foot-links" aria-label="Footer">
-        <a href="#" data-placeholder>Privacy Policy</a>
-        <a href="#" data-placeholder>Terms</a>
+        <a href="#" data-placeholder class="with-logo"><svg class="logo legal-ico" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5.5c0 4.3 2.9 8 7 9.5 4.1-1.5 7-5.2 7-9.5V6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m9 12 2.2 2.2L15.5 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Privacy Policy</a>
+        <a href="#" data-placeholder class="with-logo"><svg class="logo legal-ico" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v4h4M9 12h6M9 15.5h6M9 9h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Terms</a>
         <a href="#" data-placeholder class="with-logo"><svg class="logo" width="18" height="18" aria-hidden="true"><use href="#logo-instagram"/></svg>Instagram</a>
         <a href="#" data-placeholder class="with-logo"><svg class="logo" width="18" height="18" aria-hidden="true"><use href="#logo-strava"/></svg>Strava</a>
       </nav>
@@ -571,8 +571,8 @@
     <p class="foot-word" aria-hidden="true">Adagio</p>
   </footer>
 
-  <script src="script.js?v=20261122d"></script>
-  <script src="staff.js?v=20261122d"></script>
+  <script src="script.js?v=20261122e"></script>
+  <script src="staff.js?v=20261122e"></script>
   <!-- three.js for the 3D track spike and watch (models.js) -->
   <script type="importmap">
     { "imports": {
@@ -580,6 +580,6 @@
         "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
     } }
   </script>
-  <script type="module" src="models.js?v=20261122d"></script>
+  <script type="module" src="models.js?v=20261122e"></script>
 </body>
 </html>
