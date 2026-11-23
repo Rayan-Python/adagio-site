@@ -671,6 +671,10 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
   .hero-grid { grid-template-columns: 1.15fr .85fr; }
   .play-grid { grid-template-columns: .9fr 1.1fr; }
   .panel-in { grid-template-columns: 1.1fr .9fr; gap: 64px; }
+  /* step 02 is mirrored: number and track on the left, words on the right */
+  .panel.flip .panel-in { grid-template-columns: .9fr 1.1fr; }
+  .panel.flip .panel-copy { order: 2; }
+  .panel.flip .giant-num { right: auto; left: -4vw; }
   .features { grid-template-columns: 1fr 1fr; gap: 64px; }
   .phone3d { --w: 270px; }
   .devices { grid-template-columns: 1fr 1fr; gap: 32px; padding: 28px 40px 28px 20px; }
