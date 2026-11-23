@@ -627,7 +627,7 @@ if (road && track) {
     }
     if (mode !== 'flat') setPoles(runNow);
   };
-  let ticking = false;
+  let ticking = false, lastLift = '';
   const onScroll = () => {
     ticking = false;
     if (mode === 'fly') {
@@ -647,7 +647,11 @@ if (road && track) {
     const mark = $('.foot-mark');
     if (mark) {
       const fr = mark.getBoundingClientRect();
-      if (fr.top < window.innerHeight) mark.style.setProperty('--lift', clamp((window.innerHeight - fr.top) / fr.height, 0, 1).toFixed(3));
+      // in 20 steps, and only when it changes: each change re-filters every clip in the wordmark
+      if (fr.top < window.innerHeight) {
+        const lift = (Math.round(clamp((window.innerHeight - fr.top) / fr.height, 0, 1) * 20) / 20).toFixed(2);
+        if (lift !== lastLift) { lastLift = lift; mark.style.setProperty('--lift', lift); }
+      }
     }
   };
   layout();
