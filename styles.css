@@ -135,22 +135,23 @@ button { font: inherit; color: inherit; }
 .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 /* partner logos under the hero buttons */
 .logo { width: 18px; height: 18px; flex: none; }
+.app-mini { border-radius: 22.5%; }
 /* app bundle: one quiet tray with the Adagio icon first, a hairline, then the partner apps */
 .app-bundle { display: flex; margin-top: 30px; }
 .bundle-apps { list-style: none; display: flex; align-items: center; gap: 10px; margin: 0; padding: 10px 12px; border-radius: 20px;
   background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
 .bundle-apps li { display: grid; transition: transform .2s var(--ease); }
 .bundle-apps li:hover { transform: translateY(-3px); }
-.bundle-apps svg, .bundle-hub { display: block; width: 44px; height: 44px; border-radius: 10px; box-shadow: 0 6px 16px -6px rgba(0,0,0,.6); }
-.bundle-hub { box-shadow: 0 0 0 1px rgba(166,226,46,.35), 0 6px 16px -6px rgba(0,0,0,.6); }
+.bundle-apps img { display: block; width: 44px; height: 44px; border-radius: 22.5%; box-shadow: 0 6px 16px -6px rgba(0,0,0,.6); } /* official App Store icons */
+.bundle-apps .bundle-hub { box-shadow: 0 0 0 1px rgba(166,226,46,.35), 0 6px 16px -6px rgba(0,0,0,.6); }
 .bundle-apps li.sep { width: 1px; height: 30px; margin: 0 2px; background: repeating-linear-gradient(rgba(255,255,255,.3) 0 3px, transparent 3px 6px); }
 .bundle-apps li.sep.plain { background: rgba(255,255,255,.14); }
 .bundle-apps li.soon { opacity: .45; filter: saturate(.6); }
 .bundle-note { margin: 12px 0 0; font-size: .62rem; letter-spacing: .08em; }
 @media (max-width: 719px) {
-  .bundle-apps { gap: 6px; padding: 8px; border-radius: 16px; }
-  .bundle-apps svg, .bundle-hub { width: 34px; height: 34px; border-radius: 8px; }
-  .bundle-apps li.sep { height: 24px; margin: 0; }
+  .bundle-apps { gap: 5px; padding: 8px; border-radius: 16px; }
+  .bundle-apps img { width: 29px; height: 29px; }
+  .bundle-apps li.sep { height: 20px; margin: 0; }
 }
 .foot-links a.with-logo { display: inline-flex; align-items: center; gap: 7px; }
 .legal-ico { opacity: .75; }
