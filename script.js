@@ -730,6 +730,9 @@ if (modelCanvases.length && 'IntersectionObserver' in window) {
     import(`./models.js?v=${window.ADAGIO_V || ''}`).catch(() => root.classList.remove('pin3d'));
   }, { rootMargin: '900px 0px' });
   modelCanvases.forEach((c) => io.observe(c));
+  // or as soon as the page has loaded and gone quiet, so it's ready before you scroll to it
+  const warm = () => { io.disconnect(); import(`./models.js?v=${window.ADAGIO_V || ''}`).catch(() => root.classList.remove('pin3d')); };
+  window.addEventListener('load', () => (window.requestIdleCallback ? requestIdleCallback(warm, { timeout: 4000 }) : setTimeout(warm, 2500)), { once: true });
 }
 
 // Placeholder links (no address yet) don't jump to the top.

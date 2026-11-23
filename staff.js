@@ -439,6 +439,7 @@
     debug = { hard, soft, tunnels, P, W };
     built = true;
     lastDrawn = -2; lastTip = -2; lastFront = -1; // new geometry: redraw the lines
+    mainTopAt = mainTop;
     update();
   }
 
@@ -455,11 +456,11 @@
   const BEAT = 60000 / 176;
   const t0 = window.adagioIntroT0 || 0;
   const introOn = () => !reduceMotion && t0 && performance.now() - t0 < BEAT * 4;
-  let frame = 0, lastDrawn = -2, lastTip = -2, lastFront = -1;
+  let frame = 0, lastDrawn = -2, lastTip = -2, lastFront = -1, mainTopAt = 0; // mainTopAt: where the page's main block starts, measured when the staff is built
   function update() {
     frame = 0;
     if (!built || !pts.length) return;
-    const mainTop = docTop(main);
+    const mainTop = mainTopAt; // measured at build: reading it here would make the browser lay the page out on every scroll frame
     const target = reduceMotion ? Infinity : window.scrollY - mainTop + window.innerHeight * 0.66; // reduced motion: fully drawn
     // last point whose base height has been reached (base only ever increases)
     let lo = 0, hi = pts.length - 1;

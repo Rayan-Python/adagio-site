@@ -42,7 +42,7 @@ function curve(points) {
 // the whole model still fits side to side.
 function makeStage(canvas, { fov = 30, distance = 14, fitWidth = 0, lights = 'neon', shadows = false, autoFit = true } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5)); // 2x costs nearly twice the pixels for little gain on a moving model
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping; // keeps product colors true
   renderer.toneMappingExposure = 1.0;
@@ -59,7 +59,7 @@ function makeStage(canvas, { fov = 30, distance = 14, fitWidth = 0, lights = 'ne
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.mapSize.set(1024, 1024);
     Object.assign(key.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 1, far: 30 });
     key.shadow.bias = -0.0004;
     key.shadow.normalBias = 0.03;
@@ -362,10 +362,8 @@ function buildSpike() {
   add(new THREE.Mesh(pad, new THREE.MeshStandardMaterial({ color: 0xd9ccb0, roughness: 0.9 })));
 
   // --- spike plate: translucent lime, under the forefoot, lipping up the sides a little
-  const plateMat = new THREE.MeshPhysicalMaterial({
-    color: 0xa6e22e, roughness: 0.32, metalness: 0, transmission: 0.45, thickness: 0.4, ior: 1.45,
-    clearcoat: 0.6, attenuationColor: new THREE.Color(0x6f9a14), attenuationDistance: 1.2,
-  });
+  // glossy lime plastic (not a see-through material: that draws the whole scene twice every frame)
+  const plateMat = new THREE.MeshPhysicalMaterial({ color: 0x9fd62a, roughness: 0.3, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.25, transparent: true, opacity: 0.9 });
   const plateGeo = loft({
     // it tapers shut under the forefoot, well behind the foam's toe, so nothing pokes out in front
     x0: 3.4, x1: 9.0, nu: 120, nv: 40,
