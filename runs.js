@@ -147,7 +147,7 @@
         stroke: 'rgba(255,255,255,.45)', 'stroke-width': 1, 'stroke-dasharray': '3 3', 'vector-effect': 'non-scaling-stroke' }));
     }
     const pts = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-    s.append(svg('polyline', { points: pts, fill: 'none', stroke: '#A6E22E', 'stroke-width': 2, 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke' }));
+    s.append(svg('polyline', { points: pts, fill: 'none', stroke: '#E8F02A', 'stroke-width': 2, 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke' }));
     return s;
   }
   function chart(run) {
@@ -178,7 +178,7 @@
         stroke: 'rgba(255,255,255,.7)', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' }));
     }
     const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-    s.append(svg('polyline', { points: pts, fill: 'none', stroke: '#A6E22E', 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    s.append(svg('polyline', { points: pts, fill: 'none', stroke: '#E8F02A', 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
     const label = `Cadence over the run, between ${Math.round(Math.min(...vals))} and ${Math.round(Math.max(...vals))} steps per minute`
       + (run.targetBPM != null ? `, target ${run.targetBPM}` : '');
     s.setAttribute('aria-label', label);
