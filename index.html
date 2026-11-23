@@ -34,7 +34,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <!-- hides the hero words until script.js types them in (no flash of the full text) -->
-  <script>document.documentElement.classList.add('js');</script>
+  <script src="/head.js"></script>
 </head>
 <body class="no-glass"> <!-- remove "no-glass" to bring the glass panels and color glows back -->
   <a class="skip" href="#main">Skip to content</a>
@@ -309,11 +309,8 @@
   </main>
 
   <script src="script.js"></script>
-  <!-- Vercel Web Analytics (plain-HTML setup; no npm package needed) -->
-  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <!-- Vercel Web Analytics and Speed Insights (plain-HTML setup, no inline code) -->
   <script defer src="/_vercel/insights/script.js"></script>
-  <!-- Vercel Speed Insights (plain-HTML setup) -->
-  <script>window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };</script>
   <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
