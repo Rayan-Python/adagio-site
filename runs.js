@@ -102,6 +102,15 @@
     const s = Math.round(sec), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
     return h ? `${h}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}` : `${m}:${String(r).padStart(2, '0')}`;
   }
+  // Run lengths read as "1m 14s" or "1h 17m" so short and long runs can't be confused.
+  // (Pace keeps the usual "9:54 /mi" form.)
+  function fmtLength(sec) {
+    if (sec == null) return null;
+    const s = Math.round(sec), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+    if (h) return `${h}h ${m}m`;
+    if (m) return `${m}m ${r}s`;
+    return `${r}s`;
+  }
   const perUnit = () => (units === 'km' ? 1000 : 1609.344);
   function fmtDistance(m) { return m == null ? null : `${(m / perUnit()).toFixed(2)} ${units}`; }
   function fmtPace(sec, m) {
@@ -194,8 +203,8 @@
     const dist = inPeriod.reduce((a, r) => a + (r.distance || 0), 0);
     ui.week.replaceChildren(
       stat('Runs', String(inPeriod.length)),
-      stat('Time', fmtDuration(time) || '0:00'),
-      stat('Distance', fmtDistance(dist) || `0.00 ${units}`),
+      stat('Time', fmtLength(time)),
+      stat('Distance', dist > 0 ? fmtDistance(dist) : '—'),
     );
     document.querySelectorAll('[data-period]').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.period === period)));
   }
@@ -219,7 +228,7 @@
       fill.style.width = `${Math.max(2, (m.time / maxTime) * 100).toFixed(1)}%`;
       bar.append(fill);
       li.append(bar);
-      const parts = [`${m.count} ${m.count === 1 ? 'run' : 'runs'}`, fmtDuration(m.time) || '0:00'];
+      const parts = [`${m.count} ${m.count === 1 ? 'run' : 'runs'}`, fmtLength(m.time)];
       if (m.dist > 0) parts.push(fmtDistance(m.dist));
       li.append(el('span', 'month-stats', parts.join(' · ')));
       return li;
@@ -235,7 +244,7 @@
     const when = el('p', 'run-when', `${fmtDay(run.date)} · ${fmtTime(run.date)}`);
     if (run.pulse) when.append(el('span', 'badge', 'Pulse Mode'));
     const meta = el('p', 'run-meta');
-    [fmtDuration(run.duration), fmtDistance(run.distance), fmtPace(run.duration, run.distance), run.source]
+    [fmtLength(run.duration), fmtDistance(run.distance), fmtPace(run.duration, run.distance), run.source]
       .filter(Boolean).forEach((t) => meta.append(el('span', null, t)));
     text.append(when, meta);
     if (run.avgCadence != null) {
@@ -267,7 +276,7 @@
     openIndex = index;
     ui.detailTitle.textContent = `${fmtDay(run.date)} · ${fmtTime(run.date)}`;
     const facts = [
-      ['Time', fmtDuration(run.duration)], ['Distance', fmtDistance(run.distance)], ['Pace', fmtPace(run.duration, run.distance)],
+      ['Time', fmtLength(run.duration)], ['Distance', fmtDistance(run.distance)], ['Pace', fmtPace(run.duration, run.distance)],
       ['Avg cadence', run.avgCadence != null ? `${run.avgCadence} spm` : null],
       ['Target', run.targetBPM != null ? `${run.targetBPM} BPM` : null],
       ['Recorded on', run.source], ['Pulse Mode', run.pulse ? 'On' : 'Off'],
@@ -394,9 +403,10 @@
       { recordName: 'demo-2', fields: { date: { value: now - 2 * day }, duration: { value: 2700 }, distance: { value: 0 }, avgCadence: { value: 168 },
         cadence: { value: wave(540, 168, 6) }, haptic: { value: 0 }, source: { value: 'iPhone' } } },
       { recordName: 'demo-3', fields: { date: { value: now - 9 * day }, duration: { value: 1500 }, distance: { value: 4100 }, haptic: { value: 0 }, source: { value: 'Garmin' } } },
+      { recordName: 'demo-5', fields: { date: { value: now - 7200000 }, duration: { value: 74 }, haptic: { value: 1 }, source: { value: 'Garmin' } } },
       { recordName: 'demo-4', fields: { date: { value: now - 40 * day }, duration: { value: 3000 }, distance: { value: 8000 }, avgCadence: { value: 170 }, haptic: { value: 0 }, source: { value: 'iPhone' } } },
     ];
-    runs = fake.map(parseRun).filter(Boolean);
+    runs = fake.map(parseRun).filter(Boolean).sort((a, b) => b.date - a.date);
     renderList();
     show('list');
     const note = el('p', 'demo-note', 'Demo data: local testing only');
