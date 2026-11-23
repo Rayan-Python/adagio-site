@@ -1,0 +1,121 @@
+/* Adagio, version 2 (experimental): an app promo you scroll through.
+   One dark stage, one phone, one short line per scene. Same brand as version 1: rubber black,
+   lime yellow, white; clay only on the track. Running and music run through it: the page keeps
+   a beat (the lime rings, the pulse of each headline) and the foot of the screen is a staff. */
+:root {
+  --rubber: #16110E; --volt: #E8F02A; --white: #FFFFFF; --clay: #B44A31;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Atkinson Hyperlegible", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --num: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --pad: 24px; --dim: rgba(255,255,255,.76);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--rubber); scroll-behavior: smooth; }
+body { margin: 0; font-family: var(--body); font-size: 1.125rem; line-height: 1.55; color: var(--white); -webkit-font-smoothing: antialiased; }
+h1, h2, p, ul { margin: 0; padding: 0; }
+ul { list-style: none; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+img { display: block; max-width: 100%; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--volt); outline-offset: 3px; border-radius: 4px; }
+.skip { position: absolute; left: -999px; top: 8px; z-index: 100; padding: 10px 16px; background: var(--volt); color: var(--rubber); font-weight: 700; }
+.skip:focus { left: 8px; }
+.num { font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 700; letter-spacing: -.02em; }
+
+/* the stage */
+.stage { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; display: block; }
+
+/* nav */
+.nav { position: fixed; inset: 0 0 auto; z-index: 20; display: flex; align-items: center; gap: 14px; height: 64px; padding: 0 var(--pad); }
+.nav-logo { display: flex; align-items: center; gap: 10px; margin-right: auto; text-decoration: none; font-weight: 700; }
+.nav-logo img { border-radius: 7px; }
+.chip { min-height: 38px; padding: 4px 14px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,.6); background: transparent; font-weight: 700; font-size: 1rem; cursor: pointer; white-space: nowrap; }
+.chip[aria-pressed="true"] { background: var(--volt); border-color: var(--volt); color: var(--rubber); }
+.badge { display: inline-block; line-height: 0; border-radius: 9px; }
+.badge img { height: 54px; width: auto; transition: transform 120ms ease-out; }
+.badge:active img, .chip:active, .tap-btn:active, .cue:active { transform: scale(.96); }
+.badge-nav img { height: 40px; }
+
+/* scenes: each one screen; the copy sits left on wide screens, low on phones, clear of the phone */
+main { position: relative; z-index: 1; pointer-events: none; }
+.scene { min-height: 100vh; min-height: 100svh; display: grid; align-items: end; padding: 84px var(--pad) 112px; }
+.copy { pointer-events: auto; display: grid; gap: 14px; justify-items: start; max-width: 34rem;
+  opacity: 0; transform: translateY(28px); transition: opacity 420ms ease-out, transform 520ms cubic-bezier(.2,.8,.2,1); }
+.scene.on .copy { opacity: 1; transform: none; }
+.count { font-weight: 700; color: var(--volt); }
+/* the headline: three short lines, the last one lime. It lands word by word, on the beat */
+.line { font-family: var(--display); font-weight: 800; font-size: clamp(3.5rem, 15vw, 9rem); line-height: .86; letter-spacing: .005em; text-transform: none; }
+.line em { font-style: normal; color: var(--volt); display: inline-block; transform-origin: 20% 80%; }
+.say { max-width: 30em; color: var(--dim); }
+.fine { font-size: 1rem; color: var(--dim); }
+.still { display: none; } /* shown only when the 3D stage can't run */
+
+/* tap your beat */
+.tap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.tap-btn { min-height: 52px; padding: 10px 26px; border-radius: 999px; border: 0; background: var(--volt); color: var(--rubber); font-weight: 700; font-size: 1.125rem; cursor: pointer; touch-action: manipulation; }
+.tap-read { display: flex; align-items: baseline; gap: 10px; color: var(--dim); }
+.tap-read .num { font-size: 2.6rem; line-height: 1; color: var(--volt); }
+
+/* example songs */
+.songs { display: grid; gap: 8px; width: min(100%, 22rem); }
+.song { display: grid; grid-template-columns: 1fr auto; gap: 0 14px; align-items: baseline; padding: 8px 14px; border-radius: 12px; background: rgba(255,255,255,.09); line-height: 1.35;
+  opacity: 0; transform: translateX(-18px); transition: opacity 300ms, transform 420ms cubic-bezier(.2,.8,.2,1); transition-delay: calc(var(--i) * 140ms + 200ms); }
+.scene.on .song { opacity: 1; transform: none; }
+.song b { font-weight: 700; }
+.song span { grid-row: 2; color: var(--dim); font-size: 1rem; }
+.song i { font-style: normal; font-family: var(--num); font-weight: 700; color: var(--volt); font-size: 1.25rem; }
+.song small { grid-row: 2; grid-column: 2; text-align: right; color: var(--dim); font-size: 1rem; }
+
+/* the cue that drops in */
+.toast { display: grid; gap: 0; padding: 10px 18px; border-radius: 14px; background: var(--white); color: var(--rubber); line-height: 1.3; min-width: 13rem; }
+.toast b { font-size: 1.25rem; }
+.toast span { font-size: 1rem; }
+.toast.ok { background: var(--volt); }
+
+/* pulse cues */
+.cues { display: grid; gap: 8px; width: min(100%, 22rem); }
+.cue { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; width: 100%; min-height: 48px; padding: 8px 16px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,.6); background: transparent; text-align: left; cursor: pointer; }
+.cue span { color: var(--dim); font-size: 1rem; }
+.cue.on { background: var(--volt); border-color: var(--volt); color: var(--rubber); }
+.cue.on span { color: var(--rubber); }
+.badges { display: flex; flex-wrap: wrap; gap: 14px; }
+.scene-end { padding-bottom: 136px; }
+
+/* the score along the foot of the screen */
+.score { position: fixed; inset: auto 0 0; z-index: 10; height: 56px; padding: 0 var(--pad); pointer-events: none; }
+.score svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.score line { stroke: rgba(255,255,255,.34); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.score .done { stroke: var(--volt); stroke-width: 1.4; }
+.score-marks { position: absolute; inset: 0 var(--pad); }
+.mark { position: absolute; top: 0; height: 100%; width: 0; }
+.mark i { position: absolute; left: -9px; width: 18px; text-align: center; font: normal 30px/1 "Noto Music", "Apple Symbols", serif; color: rgba(255,255,255,.5); transition: color 200ms, transform 300ms cubic-bezier(.3,1.7,.5,1); transform-origin: 50% 80%; }
+.mark.on i { color: var(--volt); transform: scale(1.25); }
+.runner { position: absolute; top: 8px; bottom: 8px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--volt); }
+
+/* phones: the headline runs on one line, so the copy stays under the phone */
+@media (max-width: 899px) {
+  .line { font-size: clamp(2.5rem, 12.5vw, 4.5rem); line-height: .92; }
+  .line br { display: none; }
+  .copy { gap: 10px; }
+  .say { font-size: 1rem; }
+}
+@media (max-width: 479px) { .nav-logo span { display: none; } }
+
+/* wide screens: copy on the left, vertically centred; the phone has the right */
+@media (min-width: 900px) {
+  :root { --pad: 56px; }
+  .scene { align-items: center; padding: 96px var(--pad) 96px max(var(--pad), calc((100vw - 1240px) / 2)); }
+  .line { font-size: clamp(4.5rem, min(9.5vw, 13.5vh), 10rem); }
+  .copy { gap: 16px; }
+}
+
+/* no 3D: each scene shows its screen as a picture */
+.no-3d .stage { display: none; }
+.no-3d .still { display: block; width: min(52vw, 230px); height: auto; margin-top: 24px; border-radius: 26px; border: 6px solid #000; }
+.no-3d .scene { align-items: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .copy, .song, .mark i, .badge img { transition: none; }
+}
