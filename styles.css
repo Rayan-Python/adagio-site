@@ -59,7 +59,7 @@ button { font: inherit; color: inherit; }
 
 /* type */
 .display, .headline, .lane-no, .foot-word { font-family: var(--display); font-weight: 800; line-height: .94; letter-spacing: .005em; }
-.display { font-size: clamp(var(--t-64), 10vw, var(--t-112)); }
+.display { font-size: clamp(var(--t-64), min(10vw, 12.6vh), var(--t-112)); } /* eases down on short screens so the first screen fits */
 .display .accent { color: var(--volt); } /* the only two-color headline on the site */
 .headline { font-size: clamp(var(--t-36), 5.6vw, var(--t-64)); max-width: 15ch; margin-bottom: 24px; text-wrap: balance; }
 .lead { font-size: clamp(var(--t-18), 1.6vw, var(--t-22)); line-height: 1.55; max-width: 34em; color: var(--fg-2); }
@@ -107,6 +107,13 @@ button { font: inherit; color: inherit; }
 .staff .note { transform-box: fill-box; transform-origin: 50% 80%; transform: scale(0); transition: transform 420ms cubic-bezier(.3, 1.7, .5, 1); }
 .staff .note.on { transform: scale(1); }
 .staff-tip { transition: opacity 300ms; }
+.staff-playhead { stroke: currentColor; stroke-width: 3; stroke-linecap: round; opacity: 0; }
+.staff-playhead.on { opacity: 1; }
+/* the half of the story loop that passes in front of the runner, above his cut-out */
+.staff-front { position: absolute; left: 0; top: 0; width: 100%; z-index: 1; pointer-events: none; overflow: visible; color: var(--volt); }
+/* every note can be played: an invisible target over each one (hover with a mouse, or tap) */
+.staff-hits { position: absolute; left: 0; top: 0; width: 100%; height: 0; z-index: 1; pointer-events: none; }
+.staff-hits i { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; pointer-events: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 main > section::before, .how > section::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--bg); }
 main section { position: relative; color: var(--fg); }
 
@@ -130,14 +137,24 @@ main section { position: relative; color: var(--fg); }
 /* ------------------------------------------------------------------
    Hero: the headline, then the step pad as the main event
    ------------------------------------------------------------------ */
-.hero { overflow: hidden; padding: 92px 0 72px; }
+/* The first screen is a whole composition: headline, copy, badge, app row and the full step pad fit
+   under the nav on wide screens (checked at 1440x900 and 1280x800). --band is the open strip the
+   staff crosses between the copy and the pad. */
+.hero { overflow: hidden; padding: 80px 0 24px; min-height: 100vh; min-height: 100svh; display: grid; align-content: center; --band: clamp(72px, 10vh, 104px); }
 .hero-video { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 70%; opacity: .22; filter: grayscale(.5); }
 .hero::after { /* darken the clip under the copy and the pad (the staff runs above this, behind the content) */
   content: ""; position: absolute; inset: 0; z-index: -2;
   background: linear-gradient(180deg, rgba(22,17,14,.55) 0%, rgba(22,17,14,.85) 55%, var(--rubber) 100%);
 }
 /* between the copy and the pad there's a band of open space: the staff crosses the page there */
-.hero-grid { display: grid; gap: 96px; }
+.hero-grid { display: grid; gap: var(--band); }
+/* Where the whole pad can't fit (phones, tablets, short laptop screens) the first screen ends
+   cleanly after the app row and the staff's sweep, and the pad starts just below the fold. */
+@media (max-width: 1179px), (max-height: 759px) {
+  .hero { min-height: 0; display: block; }
+  .hero-copy { align-content: center; } /* the copy sits in the middle of the first screen, the staff's sweep along its foot */
+  .hero-grid { grid-template-rows: minmax(calc(100vh - 78px - var(--band)), auto) auto; grid-template-rows: minmax(calc(100svh - 78px - var(--band)), auto) auto; }
+}
 /* the load sequence (once): the staff draws in and three notes land on it in time (staff.js),
    "rhythm." lands on the fourth beat, then the step pad rises into place */
 .display .accent { display: inline-block; transform-origin: 30% 80%; }
@@ -145,10 +162,12 @@ main section { position: relative; color: var(--fg); }
 .intro .pad { animation: rise 480ms cubic-bezier(.2, .8, .2, 1) 1440ms both; }
 @keyframes land { from { opacity: 0; transform: translateY(-.3em) scale(1.08); } to { opacity: 1; transform: none; } }
 @keyframes rise { from { opacity: 0; transform: translateY(36px); } to { opacity: 1; transform: none; } }
-.hero-copy { display: grid; gap: 20px; align-content: start; justify-items: start; }
+.hero-copy { display: grid; gap: 16px; align-content: start; justify-items: start; }
+.hero-get { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 16px; }
+.store-badge.badge-hero img { height: 48px; }
 .hero-copy .lead { color: rgba(255,255,255,.86); max-width: 30em; }
-.app-tray { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 8px 0 0; padding: 0; }
-.app-tray img { width: 40px; height: 40px; border-radius: 22.5%; }
+.app-tray { list-style: none; display: flex; align-items: center; gap: 8px; margin: 0; padding: 0; }
+.app-tray img { width: 34px; height: 34px; border-radius: 22.5%; }
 .app-tray .hub img { box-shadow: 0 0 0 1.5px var(--volt); }
 .app-tray .sep { width: 1px; height: 28px; margin: 0 4px; background: rgba(255,255,255,.3); }
 .app-tray .sep.dashed { background: repeating-linear-gradient(rgba(255,255,255,.4) 0 3px, transparent 3px 6px); }
@@ -162,23 +181,23 @@ main section { position: relative; color: var(--fg); }
 
 /* the step pad */
 .pad { container-type: inline-size; display: grid; border-radius: 16px; background: #231E1B; } /* solid, so the staff can pass behind it */
-.pad-tap, .pad-read { padding: 24px; display: grid; gap: 20px; align-content: start; }
-.pad-read { border-top: 1px solid var(--rule); }
+.pad-tap, .pad-read, .pad-queue { padding: 24px; display: grid; gap: 14px; align-content: start; }
+.pad-read, .pad-queue { border-top: 1px solid var(--rule); }
 .pad-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
 .pad-title { font-size: var(--t-22); font-weight: 700; line-height: 1.2; }
 .pad-keys { font-size: var(--t-16); color: var(--fg-2); }
 kbd { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 6px; font: 700 var(--t-14) var(--body);
   color: var(--white); border: 1px solid rgba(255,255,255,.4); }
-.lane { position: relative; height: 92px; border-radius: 10px; overflow: hidden; background: var(--clay); }
+.lane { position: relative; height: clamp(56px, 7.4vh, 88px); border-radius: 10px; overflow: hidden; background: var(--clay); }
 .lane::before { content: ""; position: absolute; inset: 0; pointer-events: none; /* lane lines: top, middle, bottom */
   background: linear-gradient(#fff 0 2px, transparent 2px calc(50% - 1px), #fff calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px) calc(100% - 2px), #fff calc(100% - 2px)); opacity: .9; }
 /* a footprint stamped on the lane at each step (script.js), toe pointing down the track */
 .print { position: absolute; z-index: 1; top: 0; left: calc(100% - 30px); width: 40px; height: 20px; margin-left: -20px; }
 .print svg { display: block; width: 100%; height: 100%; fill: #fff; }
-.print.L { top: 13px; } .print.R { top: calc(50% + 13px); }
+.print.L { top: calc(25% - 10px); } .print.R { top: calc(75% - 10px); }
 .print.R svg { transform: scaleY(-1); }
 .feet { display: flex; justify-content: center; gap: 24px; }
-.stepfoot { position: relative; width: 92px; height: 156px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--rubber);
+.stepfoot { position: relative; width: clamp(62px, 8.4vh, 88px); height: clamp(104px, 14vh, 150px); padding: 0; border: 0; background: none; cursor: pointer; color: var(--rubber);
   -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
 .stepfoot svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .stepfoot svg path { fill: var(--volt); }
@@ -188,8 +207,8 @@ kbd { display: inline-grid; place-items: center; min-width: 26px; height: 26px; 
 .stepfoot.right.hit svg { transform: scale(-1.07, .9); }
 .stepfoot.hit svg path { fill: var(--white); }
 .stepfoot:focus-visible { outline-offset: 6px; border-radius: 40px; }
-.foot-key { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); font-size: var(--t-28); font-weight: 700; line-height: 1; }
-.foot-name { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); font-size: var(--t-14); font-weight: 700; line-height: 1; }
+.foot-key { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); font-size: clamp(var(--t-22), 3vh, var(--t-28)); font-weight: 700; line-height: 1; }
+.foot-name { position: absolute; left: 50%; bottom: 23%; transform: translateX(-50%); font-size: var(--t-14); font-weight: 700; line-height: 1; }
 .pad-status { text-align: center; color: var(--fg-2); min-height: 1.6em; }
 .stride { display: grid; gap: 12px; }
 .stride-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -201,14 +220,16 @@ kbd { display: inline-grid; place-items: center; min-width: 26px; height: 26px; 
 .stride-bars i.off { background: rgba(232,240,42,.45); }
 .stride-note { font-size: var(--t-14); color: var(--fg-2); }
 
-.read-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.read-label { font-size: var(--t-22); font-weight: 700; margin-right: auto; }
+.read-label { font-size: var(--t-22); font-weight: 700; line-height: 1.2; }
+.read-sound { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.toggle[data-mute][aria-pressed="false"] .waves { display: none; }
 .toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 16px; border-radius: 999px; cursor: pointer;
   border: 1.5px solid rgba(255,255,255,.6); background: transparent; color: var(--white); font-weight: 700; font-size: var(--t-16); }
 .toggle svg { width: 16px; height: 16px; }
 .toggle[aria-pressed="true"] { background: var(--volt); border-color: var(--volt); color: var(--rubber); }
+.toggle[data-mute][aria-pressed="true"] { background: transparent; border-color: rgba(255,255,255,.6); color: var(--white); } /* on is its resting state */
 .big-num { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; line-height: 1; }
-.big-num .num { font-size: clamp(var(--t-64), 9cqi, var(--t-88)); color: var(--volt); }
+.big-num .num { font-size: clamp(var(--t-64), 6.7cqi, 4.75rem); color: var(--volt); }
 .big-num .unit { font-size: var(--t-18); color: var(--fg-2); }
 .slider-label { display: block; }
 input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 32px; background: transparent; cursor: pointer; }
@@ -219,11 +240,10 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 24p
 input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--white); border: 5px solid var(--volt); }
 .scale { display: flex; justify-content: space-between; gap: 8px; font-size: var(--t-14); line-height: 1.3; color: var(--fg-2); }
 .scale span:nth-child(2) { text-align: center; } .scale span:last-child { text-align: right; }
-.queue-title { font-size: var(--t-18); font-weight: 700; margin-top: 8px; }
-.queue-note { margin-top: -12px; font-size: var(--t-16); color: var(--fg-2); }
-.queue-note + .queue-note { margin-top: -16px; }
+.queue-title { font-size: var(--t-22); font-weight: 700; line-height: 1.2; }
+.queue-note { margin-top: -6px; font-size: var(--t-16); line-height: 1.4; color: var(--fg-2); }
 .songs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.song { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; align-items: baseline; padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,.07); }
+.song { display: grid; grid-template-columns: 1fr auto; gap: 0 16px; align-items: baseline; padding: 8px 12px; line-height: 1.35; border-radius: 10px; background: rgba(255,255,255,.07); }
 .song-title { font-weight: 700; }
 .song-artist { grid-row: 2; color: var(--fg-2); font-size: var(--t-16); }
 .song-bpm { text-align: right; font-weight: 700; }
@@ -232,14 +252,36 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 
 @media (min-width: 960px) {
   .pad { grid-template-columns: 1fr 1fr; }
-  .pad-tap, .pad-read { padding: 32px; }
+  .pad-tap, .pad-read, .pad-queue { padding: 28px; }
   .pad-read { border-top: 0; border-left: 1px solid var(--rule); }
+  .pad-queue { grid-column: 1 / -1; }
+  .pad-queue .songs { grid-template-columns: repeat(3, 1fr); }
+}
+/* wide screens: three parts side by side (tap, readout, queue), compact enough for the first screen */
+@media (min-width: 1180px) {
+  .pad { grid-template-columns: 1fr .92fr 1.08fr; }
+  .pad-tap, .pad-read, .pad-queue { padding: 20px 24px; gap: 10px; }
+  .pad-queue { grid-column: auto; border-top: 0; border-left: 1px solid var(--rule); }
+  .pad-queue .songs { grid-template-columns: 1fr; gap: 6px; }
+  .pad-head { gap: 4px 12px; }
+  .pad-keys { font-size: var(--t-14); }
+  .pad-status { font-size: var(--t-16); min-height: 1.5em; line-height: 1.5; }
+  .stride-bars, .stride-note { display: none; }
+  .stride-stats dd { font-size: var(--t-22); }
 }
 
 /* ------------------------------------------------------------------
    Story: text straight on the runner photo
    ------------------------------------------------------------------ */
-.story { overflow: hidden; padding: clamp(96px, 13vw, 168px) 0; }
+.story { overflow: hidden; padding: clamp(72px, 11vh, 168px) 0; }
+/* The runner again, cut out along his outline (a mask made from the photo) and laid exactly over
+   himself, above the staff: where the staff's loop passes behind him, he hides it. It's the same
+   photo under the same scrim, so nothing shows but the staff disappearing. (staff.js draws the
+   half of the loop that passes in front of him on a layer above this one.) */
+.story-cut { position: absolute; inset: 0; z-index: 0; pointer-events: none; display: none; }
+.story-cut.on { display: block;
+  background: linear-gradient(90deg, rgba(22,17,14,.94) 0%, rgba(22,17,14,.86) 45%, rgba(22,17,14,.35) 100%), url(assets/hero.webp) 70% 50% / cover no-repeat;
+  -webkit-mask: url(assets/story-runner-mask.png) 70% 50% / cover no-repeat; mask: url(assets/story-runner-mask.png) 70% 50% / cover no-repeat; }
 .story-photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 70% 50%; }
 .story::after { /* a scrim under the words, so they read on the photo */
   content: ""; position: absolute; inset: 0; z-index: -2;
@@ -315,6 +357,10 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .rv-line { fill: none; stroke: var(--rubber); stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; }
 .rv-dot circle { fill: var(--rubber); stroke: #fff; stroke-width: 3; }
 .rv-axis text { font-family: var(--body); font-size: 13px; fill: rgba(22,17,14,.72); }
+/* tempo markings in the staff's engraved style: the term in bold, then the note sign and its beats per minute */
+.rv-tempo text { font-family: var(--body); font-size: 13px; fill: var(--rubber); }
+.rv-tempo .term { font-weight: 700; }
+.rv-tempo .sign { font-family: "Noto Music", "Apple Symbols", serif; font-size: 18px; }
 
 /* ------------------------------------------------------------------
    Features
@@ -351,11 +397,11 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 /* ------------------------------------------------------------------
    Pulse Mode
    ------------------------------------------------------------------ */
-.pulse { padding: 120px 0; }
-.pulse .headline { max-width: 13ch; }
+.pulse { padding: clamp(28px, 6.5vh, 120px) 0; }
+.pulse .headline { max-width: 16ch; }
 .pulse-grid { display: grid; gap: 32px; align-items: center; }
 .aw-stage { position: relative; height: 420px; }
-.cues { list-style: none; margin: 28px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 34em; }
+.cues { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 34em; }
 .cue { display: grid; grid-template-columns: 40px 1fr; column-gap: 12px; align-items: center; width: 100%; min-height: 64px; padding: 10px 14px; text-align: left; border-radius: 12px; cursor: pointer;
   border: 1.5px solid var(--rubber); background: transparent; color: var(--rubber); }
 .taps { grid-row: 1 / span 2; display: flex; gap: 4px; align-items: center; justify-content: center; }
@@ -368,45 +414,80 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 @media (max-width: 479px) { .cue { grid-template-columns: 1fr; row-gap: 4px; } .taps { grid-row: auto; justify-content: flex-start; min-height: 10px; } .cue b, .cue span { grid-column: 1; } }
 .cue.on { background: var(--rubber); color: var(--volt); }
 .cue-note, .pulse-note { max-width: 36em; font-size: var(--t-16); color: var(--fg-2); }
-.cue-note { margin-top: 12px; }
-.pulse-note { margin-top: 20px; }
+.pulse-note { margin-top: 14px; }
 
 /* ------------------------------------------------------------------
-   Roadmap. Flat: three staggered lanes, like a 400 m start. With the flyover (wide screens,
-   motion allowed) the same list becomes a track in perspective: the section pins, and
-   scrolling carries each release down its lane toward you (script.js sets --run).
-   The lanes sit on the background layer, so the staff passes over the track, beside the text.
+   Roadmap: a running track at night, under stadium lights.
+   Flat (phones, tablets): three staggered lanes, like a 400 m start, with a row of light poles
+   along the top edge, all lit.
+   Wide screens (.road3d): the same list becomes a track in perspective, sized to fit the screen
+   whole (its lengths are in cqh, hundredths of the view's height). The unlit track is dark clay;
+   each pair of poles throws a pool of light that shows the clay at full strength, so the lane
+   text reads the same lit or unlit. With motion allowed (.flyover) the section pins and scrolling
+   runs you down the track (script.js sets --run): each release comes into focus in turn, and the
+   poles beside it flicker on. The lanes sit on the background layer, so the staff passes over the
+   edge of the scene, beside the track.
    ------------------------------------------------------------------ */
 .roadmap { padding: 104px 0; }
-.road-view { position: relative; z-index: -2; margin-top: 16px; }
+.road-view { position: relative; z-index: -2; margin-top: 76px; }
+.track { position: relative; }
 .lanes { list-style: none; margin: 0; padding: 0; background: var(--clay); border-block: 3px solid #fff; }
-.lane-row { --stagger: 0vw; display: flex; align-items: center; gap: 20px; min-height: 124px; padding: 16px var(--pad) 16px calc(var(--pad) + var(--stagger)); }
+.lane-row { --stagger: 0vw; display: flex; align-items: center; min-height: 124px; padding: 16px var(--pad) 16px calc(var(--pad) + var(--stagger)); }
 .lane-row + .lane-row { border-top: 3px solid #fff; }
 .lane-row:nth-child(2) { --stagger: 8vw; }
 .lane-row:nth-child(3) { --stagger: 16vw; }
+.lane-mark { display: flex; align-items: center; gap: 20px; }
 .lane-no { padding-left: 18px; border-left: 4px solid #fff; color: #fff; font-size: clamp(var(--t-48), 6vw, var(--t-88)); line-height: .8; }
 .lane-text { display: grid; gap: 2px; color: #fff; }
 .lane-ver { font-size: var(--t-18); font-weight: 700; }
 .lane-name { font-size: clamp(var(--t-28), 3.6vw, var(--t-48)); font-weight: 700; line-height: 1.1; }
+/* light poles: a thin pole with a bank of lamps on top (script.js makes them) */
+.pools { display: none; }
+.poles { position: absolute; left: 0; right: 0; bottom: 100%; height: 56px; pointer-events: none; }
+.pole { position: absolute; bottom: 0; left: var(--x); width: 3px; height: 100%; background: rgba(255,255,255,.5); }
+.pole::before { content: ""; position: absolute; left: 50%; top: 0; width: 26px; height: 9px; margin-left: -13px; border-radius: 2px; background: #FFF6DC; }
+.pole.r { display: none; }
 
-.flyover.roadmap { padding: 0; height: 210vh; }
-.flyover .road-pin { position: sticky; top: 64px; z-index: -2; height: calc(100vh - 64px); display: grid; grid-template-rows: auto 1fr; padding-top: 72px; overflow: hidden; }
-.flyover .road-view { z-index: auto; margin: 0; overflow: hidden; perspective: 1100px; perspective-origin: 43% -6%; }
-.flyover .lanes { position: absolute; left: 0; right: 14%; bottom: 0; height: 1400px; display: grid; grid-template-columns: repeat(3, 1fr);
-  transform-origin: 50% 100%; transform: rotateX(63deg); border: 0; border-inline: 5px solid #fff;
-  /* faint marks across the track that slide toward you, so the ground reads as moving */
-  background: repeating-linear-gradient(to bottom, transparent 0 236px, rgba(255,255,255,.2) 236px 240px) 0 var(--run, 0px) / 100% 240px, var(--clay); }
-.flyover .lane-row { position: relative; display: block; min-height: 0; padding: 0; }
-.flyover .lane-row + .lane-row { border-top: 0; border-left: 5px solid #fff; }
-.flyover .lane-no, .flyover .lane-text { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 28px; border: 0; text-align: left;
-  transform-origin: 0 100%; transform: translateY(calc(var(--run, 0px) - var(--at))) scaleY(1.7); will-change: transform; }
-.flyover .lane-no { --at: 60px; font-size: 150px; line-height: .8; }
-.flyover .lane-text { --at: 360px; gap: 6px; }
-.flyover .lane-row:nth-child(2) .lane-text { --at: 660px; }
-.flyover .lane-row:nth-child(3) .lane-text { --at: 960px; }
-.flyover .lane-ver { font-size: var(--t-28); }
-.flyover .lane-name { font-size: var(--t-48); line-height: 1.02; }
-.flyover .gone { visibility: hidden; }
+.road3d.roadmap { padding: 96px 0 0; }
+.road3d .road-view { margin: 16px 0 0; height: min(68vh, 620px); height: min(68svh, 620px); overflow: hidden; perspective: 1100px; perspective-origin: 43% -6%; container-type: size; }
+.road3d .track { position: absolute; left: 0; right: 14%; bottom: 0; height: 178cqh; transform-origin: 50% 100%; transform: rotateX(63deg); transform-style: preserve-3d;
+  border-inline: 5px solid #fff;
+  /* unlit clay, with faint marks across the track that slide toward you so the ground reads as moving */
+  background: repeating-linear-gradient(to bottom, transparent 0 21.4cqh, rgba(255,255,255,.14) 21.4cqh 22cqh) 0 calc(var(--run, 0) * 1cqh) / 100% 22cqh, #5E2819; }
+.road3d .pools { display: block; position: absolute; inset: 0; }
+.pool { position: absolute; left: 0; right: 0; bottom: 0; height: 36cqh; opacity: 0; transform: translateY(calc((var(--run, 0) - var(--d)) * 1cqh + 18cqh));
+  background: radial-gradient(ellipse 64% 50% at 6% 50%, var(--clay) 0%, rgba(180,74,49,.6) 52%, rgba(180,74,49,0) 100%),
+              radial-gradient(ellipse 64% 50% at 94% 50%, var(--clay) 0%, rgba(180,74,49,.6) 52%, rgba(180,74,49,0) 100%); }
+.pool.lit { opacity: 1; }
+.road3d .lanes { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); background: none; border: 0; }
+.road3d .lane-row { position: relative; display: block; min-height: 0; padding: 0; }
+.road3d .lane-row + .lane-row { border-top: 0; border-left: 5px solid #fff; }
+/* each release: its lane number with its title beside it, painted on the lane (stretched lengthwise, as road paint is) */
+.road3d .lane-mark { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 3.4cqh; gap: 2.6cqh; align-items: flex-end; opacity: .7;
+  transform-origin: 0 100%; transform: translateY(calc((var(--run, 0) - var(--at)) * 1cqh)) scaleY(1.7); transition: opacity 320ms; will-change: transform; }
+.road3d .lane-mark.now { opacity: 1; }
+.road3d .lane-mark.gone { opacity: 0; }
+.road3d .pole.gone { visibility: hidden; }
+.road3d .lane-row:nth-child(1) .lane-mark { --at: 34; }
+.road3d .lane-row:nth-child(2) .lane-mark { --at: 78; }
+.road3d .lane-row:nth-child(3) .lane-mark { --at: 122; }
+.road3d .lane-no { padding: 0; border: 0; font-size: 17cqh; line-height: .8; }
+.road3d .lane-text { gap: .6cqh; }
+.road3d .lane-ver { font-size: max(3.5cqh, 16px); }
+.road3d .lane-name { font-size: 6.2cqh; line-height: 1.04; }
+.road3d .poles { inset: 0; height: auto; transform-style: preserve-3d; }
+.road3d .pole, .road3d .pole.r { display: block; left: -4.5cqh; width: .6cqh; height: 36cqh; transform-origin: 50% 100%;
+  transform: translateY(calc((var(--run, 0) - var(--d)) * 1cqh)) rotateX(-90deg); }
+.road3d .pole.r { left: auto; right: -4.5cqh; }
+.road3d .pole::before { width: 5.8cqh; height: 2.3cqh; margin-left: -2.9cqh; border-radius: .3cqh; background: rgba(255,255,255,.3); }
+.road3d .pole.lit::before { background: #FFF6DC; }
+
+.flyover.roadmap { padding: 0; height: 265vh; height: 265svh; }
+.flyover .road-pin { position: sticky; top: 64px; z-index: -2; height: calc(100vh - 64px); height: calc(100svh - 64px); display: grid; grid-template-rows: auto 1fr; padding: 52px 0 36px; }
+.flyover .road-view { z-index: auto; height: auto; margin: 8px 0 0; }
+/* lights warming up: a quick flicker, then full */
+.flyover .pool.lit, .flyover .pole.lit::before { animation: lights-on 560ms steps(1, end) both; }
+@keyframes lights-on { 0% { opacity: 0; } 10% { opacity: 1; } 22% { opacity: .15; } 36% { opacity: .9; } 48% { opacity: .3; } 62%, 100% { opacity: 1; } }
 
 /* ------------------------------------------------------------------
    Team
@@ -427,7 +508,16 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 /* ------------------------------------------------------------------
    Contact
    ------------------------------------------------------------------ */
-.contact { padding: 120px 0; }
+.contact { padding: 164px 0 120px; }
+/* stands just under the staff's final barline */
+.play-page { position: absolute; z-index: 1; top: 98px; right: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); display: inline-flex; align-items: center; gap: 8px;
+  min-height: 40px; padding: 6px 16px; border-radius: 999px; border: 1.5px solid var(--rubber); background: transparent; color: var(--rubber); font-weight: 700; font-size: var(--t-16); cursor: pointer;
+  transition: transform 120ms ease-out; }
+.play-page:active { transform: scale(.96); }
+.play-page svg { width: 12px; height: 12px; fill: currentColor; }
+.play-page .ico-stop, .play-page[aria-pressed="true"] .ico-play { display: none; }
+.play-page[aria-pressed="true"] { background: var(--rubber); color: var(--volt); }
+.play-page[aria-pressed="true"] .ico-stop { display: block; }
 .contact-grid { display: grid; gap: 32px; align-items: end; }
 .contact-actions { display: grid; gap: 20px; justify-items: start; }
 .email-big { font-weight: 700; font-size: clamp(var(--t-22), 2.4vw, var(--t-28)); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; overflow-wrap: anywhere; color: var(--rubber); }
@@ -439,20 +529,33 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 /* plain dark space between the volt Contact section and the wordmark */
 .foot-top { padding: 56px 0 40px; }
 .foot { display: grid; gap: 20px; }
+.foot-id { display: grid; gap: 6px; }
 .foot-brand { font-weight: 700; font-size: var(--t-22); }
+.foot-origin { max-width: 34em; font-size: var(--t-16); color: var(--fg-2); }
 .foot-links { display: flex; flex-wrap: wrap; gap: 12px 28px; }
 .foot-links a { display: inline-flex; align-items: center; gap: 8px; color: var(--fg-2); text-decoration: none; }
 .foot-links a:hover { color: var(--white); text-decoration: underline; text-underline-offset: 4px; }
 .foot-links img { width: 18px; height: 18px; border-radius: 22.5%; }
 .legal { margin-top: 24px; font-size: var(--t-14); color: var(--fg-2); }
-/* The wordmark: the clips play behind it and a rubber layer is multiplied over them, so the footage
-   only shows inside the letters, tinted lime yellow and fading toward the bottom. It keeps the old
-   wide display style (Archivo at 125% width). */
+/* The wordmark: a rubber layer is multiplied over footage, so the footage only shows inside the
+   letters, tinted lime yellow and fading toward the bottom. It keeps the old wide display style
+   (Archivo at 125% width). Each letter has its own clip, and no seam can cut through a letter:
+   script.js gives every letter a layer of its own (.foot-letter) holding that letter's clip, placed
+   on the letter's bounds, under a copy of the word in which the other five letters are painted
+   out. The six layers are combined with "lighten", which keeps each one's letter and nothing else.
+   (Before the script runs, the clips sit in six plain columns.) */
 .foot-mark { position: relative; isolation: isolate; overflow: hidden; }
-.foot-reel { position: absolute; inset: 0; z-index: -1; display: grid; grid-template-columns: repeat(3, 1fr); background: var(--rubber); }
-/* the letters brighten as you reach the bottom of the page (script.js sets --lift, 0 to 1) */
-.foot-reel video { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1) brightness(calc(.62 + .5 * var(--lift, 1))); }
-.foot-reel video:nth-child(n+4) { display: none; }
+.foot-reel { position: absolute; inset: 0; z-index: -1; display: grid; grid-template-columns: repeat(6, 1fr); background: var(--rubber); }
+/* the letters brighten as you reach the bottom of the page (script.js sets --lift on the mark, 0 to 1) */
+.foot-mark video { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1) brightness(calc(.62 + .5 * var(--lift, 1))); transition: filter 260ms; }
+.foot-letter { position: absolute; inset: 0; isolation: isolate; pointer-events: none; }
+.foot-letter + .foot-letter { mix-blend-mode: lighten; }
+.foot-letter video { position: absolute; top: 0; z-index: -1; }
+.foot-letter .foot-word span:not(.on) { color: var(--rubber); } /* painted out: only this layer's letter shows its clip */
+.foot-mark.placed > .foot-reel { display: none; }
+.foot-mark.placed > .foot-word { position: relative; opacity: 0; } /* keeps the mark's height, and takes the pointer */
+/* the letter under the pointer comes up to full color */
+.foot-mark video.hot { filter: grayscale(0) contrast(1.05) brightness(calc(.8 + .5 * var(--lift, 1))); }
 .foot-word {
   margin: 0; padding-top: 4px; text-align: center; line-height: .78; user-select: none;
   font-family: "Archivo", var(--display); font-weight: 900; font-stretch: 125%; letter-spacing: -.06em; font-size: clamp(5rem, 24vw, 22rem);
@@ -469,8 +572,6 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
   .nav-links { display: flex; }
   .facts { grid-template-columns: 1fr 1fr; gap: 56px 128px; }
   .foot { grid-template-columns: 1fr auto; align-items: center; }
-  .foot-reel { grid-template-columns: repeat(5, 1fr); }
-  .foot-reel video:nth-child(n+4) { display: block; }
   .people { grid-template-columns: repeat(2, max-content); gap: 56px; }
   .schools { width: 100%; }
   .step-inline { grid-template-columns: 1fr auto; align-items: center; }
@@ -478,28 +579,29 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 }
 @media (min-width: 960px) {
   :root { --pad: 56px; }
-  .hero-grid { gap: 128px; }
-  .hero-copy { grid-template-columns: 1.05fr 1fr; column-gap: 56px; align-items: start; }
-  .hero-copy .display { grid-row: 1 / span 4; margin-top: -.04em; }
+  .hero-copy { grid-template-columns: .95fr 1.05fr; column-gap: 56px; align-items: start; }
+  .hero-copy .display { grid-row: 1 / span 3; margin-top: -.04em; }
+  .hero-get { flex-wrap: nowrap; }
   /* nothing pinned (reduced motion, or no WebGL): copy on the left, the step's screen on the right */
   .step-in { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 128px; align-items: center; } /* the staff runs down the gap */
   .pin3d .step-in { column-gap: 64px; }
   .step-in > * { grid-column: 1; }
   .step-in > .step-inline { grid-column: 2; grid-row: 1 / span 3; grid-template-columns: 1fr; }
   /* pinned: the steps keep to the left half, each about a screen tall; the 3D stage sticks on the right */
-  .pin3d .step { min-height: 92vh; display: grid; align-items: center; padding: 112px 0; }
+  /* each step is exactly one screen under the nav, so nothing is sliced when it lands */
+  .pin3d .step { min-height: calc(100vh - 64px); min-height: calc(100svh - 64px); display: grid; align-items: center; padding: clamp(20px, 3.6vh, 48px) 0; }
+  .pin3d .step .headline { font-size: clamp(var(--t-48), min(6.6vw, 9.4vh), var(--t-88)); margin-bottom: 16px; }
+  .pin3d .step2-visuals { grid-template-columns: 1fr 1fr; gap: 24px; width: 124%; align-items: start; }
+  .pin3d .visual figcaption, .pin3d .runvis figcaption { font-size: var(--t-14); }
   .pin3d .step-in > .step-inline { display: none; }
   .pin3d .how-pin { display: block; position: absolute; top: 0; bottom: 0; right: 0; width: 50%; pointer-events: none; }
-  .pin3d .how-stage { position: sticky; top: 64px; height: calc(100vh - 64px); pointer-events: auto; }
+  .pin3d .how-stage { position: sticky; top: 64px; height: calc(100vh - 64px); height: calc(100svh - 64px); pointer-events: auto; }
   .pin3d .how-stage .model-cap { bottom: 20px; color: rgba(22,17,14,.72); }
   .feat-top { grid-template-columns: 1.1fr .9fr; gap: 56px; }
   .devices-grid { grid-template-columns: 1fr 1fr; gap: 64px; }
+  .pulse { min-height: calc(100vh - 64px); min-height: calc(100svh - 64px); display: grid; align-items: center; }
   .pulse-grid { grid-template-columns: 1.2fr .8fr; gap: 56px; }
   .contact-grid { grid-template-columns: 1.2fr 1fr; gap: 56px; }
-}
-@media (min-width: 960px) and (max-width: 1179px) {
-  .app-tray { gap: 8px; }
-  .app-tray img { width: 34px; height: 34px; }
 }
 @media (min-width: 1100px) {
   .team-grid { grid-template-columns: auto 1fr; gap: 72px; }
@@ -512,5 +614,5 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .staff .note { transform: none; transition: none; }
-  .btn, .store-badge img, .toggle, .cue, .beat-chip, .stepfoot svg, .cue-flip img { transition: none; }
+  .btn, .store-badge img, .toggle, .cue, .beat-chip, .play-page, .stepfoot svg, .cue-flip img, .foot-mark video, .road3d .lane-mark { transition: none; }
 }

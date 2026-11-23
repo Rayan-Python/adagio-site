@@ -3,6 +3,9 @@
 // Tap your own on the step pad, or turn on the click, and the page keeps your beat: the
 // staff's notes bob, "rhythm." pulses, the Step 2 clip runs at your cadence and the watches
 // tap along, until you stop it (the pad's button, or "Stop the beat" in the nav).
+// Sound is all made here with Web Audio, no audio files: your steps play a kick and a snare, the
+// click is a hi-hat, and the staff's notes are a soft marimba (staff.js plays them). Sound only
+// ever starts from something you do.
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
@@ -25,6 +28,65 @@ const tempo = {
 };
 const beatListeners = [];
 const onBeat = (fn) => beatListeners.push(fn);
+
+/* ======================================================================
+   Sound: a small synth. Kept quiet. Nothing plays until the visitor does something.
+   ====================================================================== */
+const sound = (() => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ctx = null, master = null, noise = null;
+  const ensure = () => {
+    if (!AC) return null;
+    if (!ctx) {
+      ctx = new AC();
+      master = ctx.createGain();
+      master.gain.value = 0.42;
+      master.connect(ctx.destination);
+      noise = ctx.createBuffer(1, Math.round(ctx.sampleRate * 0.4), ctx.sampleRate); // white noise, for the snare and hi-hat
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  };
+  const env = (g, t, peak, decay, attack = 0.003) => {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+  };
+  const tone = (freq, t, peak, decay, dest, type = 'sine', endFreq = 0) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (endFreq) o.frequency.exponentialRampToValueAtTime(endFreq, t + decay * 0.7);
+    env(g, t, peak, decay);
+    o.connect(g).connect(dest || master);
+    o.start(t); o.stop(t + decay + 0.06);
+  };
+  const burst = (t, peak, decay, type, freq, dest) => {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise;
+    f.type = type; f.frequency.value = freq; f.Q.value = 0.8;
+    env(g, t, peak, decay, 0.001);
+    s.connect(f).connect(g).connect(dest || master);
+    s.start(t); s.stop(t + decay + 0.06);
+  };
+  return {
+    muted: false,                 // the pad's "Sound" button: steps and hovered notes
+    unlock: ensure,
+    time: () => (ensure() ? ctx.currentTime : 0),
+    // a channel of its own that can be faded out at once (the page's melody uses one)
+    bus() { if (!ensure()) return null; const g = ctx.createGain(); g.connect(master); return g; },
+    // a soft marimba note: the fundamental, plus a short bright partial two octaves up
+    note(freq, at = 0, dest) { if (!ensure()) return; const t = at || ctx.currentTime; tone(freq, t, 0.5, 0.85, dest); tone(freq * 4, t, 0.1, 0.11, dest); },
+    kick() { if (!ensure()) return; tone(150, ctx.currentTime, 0.95, 0.17, null, 'sine', 46); },
+    snare() { if (!ensure()) return; const t = ctx.currentTime; burst(t, 0.5, 0.13, 'bandpass', 1900); tone(196, t, 0.22, 0.08, null, 'triangle'); },
+    hat(accent) { if (!ensure()) return; burst(ctx.currentTime, accent ? 0.34 : 0.2, accent ? 0.06 : 0.04, 'highpass', 7200); },
+  };
+})();
+window.adagioAudio = sound; // staff.js plays the notes
+// the first click, tap or key press readies the audio (silently), so a hovered note can sound afterwards
+['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => sound.unlock(), { once: true, passive: true }));
 
 
 // Example songs for the queue preview. Every title and artist here is made up.
@@ -92,10 +154,12 @@ function setLive(on) {
   if (tempo.live === on) return;
   tempo.live = on;
   root.classList.toggle('beating', on);
-  if (beatChip) beatChip.hidden = !on;
+  if (beatChip) beatChip.hidden = !(on || pagePlaying);
   document.dispatchEvent(new CustomEvent('adagio:live', { detail: on }));
 }
-if (beatChip) beatChip.addEventListener('click', () => { setClick(false); setLive(false); });
+let pagePlaying = false; // staff.js is playing the page's melody
+if (beatChip) beatChip.addEventListener('click', () => { setClick(false); setLive(false); document.dispatchEvent(new Event('adagio:stop')); });
+document.addEventListener('adagio:playing', (e) => { pagePlaying = e.detail; if (beatChip) beatChip.hidden = !(tempo.live || pagePlaying); });
 const pulse = (el, scale, ms = 190) => el && el.animate([{ transform: `scale(${scale})` }, { transform: 'scale(1)' }], { duration: ms, easing: 'ease-out' });
 onBeat(() => {
   if (!tempo.live || reduceMotion || document.hidden) return;
@@ -181,6 +245,7 @@ function step(foot) {
   const btn = feetBtns.find((b) => b.dataset.foot === foot);
   if (btn) { btn.classList.add('hit'); setTimeout(() => btn.classList.remove('hit'), 110); }
   stamp(foot);
+  if (!sound.muted) (foot === 'L' ? sound.kick() : sound.snare()); // left is the kick, right is the snare
   const now = performance.now();
   if (taps.length && now - taps[taps.length - 1] > 2000) { taps = []; strideGaps = []; }
   if (taps.length) strideGaps = strideGaps.concat([[now - taps[taps.length - 1], foot]]).slice(-16);
@@ -213,43 +278,37 @@ if (pad) {
 }
 if (slider) slider.addEventListener('input', () => { taps = []; setBPM(+slider.value); padStatus.textContent = 'Set with the slider.'; });
 
-// "Play a click": a metronome click on each beat (accent every fourth). "Vibrate": a
-// vibration on each beat, where the browser supports it (Android).
+// "Play a click": a hi-hat on every beat (a little louder every fourth), layered over your steps.
+// "Sound on / off" mutes the steps' drums and the staff's hovered notes. "Vibrate": a vibration on
+// each beat, where the browser supports it (Android).
 const soundBtn = $('[data-sound]');
+const muteBtn = $('[data-mute]');
 const vibeBtn = $('[data-vibe]');
-let audio = null;
-function click(n) {
-  if (!audio) return;
-  const t = audio.currentTime;
-  const osc = audio.createOscillator(), gain = audio.createGain();
-  osc.frequency.value = n % 4 === 1 ? 1600 : 1050;
-  gain.gain.setValueAtTime(0.0001, t);
-  gain.gain.exponentialRampToValueAtTime(0.35, t + 0.002);
-  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
-  osc.connect(gain).connect(audio.destination);
-  osc.start(t); osc.stop(t + 0.06);
-}
 const soundLabel = soundBtn && $('[data-sound-label]', soundBtn);
+let clickOn = false;
 function setClick(on) {
   if (!soundBtn) return;
+  clickOn = on;
   soundBtn.setAttribute('aria-pressed', on);
   soundLabel.textContent = on ? 'Stop the click' : 'Play a click';
-  if (on) { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); }
-  else if (audio) audio.suspend();
+  if (on) sound.unlock();
 }
 if (soundBtn) {
   // pressing it starts the beat for the whole page; pressing it again makes everything still
   soundBtn.addEventListener('click', () => {
-    const on = soundBtn.getAttribute('aria-pressed') !== 'true';
+    const on = !clickOn;
     setClick(on);
     if (!reduceMotion || !on) setLive(on);
   });
   // the sound stops when you scroll away from the pad (it never starts on its own); the page keeps the beat
-  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {
-    if (!e.isIntersecting && soundBtn.getAttribute('aria-pressed') === 'true') setClick(false);
-  }).observe(pad);
+  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { if (!e.isIntersecting && clickOn) setClick(false); }).observe(pad);
 }
-onBeat((n) => { if (soundBtn && soundBtn.getAttribute('aria-pressed') === 'true') click(n); });
+onBeat((n) => { if (clickOn) sound.hat(n % 4 === 1); });
+if (muteBtn) muteBtn.addEventListener('click', () => {
+  sound.muted = !sound.muted;
+  muteBtn.setAttribute('aria-pressed', !sound.muted);
+  $('[data-mute-label]', muteBtn).textContent = sound.muted ? 'Sound off' : 'Sound on';
+});
 if (vibeBtn && 'vibrate' in navigator && window.matchMedia('(pointer: coarse)').matches) {
   vibeBtn.hidden = false;
   vibeBtn.addEventListener('click', () => vibeBtn.setAttribute('aria-pressed', vibeBtn.getAttribute('aria-pressed') !== 'true'));
@@ -477,7 +536,7 @@ if (beatClip) {
 }
 
 // Footer: the track clips play muted while the footer is on screen and pause when it isn't.
-$$('.foot-reel video').forEach((v) => lazyVideo(v));
+$$('.foot-mark video').forEach((v) => lazyVideo(v));
 
 /* ======================================================================
    Pulse Mode cues: each button plays its tap pattern. Phones that can vibrate do
@@ -496,42 +555,73 @@ $$('.cue').forEach((btn) => btn.addEventListener('click', () => {
 }));
 
 /* ======================================================================
-   Roadmap flyover: on wide screens (960px and up) with motion allowed, the lanes become a track in
-   perspective and the section pins. Scrolling runs you down the track: each release,
-   painted on its lane, comes toward you and passes underfoot (styles.css, --run).
+   Roadmap: a track under stadium lights (styles.css has the three looks).
+     flat   phones and tablets: staggered lanes, a row of poles, everything lit
+     still  wide screens with reduced motion: the track in perspective, everything lit, nothing moves
+     fly    wide screens: the section pins and scrolling runs you down the track. It moves in three
+            stops, one per release: the release in focus is at full strength, and the poles beside
+            that stretch of track flicker on as you reach it (the stretches behind you stay lit)
+   Lengths along the track are in cqh (hundredths of the track view's height).
    ====================================================================== */
 const road = $('[data-roadmap]');
-const lanesEl = $('[data-lanes]');
-const footReel = $('.foot-reel');
-if (road && lanesEl) {
-  const marks = $$('.lane-text', lanesEl).map((el, i) => ({ el, at: 360 + i * 300 }));
-  const nos = $$('.lane-no', lanesEl);
-  const END = 590; // it ends with the next release at your feet and the one after ahead of you
-  const fly = () => !reduceMotion && window.innerWidth >= 960;
-  let flying = null;
+const track = $('[data-track]');
+const footReel = $('[data-foot-reel]');
+const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+if (road && track) {
+  const AT = [34, 78, 122], STEP = 31;               // where each release is painted, and how far each stop carries you
+  const POLES = [12, 34, 56, 78, 100, 122, 144, 166]; // a pair of poles every 22
+  const stretch = (d) => (d <= 56 ? 0 : d <= 100 ? 1 : 2); // which release a pole stands beside
+  const marks = $$('.lane-mark', track);
+  const lights = [];
+  POLES.forEach((d, i) => {
+    const pool = document.createElement('i');
+    pool.className = 'pool';
+    pool.style.setProperty('--d', d);
+    $('.pools', track).appendChild(pool);
+    lights.push({ el: pool, d });
+    ['l', 'r'].forEach((side) => {
+      const p = document.createElement('i');
+      p.className = `pole ${side}`;
+      p.style.setProperty('--d', d);
+      p.style.setProperty('--x', `${(((i + 0.5) / POLES.length) * 100).toFixed(1)}%`); // flat: spread along the top edge
+      $('.poles', track).appendChild(p);
+      lights.push({ el: p, d, pole: true });
+    });
+  });
+  const light = (upTo) => lights.forEach((o) => o.el.classList.toggle('lit', stretch(o.d) <= upTo));
+  let mode = '', lit = -2;
   const layout = () => {
-    if (fly() === flying) return;
-    flying = fly();
-    road.classList.toggle('flyover', flying);
-    if (!flying) { lanesEl.style.removeProperty('--run'); [...marks.map((m) => m.el), ...nos].forEach((el) => el.classList.remove('gone')); }
+    const next = window.innerWidth < 960 ? 'flat' : reduceMotion ? 'still' : 'fly';
+    if (next === mode) return;
+    mode = next;
+    road.classList.toggle('road3d', mode !== 'flat');
+    road.classList.toggle('flyover', mode === 'fly');
+    track.style.removeProperty('--run');
+    marks.forEach((m) => { m.classList.remove('gone'); m.classList.toggle('now', mode !== 'fly'); });
+    lights.forEach((o) => o.el.classList.remove('gone'));
+    lit = mode === 'fly' ? -1 : 2;
+    light(lit);
     window.dispatchEvent(new Event('adagio:layout')); // the staff re-routes
   };
   let ticking = false;
   const onScroll = () => {
     ticking = false;
-    if (flying) {
+    if (mode === 'fly') {
       const r = road.getBoundingClientRect();
-      const span = r.height - (window.innerHeight - 64);
-      const q = clamp((64 - r.top) / span, 0, 1);
-      const run = q * END;
-      lanesEl.style.setProperty('--run', `${run.toFixed(1)}px`);
-      marks.forEach((m) => m.el.classList.toggle('gone', m.at - run < -60));
-      nos.forEach((el) => el.classList.toggle('gone', 60 - run < -60));
+      const q = clamp((64 - r.top) / (r.height - (window.innerHeight - 64)), 0, 1);
+      const run = STEP * (smoothstep(0.12, 0.44, q) + smoothstep(0.56, 0.88, q)); // hold, move, hold, move, hold
+      track.style.setProperty('--run', run.toFixed(2));
+      const k = Math.round(run / STEP);
+      const upTo = r.top < window.innerHeight * 0.45 ? k : -1; // the first stretch lights as the track arrives
+      if (upTo !== lit) { lit = upTo; light(lit); }
+      marks.forEach((m, i) => { m.classList.toggle('now', i === k); m.classList.toggle('gone', AT[i] - run < -3); }); // it fades as it reaches your feet
+      lights.forEach((o) => { if (o.pole) o.el.classList.toggle('gone', o.d - run < 5); });
     }
     // footer: the wordmark's letters brighten as the bottom of the page arrives
-    if (footReel) {
-      const fr = footReel.getBoundingClientRect();
-      if (fr.top < window.innerHeight) footReel.style.setProperty('--lift', clamp((window.innerHeight - fr.top) / fr.height, 0, 1).toFixed(3));
+    const mark = footReel && footReel.closest('.foot-mark') || $('.foot-mark');
+    if (mark) {
+      const fr = mark.getBoundingClientRect();
+      if (fr.top < window.innerHeight) mark.style.setProperty('--lift', clamp((window.innerHeight - fr.top) / fr.height, 0, 1).toFixed(3));
     }
   };
   layout();
@@ -539,7 +629,64 @@ if (road && lanesEl) {
   window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
   onScroll();
 }
-if (footReel && reduceMotion) footReel.style.setProperty('--lift', '1');
+if (footReel && reduceMotion) footReel.parentElement.style.setProperty('--lift', '1');
+
+/* ======================================================================
+   Footer wordmark: one clip per letter, and no seam inside any letter. Each letter gets a
+   layer of its own: its clip, placed on that letter's ink (measured here), under a copy of
+   the word with the other letters painted out. styles.css combines the six layers. On a
+   desktop, the letter under the pointer comes up to full color.
+   ====================================================================== */
+const footMark = $('.foot-mark');
+const footWord = $('[data-foot-word]');
+if (footMark && footReel && footWord) {
+  const clips = $$('video', footReel), letters = $$('span', footWord);
+  if (clips.length === letters.length) {
+    clips.forEach((v, i) => {
+      const layer = document.createElement('div');
+      layer.className = 'foot-letter';
+      const word = footWord.cloneNode(true);
+      word.removeAttribute('data-foot-word');
+      word.children[i].className = 'on';
+      layer.append(v, word);
+      footMark.insertBefore(layer, footWord);
+    });
+    footMark.classList.add('placed');
+    const place = () => {
+      const box = footMark.getBoundingClientRect();
+      if (!box.width) return;
+      const size = parseFloat(getComputedStyle(footWord).fontSize);
+      const g = document.createElement('canvas').getContext('2d');
+      g.font = `900 expanded ${size}px Archivo`;
+      const haveFont = document.fonts && document.fonts.check(`900 ${size}px Archivo`);
+      letters.forEach((el, i) => { // each clip covers its letter's ink, and a little more
+        const r = el.getBoundingClientRect();
+        let x0 = r.left, x1 = r.right;
+        if (haveFont) { const m = g.measureText(el.textContent); x0 = r.left - m.actualBoundingBoxLeft; x1 = r.left + m.actualBoundingBoxRight; }
+        const pad = size * 0.03;
+        clips[i].style.left = `${(x0 - pad - box.left).toFixed(1)}px`;
+        clips[i].style.width = `${(x1 - x0 + pad * 2).toFixed(1)}px`;
+      });
+    };
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('load', place);
+    if (document.fonts) { document.fonts.ready.then(place); document.fonts.load('900 100px Archivo').then(place, () => {}); }
+    if (window.matchMedia('(hover: hover)').matches) letters.forEach((el, i) => {
+      el.addEventListener('pointerenter', () => clips[i].classList.add('hot'));
+      el.addEventListener('pointerleave', () => clips[i].classList.remove('hot'));
+    });
+  }
+}
+
+/* ======================================================================
+   Story: the runner's cut-out (styles.css) loads with its section, on wide screens
+   ====================================================================== */
+const storyCut = $('[data-story-cut]');
+if (storyCut && 'IntersectionObserver' in window) {
+  const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { storyCut.classList.add('on'); io.disconnect(); } }, { rootMargin: '700px 0px' });
+  io.observe(storyCut.parentElement);
+}
 
 /* ======================================================================
    3D (models.js, three.js): fetched only when the first model is about to come on screen
