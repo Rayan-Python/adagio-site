@@ -9,9 +9,23 @@
   <meta property="og:title" content="Adagio: music that runs at your pace">
   <meta property="og:description" content="A running app that matches music BPM to your live cadence.">
   <meta property="og:type" content="website">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-  <link rel="icon" type="image/png" sizes="500x500" href="favicon.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="canonical" href="https://www.adagiorunning.com/">
+  <meta property="og:url" content="https://www.adagiorunning.com/">
+  <meta property="og:image" content="https://www.adagiorunning.com/favicon.png">
+  <!-- Icons: Google search needs a square multiple of 48px (48/96/192) and reads /favicon.ico -->
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <!-- Tells Google the site name and logo -->
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@graph":[
+    {"@type":"WebSite","name":"Adagio","alternateName":"Adagio Running","url":"https://www.adagiorunning.com/"},
+    {"@type":"Organization","name":"Adagio","url":"https://www.adagiorunning.com/","logo":"https://www.adagiorunning.com/favicon.png"}
+  ]}
+  </script>
   <!-- Two typefaces: Big Shoulders Display (stadium and race-bib signage) for headings
        36px and up, Atkinson Hyperlegible for everything else. Noto Music only draws the
        notes on the staff. Live numbers use the system monospace (no extra download). -->
@@ -22,9 +36,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Music&text=%F0%9D%84%9E%F0%9D%85%9F%F0%9D%85%A0%F0%9D%84%90%E2%99%A9&display=swap" rel="stylesheet">
   <!-- the footer wordmark alone keeps the old wide display style: Archivo at 125% width, subset to its six letters -->
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900&text=Adagio&display=swap" rel="stylesheet">
-  <!-- the load sequence plays once, and not at all with reduced motion -->
-  <script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { document.documentElement.classList.add('intro'); window.adagioIntroT0 = performance.now(); if (window.WebGL2RenderingContext) document.documentElement.classList.add('pin3d'); }</script>
-  <link rel="stylesheet" href="styles.css?v=20261127e">
+  <!-- Runs before the first paint: starts the load sequence and picks the pinned layout
+       (a file, not inline code, because the site's security policy only allows script files) -->
+  <script src="boot.js?v=20261128a"></script>
+  <link rel="stylesheet" href="styles.css?v=20261128a">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -49,7 +64,7 @@
       <video class="hero-video" muted loop playsinline preload="none" poster="assets/video/hero-feet-strike.jpg" data-src="assets/video/hero-feet-strike.mp4" aria-hidden="true" data-hero-video></video>
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <h1 class="display">Run your <span class="accent">rhythm.</span></h1>
+          <h1 class="display">Run your <span class="accent">rhythm</span></h1>
           <p class="lead">Adagio plays songs from your Apple Music playlists whose tempo matches your running cadence, step for step. Tap the feet to find yours.</p>
           <div class="hero-get">
             <a class="store-badge badge-hero" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener"><img src="assets/brand/app-store-badge.svg" alt="Download on the App Store" width="144" height="48"></a>
@@ -133,7 +148,7 @@
       <img class="story-photo" src="assets/hero.webp" alt="" width="1696" height="960" loading="lazy">
       <div class="story-cut" aria-hidden="true" data-story-cut></div>
       <div class="wrap story-in">
-        <h2 class="headline">One idea, two runners.</h2>
+        <h2 class="headline">One idea two runners</h2>
         <div class="prose">
           <p>We're both on our school's cross country team, and we see people run with AirPods in all the time. That got us asking: how could we connect mental health and physical fitness?</p>
           <p>Music is one of the best things for your mind. Running is one of the best things for your body. But they usually aren't connected. Adagio changes that by matching your music to your running pace.</p>
@@ -439,7 +454,7 @@
         </div>
         <!-- PLACEHOLDER LINKS: Terms, Instagram and Strava still need their real addresses -->
         <nav class="foot-links" aria-label="Footer">
-          <a href="https://adagio-darren.onrender.com/privacy" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5.5c0 4.3 2.9 8 7 9.5 4.1-1.5 7-5.2 7-9.5V6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m9 12 2.2 2.2L15.5 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Privacy Policy</a>
+          <a href="/privacy"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5.5c0 4.3 2.9 8 7 9.5 4.1-1.5 7-5.2 7-9.5V6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m9 12 2.2 2.2L15.5 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Privacy Policy</a>
           <a href="#" data-placeholder><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v4h4M9 12h6M9 15.5h6M9 9h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Terms</a>
           <a href="#" data-placeholder><img src="assets/brand/apps/instagram.png" alt="" width="18" height="18" loading="lazy">Instagram</a>
           <a href="#" data-placeholder><img src="assets/brand/apps/strava.png" alt="" width="18" height="18" loading="lazy">Strava</a>
@@ -465,14 +480,18 @@
   </footer>
 
   <!-- three.js for the 3D phone, spike and watches: script.js imports models.js only when one is about to come on screen -->
+  <!-- SECURITY: vercel.json allows this exact import map by its sha256 hash. If you edit it
+       (even spacing), update the hash in vercel.json or the 3D models will be blocked. -->
   <script type="importmap">
     { "imports": {
         "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
         "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
     } }
   </script>
-  <script>window.ADAGIO_V = "20261127e";</script>
-  <script src="script.js?v=20261127e" defer></script>
-  <script src="staff.js?v=20261127e" defer></script>
+  <script src="script.js?v=20261128a" defer></script>
+  <script src="staff.js?v=20261128a" defer></script>
+  <!-- Vercel Web Analytics and Speed Insights (plain-HTML setup, no inline code) -->
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
