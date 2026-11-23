@@ -363,6 +363,45 @@ const feetBtns = $$('[data-foot]');
 const LANE_MS = 3200; // how long a print takes to cross the lane
 let taps = [];
 let lastFoot = 'R';
+
+// "Your stride": counts steps, and reads the last 16 gaps between them for how even
+// they are (steadiness) and whether the left or right foot lands sooner (balance)
+const stride = $('[data-stride]');
+const strideBars = stride ? $('[data-stride-bars]', stride) : null;
+if (strideBars) strideBars.innerHTML = '<i></i>'.repeat(16);
+let strideSteps = 0, strideGaps = []; // [gap ms, foot that landed]
+function showStride() {
+  if (!stride) return;
+  $('[data-stride-steps]', stride).textContent = strideSteps;
+  const note = $('[data-stride-note]', stride);
+  const bars = $$('i', strideBars);
+  if (strideGaps.length < 3) {
+    $('[data-stride-steady]', stride).textContent = '–';
+    $('[data-stride-balance]', stride).textContent = '–';
+    note.textContent = strideSteps ? 'Keep stepping' : 'Waiting for steps';
+    bars.forEach((b) => { b.style.height = ''; b.className = ''; });
+    return;
+  }
+  const gaps = strideGaps.map(([g]) => g);
+  const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+  const sd = Math.sqrt(gaps.reduce((a, g) => a + (g - avg) ** 2, 0) / gaps.length);
+  const steady = Math.round(clamp(100 - (sd / avg) * 250, 0, 100));
+  $('[data-stride-steady]', stride).textContent = `${steady}%`;
+  // a foot that lands after a shorter gap is quicker; split the time between the two
+  const side = (f) => { const g = strideGaps.filter(([, ft]) => ft === f).map(([x]) => x); return g.length ? g.reduce((a, b) => a + b, 0) / g.length : avg; };
+  const l = side('L'), r = side('R');
+  const left = Math.round((l / (l + r)) * 100);
+  $('[data-stride-balance]', stride).textContent = `${left} / ${100 - left}`;
+  note.textContent = steady >= 85 ? 'Smooth and even' : steady >= 65 ? 'Pretty steady' : 'A little uneven';
+  // one bar per step gap, newest on the right; lime when it is close to your average
+  const start = 16 - gaps.length;
+  bars.forEach((b, i) => {
+    const g = gaps[i - start];
+    if (g === undefined) { b.style.height = ''; b.className = ''; return; }
+    b.style.height = `${clamp(55 + (g / avg - 1) * 260, 14, 100).toFixed(0)}%`; // a slow step stands taller
+    b.className = Math.abs(g - avg) / avg < 0.12 ? 'on' : 'off';
+  });
+}
 function stamp(foot) {
   if (!lane || reduceMotion) return;
   const p = document.createElement('i');
@@ -379,8 +418,11 @@ function step(foot) {
   if (btn) { btn.classList.add('hit'); setTimeout(() => btn.classList.remove('hit'), 100); }
   stamp(foot);
   const now = performance.now();
-  if (taps.length && now - taps[taps.length - 1] > 2000) taps = [];
+  if (taps.length && now - taps[taps.length - 1] > 2000) { taps = []; strideGaps = []; }
+  if (taps.length) strideGaps = strideGaps.concat([[now - taps[taps.length - 1], foot]]).slice(-16);
+  strideSteps += 1;
   taps.push(now);
+  showStride();
   if (taps.length > 9) taps.shift();
   if (taps.length < 3) { padStatus.textContent = 'Keep going…'; return; }
   const gaps = taps.slice(1).map((t, i) => t - taps[i]);

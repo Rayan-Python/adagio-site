@@ -187,7 +187,7 @@ const LEN = 10;
 const groundY = (x) => (x < 6.2 ? 0 : 0.85 * Math.pow((x - 6.2) / 3.8, 2.1));      // toe spring
 const foamH = (x) => lerp(lerp(0.95, 0.22, smooth(0.9, 6.0, x)), 0.15, smooth(8.2, 10, x)); // stack height
 const foamTop = (x) => groundY(x) + foamH(x);
-const upperRaw = curve([[0, 1.95], [0.25, 2.22], [0.9, 1.72], [1.9, 1.4], [3.0, 1.5], [3.6, 1.52], [5.2, 1.16], [6.8, 0.84], [8.3, 0.6], [9.4, 0.44], [10, 0.38]]);
+const upperRaw = curve([[0, 1.62], [0.25, 1.8], [0.9, 1.58], [1.9, 1.4], [3.0, 1.5], [3.6, 1.52], [5.2, 1.16], [6.8, 0.84], [8.3, 0.6], [9.4, 0.44], [10, 0.38]]);
 const topY = (x) => foamTop(x) + upperRaw(x);
 const widthRaw = curve([[0, 0.7], [0.6, 0.84], [2.2, 0.86], [3.8, 0.92], [5.8, 1.08], [7.2, 1.06], [8.6, 0.84], [9.5, 0.5], [10, 0.3]]);
 const HEEL_R = 0.7, TOE_R = 0.95;
@@ -202,7 +202,7 @@ const toeK = (x) => (x > LEN - TOE_R ? Math.sqrt(Math.max(0, 1 - Math.pow((x - (
 
 function upperSection(x, phi) {
   const yb = foamTop(x) - 0.02, yt = topY(x);
-  const mid = (yb + yt) / 2, hh = ((yt - yb) / 2) * (0.45 + 0.55 * toeK(x));
+  const mid = (yb + yt) / 2, hh = ((yt - yb) / 2) * (0.45 + 0.55 * toeK(x)) * Math.pow(toeK(x), 0.3);
   const vert = -Math.cos(phi);                       // -1 bottom … +1 top
   const y = mid + hh * spow(vert, vert < 0 ? 0.28 : 0.85);
   const taper = 1 - 0.46 * smooth(0, 1, vert);       // narrower toward the top, like a foot
@@ -335,7 +335,11 @@ function buildSpike() {
   const cream = new THREE.Color(0xf1e8d0), limeFoam = new THREE.Color(0xc4dc3c), green = new THREE.Color(0x2c8a3c), deepGreen = new THREE.Color(0x0e4c24);
   const foamGeo = loft({
     x0: 0, x1: 9.92, nu: 160, nv: 44,
-    section: slabSection((x) => groundY(x), (x) => foamTop(x) + 0.03, (x) => halfW(x) * 1.08 + 0.04 * endRound(x), 0.32, 0.42),
+    // the height closes along with the width at each end, so the tips are rounded, not thin blades
+    section: slabSection(
+      (x) => { const a = groundY(x), b = foamTop(x) + 0.03, k = Math.pow(endRound(x), 0.3); return (a + b) / 2 - ((b - a) / 2) * k; },
+      (x) => { const a = groundY(x), b = foamTop(x) + 0.03, k = Math.pow(endRound(x), 0.3); return (a + b) / 2 + ((b - a) / 2) * k; },
+      (x) => halfW(x) * 1.08 + 0.04 * endRound(x), 0.32, 0.42),
     colorAt: (x, h) => {
       const c = cream.clone().lerp(limeFoam, smooth(2.2, 5.0, x)).lerp(green, smooth(5.0, 7.8, x)).lerp(deepGreen, smooth(7.8, 9.9, x));
       return c.lerp(new THREE.Color(0xffffff), 0.08 * smooth(0.6, 1, h)); // slightly lighter top edge
@@ -356,15 +360,19 @@ function buildSpike() {
     clearcoat: 0.6, attenuationColor: new THREE.Color(0x6f9a14), attenuationDistance: 1.2,
   });
   const plateGeo = loft({
-    x0: 3.4, x1: 9.95, nu: 120, nv: 40,
-    section: slabSection((x) => groundY(x) - 0.06, (x) => groundY(x) + 0.09 + 0.06 * smooth(4, 6, x), (x) => (halfW(x) * 1.09 + 0.03) * smooth(3.4, 4.2, x) + 0.0001, 0.2, 0.25),
+    // it tapers shut under the forefoot, well behind the foam's toe, so nothing pokes out in front
+    x0: 3.4, x1: 9.0, nu: 120, nv: 40,
+    section: slabSection(
+      (x) => groundY(x) - 0.06 * (1 - 0.8 * smooth(8.3, 9.0, x)),
+      (x) => groundY(x) + (0.09 + 0.06 * smooth(4, 6, x)) * (1 - 0.85 * smooth(8.3, 9.0, x)),
+      (x) => (halfW(x) * 1.09 + 0.03) * smooth(3.4, 4.2, x) * (1 - smooth(8.5, 9.0, x)) + 0.0001, 0.2, 0.25),
   });
   add(new THREE.Mesh(plateGeo, plateMat));
 
   // traction nubs on the plate, and gold spike pins
   const nubSpots = [];
-  for (let x = 3.9, row = 0; x <= 9.6; x += 0.24, row++) {
-    const w = halfW(x) * 0.88;
+  for (let x = 3.9, row = 0; x <= 6.6; x += 0.24, row++) { // only on the flat forefoot, not where the toe curls up
+    const w = halfW(x) * 0.8 - 0.06;
     for (let z = -w + (row % 2) * 0.11; z <= w; z += 0.22) nubSpots.push([x, z]);
   }
   const nubGeo = new THREE.ConeGeometry(0.055, 0.11, 6);
@@ -382,7 +390,7 @@ function buildSpike() {
   const pinGeo = new THREE.ConeGeometry(0.075, 0.36, 24);
   pinGeo.rotateX(Math.PI);
   const baseGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.06, 24);
-  [[4.6, 0.6], [4.6, -0.6], [6.0, 0.82], [6.0, -0.82], [7.4, 0.76], [7.4, -0.76], [8.7, 0.42], [8.7, -0.42]].forEach(([x, zf]) => {
+  [[4.6, 0.6], [4.6, -0.6], [6.0, 0.82], [6.0, -0.82], [7.4, 0.76], [7.4, -0.76], [8.3, 0.5], [8.3, -0.5]].forEach(([x, zf]) => {
     const tilt = Math.atan2(groundY(x + 0.05) - groundY(x - 0.05), 0.1);
     const g = new THREE.Group();
     const base = new THREE.Mesh(baseGeo, pinMat); base.position.y = -0.02;
