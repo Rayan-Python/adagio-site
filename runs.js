@@ -33,6 +33,8 @@
 
   let runs = [];
   let units = 'mi';
+  let period = 'week';
+  try { const p = localStorage.getItem('adagio-period'); if (p === 'month' || p === 'all') period = p; } catch (e) { /* keep week */ }
   try { if (localStorage.getItem('adagio-units') === 'km') units = 'km'; } catch (e) { /* storage blocked: keep mi */ }
 
   // ---------- small DOM helpers (text only) ----------
@@ -182,15 +184,20 @@
   }
   function renderWeek() {
     const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)); // Monday
-    const week = runs.filter((r) => r.date >= start);
-    const time = week.reduce((a, r) => a + (r.duration || 0), 0);
-    const dist = week.reduce((a, r) => a + (r.distance || 0), 0);
+    const starts = {
+      week: new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)), // Monday
+      month: new Date(now.getFullYear(), now.getMonth(), 1),
+      all: new Date(0),
+    };
+    const inPeriod = runs.filter((r) => r.date >= starts[period]);
+    const time = inPeriod.reduce((a, r) => a + (r.duration || 0), 0);
+    const dist = inPeriod.reduce((a, r) => a + (r.distance || 0), 0);
     ui.week.replaceChildren(
-      stat('Runs', String(week.length)),
+      stat('Runs', String(inPeriod.length)),
       stat('Time', fmtDuration(time) || '0:00'),
       stat('Distance', fmtDistance(dist) || `0.00 ${units}`),
     );
+    document.querySelectorAll('[data-period]').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.period === period)));
   }
   function runCard(run, index) {
     const li = el('li');
@@ -220,7 +227,7 @@
     renderWeek();
     ui.runs.replaceChildren(...runs.map(runCard));
     ui.empty.hidden = runs.length > 0;
-    document.querySelectorAll('.units button').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.units === units)));
+    document.querySelectorAll('[data-units]').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.units === units)));
   }
 
   // ---------- detail view ----------
@@ -261,7 +268,12 @@
   ui.back.addEventListener('click', closeRun);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !ui.detail.hidden) closeRun(); });
 
-  document.querySelectorAll('.units button').forEach((btn) => btn.addEventListener('click', () => {
+  document.querySelectorAll('[data-period]').forEach((btn) => btn.addEventListener('click', () => {
+    period = ['week', 'month', 'all'].includes(btn.dataset.period) ? btn.dataset.period : 'week';
+    try { localStorage.setItem('adagio-period', period); } catch (e) { /* ignore */ }
+    renderWeek();
+  }));
+  document.querySelectorAll('[data-units]').forEach((btn) => btn.addEventListener('click', () => {
     units = btn.dataset.units === 'km' ? 'km' : 'mi';
     try { localStorage.setItem('adagio-units', units); } catch (e) { /* ignore */ }
     renderList();

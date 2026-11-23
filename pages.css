@@ -17,6 +17,7 @@ img { display: block; max-width: 100%; }
 :focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
 .skip { position: absolute; left: -999px; top: 8px; background: var(--yellow); color: #0A0A0A; padding: 8px 14px; z-index: 10; }
 .skip:focus { left: 8px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .wrap { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
 
 /* top bar */
