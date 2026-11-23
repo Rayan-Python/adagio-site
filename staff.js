@@ -2,8 +2,9 @@
 // One continuous five-line staff runs from the top of the page to the Contact section. It starts
 // under the nav, crosses the hero between the headline and the step pad (a treble clef, then
 // three notes that land in time as the page loads), and then winds down the page through the
-// open space of each section. It is always drawn a little past the bottom of the screen, so it
-// never shows a loose end; its engraved notes (Noto Music) pop onto it as they come into view.
+// open space of each section. It draws itself as you scroll: a lead note rides the tip of the
+// line, about two thirds of the way down the screen, and the engraved notes (Noto Music) pop
+// onto the staff as the tip passes them.
 // It ends in Contact like a piece of music: a last note under a fermata, a final barline.
 //
 // It is never cut or masked. It runs behind the content, and it's routed: every block of small
@@ -61,6 +62,7 @@
   const layers = ['dark', 'light'].map((kind) => {
     const g = make('g', { class: `staff-layer ${kind}`, 'clip-path': `url(#staff-clip-${kind})` }, svg);
     const lines = Array.from({ length: 5 }, () => make('path', { class: 'staff-line' }, g));
+    const live = Array.from({ length: 5 }, () => make('path', { class: 'staff-line' }, g)); // from the long lines' end to the tip
     const clef = make('text', { class: 'staff-clef' }, g);
     clef.textContent = CLEF;
     const notesG = make('g', {}, g);
@@ -72,7 +74,7 @@
     const tipGlyph = make('text', { 'text-anchor': 'middle' }, tip);
     tipGlyph.textContent = EIGHTH;
     const playhead = make('line', { class: 'staff-playhead' }, g); // rides the staff while the page plays
-    return { g, lines, clef, notesG, end, endThin, endThick, fermata, tip, tipGlyph, playhead, notes: [] };
+    return { g, lines, live, clef, notesG, end, endThin, endThick, fermata, tip, tipGlyph, playhead, notes: [] };
   });
   main.appendChild(svg);
   // the half of the story loop that passes in front of the runner: drawn again on a layer above his cut-out
@@ -88,6 +90,7 @@
   // ---- geometry -------------------------------------------------------------------
   let pts = [], normals = [], cum = [], total = 0, lens = [], noteAt = [], noteY = [], tune = [], heroNotes = 0, introEnd = 0, clefAt = 0, gap = 7, built = false;
   let frontAt = null, frontLens = []; // the stretch of the line that the front layer repeats
+  let lineRun = [];                   // each of the five lines' length up to every point
   let debug = null; // last build's obstacles, for the clearance check
 
   // An element's box in page coordinates. Paragraphs use the box around their lines of text
@@ -338,18 +341,21 @@
 
     // the five lines
     const paths = [];
-    lens = [];
+    lens = []; lineRun = [];
     for (let k = 0; k < 5; k++) {
       const off = (k - 2) * gap;
+      const run = new Float32Array(pts.length);
       let d = '', len = 0, px = 0, py = 0;
       pts.forEach((p, i) => {
         const x = p.x + normals[i].x * off, y = p.y + normals[i].y * off;
         d += `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`;
         if (i) len += Math.hypot(x - px, y - py);
+        run[i] = len;
         px = x; py = y;
       });
       paths.push(d);
       lens.push(len);
+      lineRun.push(run);
     }
     frontLens = [];
     frontLines.forEach((line, k) => {
@@ -432,30 +438,29 @@
     });
     debug = { hard, soft, tunnels, P, W };
     built = true;
-    lastDrawn = -2; // new geometry: redraw the lines
+    lastDrawn = -2; lastTip = -2; lastFront = -1; // new geometry: redraw the lines
     update();
   }
 
   // ---- drawing: the load sequence, then as you scroll ---------------------------------
-  // The line is drawn to a little below the bottom of the screen, so its end is never in view;
-  // what you see arrive as you scroll is the notes, each popping onto the staff as it comes up.
+  // The line follows your scrolling: it is drawn as far as a point two thirds of the way down the
+  // screen, with a lead note riding its tip, and each note pops on as the tip passes it. (Reduced
+  // motion: the whole line is drawn and nothing moves.)
+  // To keep scrolling smooth, the page-tall lines themselves only advance in steps of a fifth of a
+  // screen, so they repaint every ~150px of scrolling, not every frame. The stretch between their
+  // end and the tip is a short line of its own ("live"), redrawn each frame: a small repaint.
   // On load (once, about 1.4 s): the hero's stretch of staff draws in from under the nav, and its
   // three notes land on beats one, two and three of a 176 BPM count ("rhythm." lands on the
   // fourth, then the step pad rises: styles.css). After that the staff draws as you scroll.
   const BEAT = 60000 / 176;
   const t0 = window.adagioIntroT0 || 0;
   const introOn = () => !reduceMotion && t0 && performance.now() - t0 < BEAT * 4;
-  let frame = 0, lastDrawn = -2;
+  let frame = 0, lastDrawn = -2, lastTip = -2, lastFront = -1;
   function update() {
     frame = 0;
     if (!built || !pts.length) return;
     const mainTop = docTop(main);
-    const view = window.scrollY - mainTop;
-    // Drawn to 1.05 to 1.25 screens below the top, in steps of a fifth of a screen: the end is
-    // never in view, and the page-tall SVG repaints every ~150px of scrolling, not every frame.
-    const drawStep = window.innerHeight * 0.2;
-    const target = reduceMotion ? Infinity : Math.ceil((view + window.innerHeight * 1.05) / drawStep) * drawStep; // reduced motion: fully drawn
-    const seen = reduceMotion ? Infinity : view + window.innerHeight * 0.9;    // a note appears once it's this far up the screen
+    const target = reduceMotion ? Infinity : window.scrollY - mainTop + window.innerHeight * 0.66; // reduced motion: fully drawn
     // last point whose base height has been reached (base only ever increases)
     let lo = 0, hi = pts.length - 1;
     while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (pts[mid].base <= target) lo = mid; else hi = mid - 1; }
@@ -466,26 +471,43 @@
       const k = clamp(sinceLoad / (BEAT * 1.5), 0, 1);
       if (k < 1) i = Math.min(i, Math.round(introEnd * (1 - Math.pow(1 - k, 2.2))));
     }
-    const frac = i < 0 ? 0 : cum[i] / total;
     const p = i < 0 ? null : pts[i];
     const q = i < 0 ? null : pts[Math.min(i + 2, pts.length - 1)];
     const done = i >= pts.length - 1;
-    const redraw = i !== lastDrawn || intro; // only touch the long lines when their end actually moves
-    lastDrawn = i;
+    // where the long lines stop: the last fifth-of-a-screen step at or before the tip
+    let c = i;
+    if (!intro && !reduceMotion && !done) {
+      const drawStep = window.innerHeight * 0.2, stop = Math.floor(target / drawStep) * drawStep;
+      let a = 0, b = i;
+      while (a < b) { const mid = (a + b + 1) >> 1; if (pts[mid].base <= stop) a = mid; else b = mid - 1; }
+      c = Math.max(Math.min(a, i), Math.min(introEnd, i));
+    }
+    const redraw = c !== lastDrawn;            // only touch the long lines when their end actually moves
+    const moved = redraw || i !== lastTip;     // the tip moved: redraw the short live stretch
+    lastDrawn = c; lastTip = i;
+    let liveD = null;
+    if (moved) liveD = [0, 1, 2, 3, 4].map((k) => {
+      if (i <= c) return '';
+      const off = (k - 2) * gap;
+      let d = '';
+      for (let j = c; j <= i; j++) d += `${j > c ? 'L' : 'M'}${(pts[j].x + normals[j].x * off).toFixed(1)} ${(pts[j].y + normals[j].y * off).toFixed(1)}`;
+      return d;
+    });
     layers.forEach((Ly) => {
-      if (redraw) Ly.lines.forEach((path, k) => { path.style.strokeDashoffset = (lens[k] * (1 - frac)).toFixed(1); });
+      if (redraw) Ly.lines.forEach((path, k) => { path.style.strokeDashoffset = (lens[k] - lineRun[k][Math.max(c, 0)]).toFixed(1); });
+      if (moved) Ly.live.forEach((path, k) => path.setAttribute('d', liveD[k]));
       Ly.clef.style.opacity = i >= clefAt ? 1 : 0;
-      Ly.notes.forEach((el, k) => el.classList.toggle('on', noteAt[k] <= i && (k < heroNotes ? !intro || sinceLoad >= BEAT * (k + 1) : noteY[k] <= seen)));
+      Ly.notes.forEach((el, k) => el.classList.toggle('on', noteAt[k] <= i && (k >= heroNotes || !intro || sinceLoad >= BEAT * (k + 1))));
       Ly.end.style.opacity = done ? 0.9 : 0;
-      Ly.fermata.style.opacity = i >= noteAt[noteAt.length - 1] && noteY[noteY.length - 1] <= seen ? 1 : 0;
+      Ly.fermata.style.opacity = i >= noteAt[noteAt.length - 1] ? 1 : 0;
       if (!p) { Ly.tip.style.opacity = 0; return; }
       const angle = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
       Ly.tip.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${angle.toFixed(1)})`);
-      Ly.tip.style.opacity = intro && i < introEnd ? 1 : 0; // the note riding the tip only shows while the hero's stretch draws in
+      Ly.tip.style.opacity = done || (intro && i >= introEnd) ? 0 : 1; // the lead note rides the tip until the line reaches its final barline
     });
-    if (frontAt && redraw) { // the front half of the story loop keeps pace with the line beneath it
+    if (frontAt) { // the front half of the story loop keeps pace with the tip
       const f = clamp((i - frontAt[0]) / (frontAt[1] - frontAt[0]), 0, 1);
-      frontLines.forEach((line, k) => { line.style.strokeDashoffset = (frontLens[k] * (1 - f)).toFixed(1); });
+      if (f !== lastFront) { lastFront = f; frontLines.forEach((line, k) => { line.style.strokeDashoffset = (frontLens[k] * (1 - f)).toFixed(1); }); }
     }
     if (intro) queue();
   }
