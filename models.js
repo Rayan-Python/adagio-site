@@ -309,12 +309,13 @@ function buildSpike() {
   add(new THREE.Mesh(upperGeo, upperMat));
 
   // lining: the inside of the same surface, seen through the foot opening
-  const liningMat = new THREE.MeshStandardMaterial({ color: 0xf1e3b4, roughness: 0.9, side: THREE.BackSide });
+  // a shadowed gold, like the inside of the knit, so the opening reads as depth, not a flat cream patch
+  const liningMat = new THREE.MeshStandardMaterial({ color: 0x8a6512, roughness: 0.95, side: THREE.BackSide });
   cutCollar(liningMat, false);
   add(new THREE.Mesh(upperGeo, liningMat), false);
 
   // insole, visible inside the opening
-  const insole = new THREE.Mesh(new THREE.CircleGeometry(1, 40), new THREE.MeshStandardMaterial({ color: 0xf7e68a, roughness: 0.85 }));
+  const insole = new THREE.Mesh(new THREE.CircleGeometry(1, 40), new THREE.MeshStandardMaterial({ color: 0x2b2116, roughness: 0.9, side: THREE.DoubleSide }));
   insole.rotation.x = -Math.PI / 2;
   insole.scale.set(1.25, 0.5, 1);
   insole.position.set(COLLAR.cx, foamTop(COLLAR.cx) + 0.06, 0);
@@ -481,22 +482,60 @@ async function loadRealSpike(pivot, url) {
 }
 
 function initSpike(canvas) {
-  const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 28, distance: 16.5, fitWidth: 10, lights: 'studio', shadows: true });
+  const { renderer, scene, camera, drag } = makeStage(canvas, { fov: 28, distance: 16.5, fitWidth: 11, lights: 'studio', shadows: true });
   const spike = buildSpike();
-  // a tilted turntable: the shoe spins steadily on its own axis, angled toward the
-  // viewer and slightly toe-up, like a product shot. No bobbing or hopping.
+  // a tilted stage, angled toward the viewer like a product shot
   const tilt = new THREE.Group();
-  tilt.rotation.set(0.38, 0, -0.1);
+  tilt.rotation.set(0.3, 0, -0.06);
+  tilt.position.y = -0.9;
   tilt.add(spike);
   scene.add(tilt);
   loadRealSpike(spike, canvas.dataset.glb);
-  let spin = -2.55, last = 0; // start at a three-quarter view, toe toward the viewer
+
+  // a short strip of clay running track under the shoe, with a white lane line and a volt
+  // tick mark where the shoe lands (the track doesn't turn with the shoe)
+  const TRACK_Y = -1.62;
+  const track = new THREE.Group();
+  const clay = new THREE.Mesh(new THREE.BoxGeometry(9.5, 0.24, 3.4), new THREE.MeshStandardMaterial({ color: 0xb44a31, roughness: 0.92 }));
+  clay.receiveShadow = true;
+  track.add(clay);
+  const line = new THREE.Mesh(new THREE.BoxGeometry(9.5, 0.012, 0.08), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }));
+  line.position.set(0, 0.126, 1.45);
+  track.add(line);
+  const tickMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+  const tick = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.014, 3.4), tickMat);
+  tick.position.y = 0.127;
+  track.add(tick);
+  track.position.y = TRACK_Y - 0.12;
+  tilt.add(track);
+  const VOLT = new THREE.Color(0xe8f02a), WHITE = new THREE.Color(0xffffff);
+
+  // Scroll drives it: as Step 1 passes through the screen the shoe turns and steps down onto
+  // the track, landing halfway through with a small squash, as the tick flashes volt. Dragging
+  // still turns it on top of that. With reduced motion it simply rests on the track.
+  const section = canvas.closest('section') || canvas;
+  const progress = () => {
+    const r = section.getBoundingClientRect();
+    return clamp((window.innerHeight - r.top) / (window.innerHeight + r.height), 0, 1);
+  };
+  let landed = false, landAt = -1, flash = 0;
   runWhileVisible(canvas, (now) => {
-    const dt = last ? Math.min(now - last, 50) : 16;
-    last = now;
-    // no auto-spin: it rests at a three-quarter view and turns only while you drag it
-    if (canvas.dataset.angle) spin = +canvas.dataset.angle; // a fixed angle, e.g. for screenshots
-    spike.rotation.set(0, spin + drag.offset, 0);
+    const p = reduceMotion ? 1 : progress();
+    const d = clamp(p / 0.5, 0, 1);                       // 0 high above the track … 1 landed
+    const height = reduceMotion ? 0 : 2.6 * Math.pow(1 - d, 2);
+    if (!landed && d >= 1) { landed = true; landAt = now; }
+    if (landed && d < 0.98) landed = false;               // scrolled back up: it can land again
+    const since = landAt < 0 ? 1e9 : now - landAt;
+    const squash = since < 220 ? 1 - 0.06 * Math.sin((since / 220) * Math.PI) : 1;
+    spike.position.y = height;
+    spike.scale.set(1 + (1 - squash) * 0.5, squash, 1 + (1 - squash) * 0.5);
+    // it turns as it comes down, arriving at its three-quarter view as it lands, then drifts a little further
+    spike.rotation.set(0, -2.55 + (1 - d) * 2.4 - Math.max(0, p - 0.5) * 0.9 + drag.offset, 0);
+    // the tick: flashes volt on landing, and pulses gently on each beat while it's on screen
+    const ph = reduceMotion ? 1 : tempo().phase(now);
+    flash = Math.max(since < 400 ? 1 - since / 400 : 0, ph < 0.15 ? (1 - ph / 0.15) * 0.6 : 0);
+    tickMat.color.copy(WHITE).lerp(VOLT, flash);
+    tick.scale.set(1 + flash * 1.5, 1, 1);
   }, () => renderer.render(scene, camera));
 }
 
@@ -859,12 +898,22 @@ function initAppleWatch(canvas) {
   scene.add(watch);
   document.addEventListener('adagio:bpm', (e) => watch.userData.setBPM(e.detail));
   if (document.fonts) document.fonts.ready.then(() => watch.userData.setBPM(tempo().bpm));
+  // the haptic pulse, the point of this section: on every beat at the page tempo the watch gives a
+  // small scale bump and a thin ring (rubber, the section's ink color) spreads out from it and fades
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0x16110e, transparent: true, opacity: 0, depthWrite: false });
+  const ring = new THREE.Mesh(new THREE.RingGeometry(1, 1.035, 128), ringMat);
+  ring.position.z = -1.2;
+  scene.add(ring);
+  let beatAt = -1, lastCount = -1;
   runWhileVisible(canvas, (now) => {
-    // the haptic tap, the point of this section: a quick small buzz at the start of every beat
-    const ph = reduceMotion ? 1 : tempo().phase(now);
-    const buzz = ph < 0.12 ? Math.sin(ph * 160) * 0.035 * (1 - ph / 0.12) : 0;
-    watch.rotation.set(-0.22, 0.5 + drag.offset, 0.08 + buzz);
-    watch.position.set(buzz * 2, 0, 0);
+    const t = tempo();
+    if (!reduceMotion && t.count !== lastCount) { lastCount = t.count; beatAt = now; }
+    const age = beatAt < 0 ? 1 : clamp((now - beatAt) / 900, 0, 1);
+    const bump = reduceMotion ? 0 : Math.max(0, 1 - (now - beatAt) / 140);
+    watch.scale.setScalar(1 + 0.035 * bump);
+    watch.rotation.set(-0.22, 0.5 + drag.offset, 0.08);
+    ring.scale.setScalar(2.3 + age * 2.2);
+    ringMat.opacity = reduceMotion ? 0 : (1 - age) * 0.7;
   }, () => renderer.render(scene, camera));
 }
 

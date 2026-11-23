@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Noto+Music&display=swap" rel="stylesheet">
   <!-- the footer wordmark alone keeps the old wide display style: Archivo at 125% width, subset to its six letters -->
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900&text=Adagio&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261123h">
+  <link rel="stylesheet" href="styles.css?v=20261124j">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -109,10 +109,11 @@
             <div class="scale" aria-hidden="true"><span>120<br>easy jog</span><span>170<br>race pace</span><span>240<br>sprint</span></div>
 
             <h3 class="queue-title">What Adagio would queue</h3>
+            <p class="queue-note">Made-up songs to show how matching works. Adagio uses your own playlists.</p>
+            <p class="queue-note">No exact match? Adagio looks a few BPM either side, then wider.</p>
             <!-- three example songs, picked for your cadence (script.js): two at the same tempo,
-                 one at half time (one beat every two steps). Songs and artists are made up. -->
+                 one at half time (one beat every two steps) -->
             <ul class="songs" data-songs aria-live="polite"></ul>
-            <p class="fine">No exact match? Adagio looks a few BPM either side, then a little wider, until your playlist has enough songs. These example songs and artists are made up; Adagio picks from your own playlists.</p>
           </div>
         </div>
       </div>
@@ -147,24 +148,20 @@
         </div>
       </section>
 
-      <section class="step step-2 flip" id="step-2" data-theme="volt" aria-labelledby="step-2-title">
-        <div class="wrap step-grid">
-          <div class="step-copy">
+      <section class="step step-2" id="step-2" data-theme="volt" aria-labelledby="step-2-title">
+        <div class="wrap">
+          <div class="step-copy step-copy-wide">
             <p class="step-label">Step 2</p>
             <h2 class="headline" id="step-2-title">Match. Beat for beat.</h2>
             <p class="lead">It finds songs from Spotify or Apple Music whose tempo, in beats per minute, fits your cadence.</p>
-            <!-- footage of feet on the track, with a strip of ticks underneath scrolling at the runner's
-                 cadence: every footstrike lands on a tick (script.js syncs them to the video) -->
-            <figure class="beat-clip" data-beat-clip>
-              <video muted loop playsinline preload="none" poster="assets/video/hero-feet-strike.jpg" data-src="assets/video/hero-feet-strike.mp4" aria-hidden="true"></video>
-              <div class="beat-strip" aria-hidden="true"><div class="beat-ticks" data-beat-ticks></div><span class="beat-mark" data-beat-mark></span></div>
-              <figcaption>Every footstrike lands on a tick. The clip is in slow motion; at full speed this runner takes about 176 steps a minute.</figcaption>
-            </figure>
           </div>
-          <!-- A running track whose lane lines are also a music staff: every footstep on the
-               track lands on a note in the bar. The playhead moves at the page tempo. -->
-          <figure class="trackstaff" aria-hidden="true">
-            <svg viewBox="0 0 600 236" data-trackstaff>
+          <!-- two visuals side by side, same height, each with a one-line caption on a shared baseline -->
+          <div class="step2-visuals">
+            <!-- a running track whose lane lines are also a music staff: every footstep on the
+                 track lands on a note in the bar; the playhead moves at the page tempo -->
+            <figure class="visual trackstaff" aria-hidden="true">
+              <div class="visual-frame">
+                <svg viewBox="0 0 600 236" data-trackstaff>
               <defs>
                 <pattern id="rubber" width="6" height="6" patternUnits="userSpaceOnUse">
                   <rect width="6" height="6" fill="#B44A31"/>
@@ -182,8 +179,18 @@
               <g class="ts-steps"></g>
               <line class="ts-head" x1="0" x2="0" y1="20" y2="216"/>
             </svg>
-            <figcaption>Footsteps land on the beat: <span class="num" data-bpm>176</span> steps per minute, <span class="num" data-bpm>176</span> BPM.</figcaption>
-          </figure>
+              </div>
+              <figcaption>Footsteps land on the beat: <span class="num" data-bpm>176</span> steps per minute, <span class="num" data-bpm>176</span> BPM.</figcaption>
+            </figure>
+            <!-- feet on the track, with a strip of ticks underneath scrolling at the runner's cadence -->
+            <figure class="visual beat-clip" data-beat-clip>
+              <div class="visual-frame">
+                <video muted loop playsinline preload="none" poster="assets/video/hero-feet-strike.jpg" data-src="assets/video/hero-feet-strike.mp4" aria-hidden="true"></video>
+                <div class="beat-strip" aria-hidden="true"><div class="beat-ticks" data-beat-ticks></div><span class="beat-mark" data-beat-mark></span></div>
+              </div>
+              <figcaption>Slowed down: every footstrike lands on a tick.</figcaption>
+            </figure>
+          </div>
         </div>
       </section>
 
@@ -312,6 +319,7 @@
     <section class="team" id="team" data-theme="white">
       <div class="wrap">
         <h2 class="headline">Built by two high school cross country runners.</h2>
+        <div class="team-grid">
         <ul class="people">
           <li class="person">
             <h3 class="person-name">Ryan Soudkhah</h3>
@@ -324,6 +332,18 @@
             <a class="person-mail" href="mailto:dmkapturski@gmail.com">dmkapturski@gmail.com</a>
           </li>
         </ul>
+        <!-- SCHOOL LOGOS: add the official files to assets/schools/ and swap each placeholder box for an <img> -->
+        <ul class="schools" aria-label="Our schools">
+          <li class="school">
+            <div class="logo-slot" role="img" aria-label="Bergen County Technical High School logo (placeholder)"><span>Logo goes here<br>assets/schools/</span></div>
+            <p class="school-name">Bergen County Technical High School, Teterboro</p>
+          </li>
+          <li class="school">
+            <div class="logo-slot" role="img" aria-label="Northern Highlands Regional High School logo (placeholder)"><span>Logo goes here<br>assets/schools/</span></div>
+            <p class="school-name">Northern Highlands Regional High School</p>
+          </li>
+        </ul>
+        </div>
       </div>
     </section>
 
@@ -336,22 +356,17 @@
         </div>
         <div class="contact-actions">
           <a class="email-big" href="mailto:adagiorunning.support@gmail.com">adagiorunning.support<wbr>@gmail.com</a>
-          <a class="store-badge badge-contact" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener"><img src="assets/brand/app-store-badge.svg" alt="Download on the App Store" width="162" height="54"></a>
+          <div class="badge-pair">
+            <a class="store-badge badge-contact" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener"><img src="assets/brand/app-store-badge.svg" alt="Download on the App Store" width="162" height="54"></a>
+            <!-- Garmin's official "Available on the Connect IQ Store" badge (white, 2024 brand assets), unmodified -->
+            <a class="store-badge badge-garmin" href="https://apps-developer.garmin.com/apps/6215c95e-e5a2-4298-81f5-ff0b1000b1ab" target="_blank" rel="noopener"><img src="assets/brand/connect-iq-badge.svg" alt="Available on the Connect IQ Store" width="158" height="54"></a>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="site-footer" data-theme="dark">
-    <!-- Runners on the track (Pexels clips): they play muted while the footer is on screen,
-         pause when it isn't, and show still posters with reduced motion -->
-    <div class="foot-reel" aria-hidden="true">
-      <video muted loop playsinline preload="none" poster="assets/video/posters/track-aerial.jpg" data-src="assets/video/track-aerial.mp4"></video>
-      <video muted loop playsinline preload="none" poster="assets/video/posters/track-footrace.jpg" data-src="assets/video/track-footrace.mp4"></video>
-      <video muted loop playsinline preload="none" poster="assets/video/posters/track-sprinter.jpg" data-src="assets/video/track-sprinter.mp4"></video>
-      <video muted loop playsinline preload="none" poster="assets/video/posters/track-jog.jpg" data-src="assets/video/track-jog.mp4"></video>
-      <video muted loop playsinline preload="none" poster="assets/video/posters/track-pair.jpg" data-src="assets/video/track-pair.mp4"></video>
-    </div>
     <div class="foot-top">
       <div class="wrap foot">
         <p class="foot-brand">Adagio, made by runners for runners.</p>
@@ -365,12 +380,23 @@
       </div>
       <p class="wrap legal">© <span id="year">2026</span> Adagio. Footage from Pexels.</p>
     </div>
-    <!-- the footage shows through the letters, tinted lime yellow -->
-    <p class="foot-word" aria-hidden="true">Adagio</p>
+    <!-- the wordmark: the track clips play behind it and show only through its letters, tinted lime yellow -->
+    <div class="foot-mark" aria-hidden="true">
+      <!-- Runners on the track (Pexels clips): they play muted while the footer is on screen,
+         pause when it isn't, and show still posters with reduced motion -->
+      <div class="foot-reel" aria-hidden="true">
+        <video muted loop playsinline preload="none" poster="assets/video/posters/track-aerial.jpg" data-src="assets/video/track-aerial.mp4"></video>
+        <video muted loop playsinline preload="none" poster="assets/video/posters/track-footrace.jpg" data-src="assets/video/track-footrace.mp4"></video>
+        <video muted loop playsinline preload="none" poster="assets/video/posters/track-sprinter.jpg" data-src="assets/video/track-sprinter.mp4"></video>
+        <video muted loop playsinline preload="none" poster="assets/video/posters/track-jog.jpg" data-src="assets/video/track-jog.mp4"></video>
+        <video muted loop playsinline preload="none" poster="assets/video/posters/track-pair.jpg" data-src="assets/video/track-pair.mp4"></video>
+      </div>
+      <p class="foot-word">Adagio</p>
+    </div>
   </footer>
 
-  <script src="script.js?v=20261123h"></script>
-  <script src="staff.js?v=20261123h"></script>
+  <script src="script.js?v=20261124j"></script>
+  <script src="staff.js?v=20261124j"></script>
   <!-- three.js for the 3D spike, phone and watch (models.js) -->
   <script type="importmap">
     { "imports": {
@@ -378,6 +404,6 @@
         "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
     } }
   </script>
-  <script type="module" src="models.js?v=20261123h"></script>
+  <script type="module" src="models.js?v=20261124j"></script>
 </body>
 </html>

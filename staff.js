@@ -22,11 +22,6 @@
   // engraved glyphs (Unicode musical symbols, drawn with the Noto Music font)
   const CLEF = '\u{1D11E}';
   const GLYPHS = ['\u{1D160}', '♫', '\u{1D15F}', '\u{1D160}', '♫', '\u{1D161}'];
-  // what the staff must never cross: body text, captions, labels, buttons, charts, 3D models
-  const KEEP_CLEAR = [
-    'p', 'li', 'figcaption', 'dl', 'button', 'label', 'input', '.store-badge', '.person-mail',
-    '.pad', '.app-tray', '.lanes', '.runvis', '.trackstaff svg', '.beat-clip video', '.beat-strip', 'canvas',
-  ].map((s) => `${s}:not(.headline)`).join(', ');
   // sections where the page is volt or white: the staff turns rubber there
   const LIGHT = ['#step-1', '#step-2', '#step-3', '#accessibility', '#team', '#contact'];
 
@@ -35,9 +30,16 @@
   const defs = make('defs', {}, svg);
   const clipDark = make('clipPath', { id: 'staff-clip-dark' }, defs);
   const clipLight = make('clipPath', { id: 'staff-clip-light' }, defs);
-  // where the staff has to pass near text it stops at the edge of the text block: a mask
-  // with a hole for every block it must never cross (headlines aren't in it; it may cross those)
+  // The one rule on top of the original: the staff never crosses running text. A mask cuts it
+  // out tightly under each line of body text, captions, labels, small headings, names, emails,
+  // links and buttons, so it stops at their edges and carries on past them as the same line.
+  // (Big headlines and the 3D models aren't masked: it still weaves over and behind those.)
   const mask = make('mask', { id: 'staff-mask', maskUnits: 'userSpaceOnUse' }, defs);
+  // each of these is cut out as one block, tight to its words (paragraphs whole, not line by line)
+  const TEXT = [
+    'p:not(.headline)', 'figcaption', 'h3', 'dt', 'dd', '.song', '.scale', '.lane-text', 'a', 'button', 'label',
+    '.facts li', '.people li', '.device-list', '.contact-actions', 'svg:not(.staff) text', // (not the staff's own notes)
+  ].map((s) => `main ${s}`).join(', ');
   // The staff runs behind the text. Where it passes through a letter, the letter itself
   // shows it in the opposite color: the text uses "difference" blending (styles.css).
   const layers = ['dark', 'light'].map((kind) => {
@@ -59,7 +61,7 @@
   function build() {
     const W = document.documentElement.clientWidth;
     const mobile = W < 720;
-    gap = mobile ? 3.2 : 7; // on phones the staff is slim enough to run in the 20px page gutter
+    gap = mobile ? 4.5 : 7;
     const mainTop = docTop(main);
     const H = main.scrollHeight;
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
@@ -81,20 +83,63 @@
     });
     make('rect', { x: -50, y: y0, width: W + 100, height: Math.max(0, H - y0) }, clipDark);
 
+    // the text mask: one hole per line of text (tight to the words), plus small bridges where
+    // lines or paragraphs sit close together, so no little stubs of staff show in between
+    const scrollY = window.scrollY;
+    const holes = [];
+    document.querySelectorAll(TEXT).forEach((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      // the block is the box around its lines of text: as wide as its longest line, no wider
+      const rects = [...range.getClientRects()].filter((r) => r.width >= 1 && r.height >= 1);
+      const box = rects.length ? rects.reduce((b, r) => ({ left: Math.min(b.left, r.left), right: Math.max(b.right, r.right), top: Math.min(b.top, r.top), bottom: Math.max(b.bottom, r.bottom) }),
+        { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity }) : el.getBoundingClientRect();
+      if (box.right - box.left < 1 || box.bottom - box.top < 1) return;
+      holes.push({ x0: box.left - 6, x1: box.right + 6, y0: box.top + scrollY - mainTop - 4, y1: box.bottom + scrollY - mainTop + 4 });
+    });
+    mask.replaceChildren();
+    make('rect', { x: -50, y: 0, width: W + 100, height: H, fill: '#fff' }, mask);
+    holes.forEach((h) => make('rect', { x: h.x0, y: h.y0, width: h.x1 - h.x0, height: h.y1 - h.y0, rx: 3, fill: '#000' }, mask));
+    const GAP = mobile ? 22 : 30;
+    holes.forEach((a, i) => holes.forEach((b, k) => {
+      if (k === i) return;
+      // b just below a and overlapping it sideways: fill the strip between them
+      if (b.y0 > a.y1 - 1 && b.y0 - a.y1 < GAP) {
+        const x0 = Math.max(a.x0, b.x0), x1 = Math.min(a.x1, b.x1);
+        if (x1 - x0 > 8) make('rect', { x: x0, y: a.y1 - 1, width: x1 - x0, height: b.y0 - a.y1 + 2, fill: '#000' }, mask);
+      }
+      // b just right of a on the same line: fill the gap between them
+      if (b.x0 > a.x1 - 1 && b.x0 - a.x1 < GAP) {
+        const y0 = Math.max(a.y0, b.y0), y1 = Math.min(a.y1, b.y1);
+        if (y1 - y0 > 6) make('rect', { x: a.x1 - 1, y: y0, width: b.x0 - a.x1 + 2, height: y1 - y0, fill: '#000' }, mask);
+      }
+    }));
+
     // each section gets its own way of moving: where the staff centers, how wide it
     // sways, and how loopy it gets (loops happen when "loop" pushes past the pitch)
-    const zones = [
-      ['#story', 0.62, 0.26, 0.85],
-      ['#step-1', 0.5, 0.36, 0.9],
-      ['#step-2', 0.5, 0.38, 1.0],
-      ['#step-3', 0.5, 0.36, 0.8],
-      ['#features', 0.5, 0.38, 0.8],
-      ['#devices', 0.5, 0.3, 0.6],
-      ['#accessibility', 0.5, 0.34, 1.0],
-      ['#roadmap', 0.5, 0.38, 0.7],
-      ['#team', 0.5, 0.36, 0.9],
-      ['#contact', 0.5, 0.18, 0.0],
-    ].map(([sel, cx, amp, loop]) => ({ top: docTop(document.querySelector(sel)) - mainTop, cx, amp, loop }));
+    // Where the staff goes in each section: its center (as a share of the width), how far it
+    // sways and how loopy it gets. On wide screens the text sits in the left column, so the staff
+    // weaves through the right one (over and behind the models, the photo, the charts) and sweeps
+    // across the page in the gaps between sections. On phones the text is full width, so it runs
+    // in the side gutter and switches sides in the gap between each pair of sections.
+    const L = 10 / W, R = 1 - 10 / W;
+    const zones = (mobile ? [
+      ['#story', R, 0, 0], ['#step-1', L, 0, 0], ['#step-2', R, 0, 0], ['#step-3', L, 0, 0],
+      ['#features', R, 0, 0], ['#devices', L, 0, 0], ['#accessibility', R, 0, 0], ['#roadmap', L, 0, 0],
+      ['#team', R, 0, 0], ['#contact', L, 0, 0],
+    ] : [
+      ['#story', 0.78, 0.12, 0.6],
+      ['#step-1', 0.75, 0.14, 0.7],
+      ['#step-2', 0.82, 0.1, 0.7],     // right of the paragraph, over the clip
+      ['#step-3', 0.955, 0.02, 0],     // down the margin past the chart
+      ['#features', 0.76, 0.12, 0.6],  // over and behind the phone
+      ['.facts', 0.955, 0.02, 0],      // past the three facts in the margin
+      ['#devices', 0.76, 0.12, 0.6],   // around the Garmin watch
+      ['#accessibility', 0.78, 0.12, 0.7],
+      ['#roadmap', 0.75, 0.15, 0.5],
+      ['#team', 0.46, 0.03, 0],        // one pass between the names and the school logos
+      ['#contact', 0.55, 0.1, 0],
+    ]).map(([sel, cx, amp, loop]) => ({ top: docTop(document.querySelector(sel)) - mainTop, cx, amp, loop }));
     const param = (y, k) => {
       let v = zones[0][k];
       for (let i = 1; i < zones.length; i++) v = lerp(v, zones[i][k], smooth(zones[i].top - 180, zones[i].top + 180, y));
@@ -106,94 +151,14 @@
     const A = mobile ? 52 : 82;            // vertical pitch per radian of the loop
     const B = mobile ? 72 : 118;           // loop radius at full loopiness
     const P = mobile ? 900 : 1300;         // period of the big side-to-side sway
-    // Everything the staff must stay off: body text, captions, labels, buttons, charts and the
-    // 3D models (not headlines). Rects are in the staff's own coordinates.
-    const half = gap * 2 + 2;                 // half the staff's width, plus a hair
-    const avoid = [...main.querySelectorAll(KEEP_CLEAR)].map((el) => {
-      const r = el.getBoundingClientRect();
-      return { x0: r.left, x1: r.right, y0: r.top + window.scrollY - mainTop, y1: r.bottom + window.scrollY - mainTop };
-    }).filter((r) => r.x1 > r.x0 && r.y1 > r.y0 && r.y1 > start - 200);
-
-    // the mask: white everywhere, black holes over those blocks (with a small margin)
-    mask.replaceChildren();
-    make('rect', { x: -50, y: 0, width: W + 100, height: H, fill: '#fff' }, mask);
-    // the holes are a little wider than the blocks, so narrow gaps between neighbours close up and
-    // no slivers of staff show between, say, a paragraph and the model beside it
-    // (on phones the margins are only 20px, so the holes stay tight there)
-    const PADX = mobile ? 1 : 26, PADY = mobile ? 10 : 12;
-    avoid.forEach((r) => make('rect', { x: r.x0 - PADX, y: r.y0 - PADY, width: r.x1 - r.x0 + PADX * 2, height: r.y1 - r.y0 + PADY * 2, rx: mobile ? 4 : 10, fill: '#000' }, mask));
-    // side-by-side blocks closer than a real corridor are cut out as one, so the staff never
-    // shows as stray dashes in the thin gap between, say, a paragraph and the model next to it
-    const BRIDGE = mobile ? 0 : 120;
-    avoid.forEach((p, i) => avoid.forEach((q, k) => {
-      if (k <= i) return;
-      const top = Math.max(p.y0, q.y0), bottom = Math.min(p.y1, q.y1);
-      if (bottom <= top) return; // not side by side
-      const [l, r] = p.x1 <= q.x0 ? [p, q] : q.x1 <= p.x0 ? [q, p] : [null, null];
-      if (!l || r.x0 - l.x1 > BRIDGE) return;
-      make('rect', { x: l.x1, y: top - PADY, width: r.x0 - l.x1, height: bottom - top + PADY * 2, fill: '#000' }, mask);
-    }));
-
-    // Route: for each height, the staff's wish is the gentle sway it always had; if a text block
-    // is at that height (or close above or below), it moves to the nearest clear gap instead,
-    // and it doesn't loop there.
-    const LOOK = mobile ? 80 : 170;          // start moving aside this far before a block
-    const edge = half + 1;                     // how close to the page edge it may run
-    const rows = [];
-    let prevX = null; // while text is around, the staff keeps to the side it's on rather than cutting across
+    pts = [];
     for (let y = start; y <= end; y += 3) {
-      const wish = param(y, 'cx') * W + param(y, 'amp') * W * Math.sin(((y - start) / P) * Math.PI * 2 + 0.4);
-      const near = avoid.filter((r) => r.y1 > y - LOOK && r.y0 < y + LOOK);
-      let hidden = false;
-      let x = clamp(wish, edge, W - edge);
-      if (near.length) {
-        // free spans between blocks at this height
-        const CLR = mobile ? 1 : PADX + 4;
-        const blocked = near.map((r) => [r.x0 - half - CLR, r.x1 + half + CLR]).sort((a, b) => a[0] - b[0]);
-        const free = [];
-        let from = edge;
-        blocked.forEach(([a, b]) => { if (a > from) free.push([from, a]); from = Math.max(from, b); });
-        if (W - edge > from) free.push([from, W - edge]);
-        // a gap only counts if it's a real corridor, not a sliver between two columns
-        for (let k = free.length - 1; k >= 0; k--) if (free[k][1] - free[k][0] < 40 && free[k][0] > edge && free[k][1] < W - edge) free.splice(k, 1);
-        if (!free.length) hidden = true; // nowhere clear at this height: this stretch gets cut out below
-        if (free.length) {
-          const aim = prevX === null ? x : prevX;
-          let best = null, bestD = Infinity;
-          free.forEach(([a, b]) => { const c = clamp(aim, a, b), d = Math.abs(c - aim); if (d < bestD) { bestD = d; best = c; } });
-          x = best;
-        }
-      }
-      // loops only where there's nothing to stay off within a loop's reach
-      const clear = !avoid.some((r) => r.y1 > y - B * 1.4 - LOOK && r.y0 < y + B * 1.4 + LOOK);
-      rows.push({ y, x, b: clear ? param(y, 'loop') * B : 0, hidden });
-      prevX = x;
-    }
-    // smooth the route (centered, so the staff starts moving aside before it reaches a block)
-    const R = mobile ? 14 : 24;
-    const smoothed = rows.map((row, i) => {
-      let sx = 0, sb = 0, n = 0;
-      for (let k = Math.max(0, i - R); k <= Math.min(rows.length - 1, i + R); k++) { sx += rows[k].x; sb += Math.min(rows[k].b, row.b === 0 ? 0 : rows[k].b); n++; }
-      return { y: row.y, x: sx / n, b: sb / n };
-    });
-    pts = smoothed.map(({ y, x, b }) => {
+      const b = param(y, 'loop') * B;
       const t = (y - start) / A;
-      return { x: clamp(x + b * Math.cos(t) - b, edge, W - edge), y: y - b * Math.sin(t), base: y };
-    });
-    // where no clear route existed, cut those stretches out whole rather than leave dashes
-    let run = null;
-    const closeRun = () => {
-      if (!run) return;
-      make('rect', { x: run.x0 - half - 4, y: run.y0 - half - 4, width: run.x1 - run.x0 + half * 2 + 8, height: run.y1 - run.y0 + half * 2 + 8, fill: '#000' }, mask);
-      run = null;
-    };
-    rows.forEach((row, i) => {
-      const p = pts[i];
-      if (!row.hidden) { closeRun(); return; }
-      if (!run) run = { x0: p.x, x1: p.x, y0: p.y, y1: p.y };
-      run.x0 = Math.min(run.x0, p.x); run.x1 = Math.max(run.x1, p.x); run.y0 = Math.min(run.y0, p.y); run.y1 = Math.max(run.y1, p.y);
-    });
-    closeRun();
+      const x = param(y, 'cx') * W + param(y, 'amp') * W * Math.sin(((y - start) / P) * Math.PI * 2 + 0.4) + b * Math.cos(t) - b;
+      const yy = y - b * Math.sin(t);
+      pts.push({ x: clamp(x, mobile ? 10 : 14, W - (mobile ? 10 : 14)), y: yy, base: y });
+    }
 
     // running length along the center line; normals point toward the bottom staff line
     cum = [0];

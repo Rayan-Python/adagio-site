@@ -79,6 +79,14 @@ button { font: inherit; color: inherit; }
 .store-badge { display: inline-block; line-height: 0; border-radius: 9px; }
 .store-badge img { display: block; height: 54px; width: auto; }
 .store-badge.badge-nav img { height: 40px; }
+.badge-pair { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.badge-pair .store-badge img { height: 54px; width: auto; }
+@media (max-width: 719px) {
+  /* on phones the two badges stack at the same width */
+  .badge-pair { display: grid; grid-template-columns: 220px; gap: 16px; }
+  .badge-pair .store-badge { display: block; }
+  .badge-pair .store-badge img { display: block; width: 100%; height: auto; }
+}
 
 /* ------------------------------------------------------------------
    The music staff (staff.js): five lines winding down the page, drawn as you scroll.
@@ -195,6 +203,8 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .scale { display: flex; justify-content: space-between; gap: 8px; font-size: var(--t-14); line-height: 1.3; color: var(--fg-2); }
 .scale span:nth-child(2) { text-align: center; } .scale span:last-child { text-align: right; }
 .queue-title { font-size: var(--t-18); font-weight: 700; margin-top: 8px; }
+.queue-note { margin-top: -12px; font-size: var(--t-16); color: var(--fg-2); }
+.queue-note + .queue-note { margin-top: -16px; }
 .songs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .song { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; align-items: baseline; padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,.07); }
 .song-title { font-weight: 700; }
@@ -226,7 +236,8 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
    ------------------------------------------------------------------ */
 .how { position: relative; }
 .step { padding: 96px 0; }
-.step-2 { padding: 136px 0; }
+.step-2 { padding: 96px 0; }
+.step-copy-wide .lead { max-width: 40em; }
 .step-grid { display: grid; gap: 40px; align-items: center; }
 .step-label { font-weight: 700; font-size: var(--t-18); color: var(--fg-2); margin-bottom: 12px; }
 .step .headline { font-size: clamp(var(--t-48), 6.6vw, var(--t-88)); max-width: none; text-wrap: balance; }
@@ -234,12 +245,15 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .model-canvas:active { cursor: grabbing; }
 .model-cap { position: absolute; left: 50%; bottom: 0; translate: -50% 0; font-size: var(--t-14); color: var(--fg-2); white-space: nowrap; pointer-events: none; display: none; }
 .has-3d .model-cap { display: block; }
-.spike-stage { position: relative; height: min(48vh, 440px); min-height: 260px; }
+.spike-stage { position: relative; height: min(58vh, 520px); min-height: 320px; }
 
+/* Step 2: the track-staff and the clip, side by side, same height, captions on one baseline */
+.step2-visuals { display: grid; gap: 40px; margin-top: 48px; }
+.visual { display: grid; grid-template-rows: 1fr auto; gap: 14px; }
+.visual-frame { display: grid; align-content: center; min-height: 0; }
+.visual figcaption { font-weight: 700; font-size: var(--t-16); }
 /* Step 2: a running track whose lane lines are a music staff */
-.trackstaff { display: grid; gap: 16px; }
 .trackstaff svg { width: 100%; height: auto; display: block; overflow: visible; }
-.trackstaff figcaption { font-weight: 700; }
 .ts-lanes line { stroke: #fff; stroke-width: 3; stroke-linecap: round; opacity: .92; }
 .ts-bars line { stroke: #fff; stroke-width: 2.5; opacity: .92; }
 .ts-bars line.thick { stroke-width: 6; }
@@ -251,14 +265,13 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .ts-head { stroke: var(--volt); stroke-width: 4; stroke-linecap: round; }
 
 /* Step 2: a running clip with a beat strip; a tick crosses the mark on every footstrike */
-.beat-clip { display: grid; gap: 0; margin-top: 32px; max-width: 34em; }
+.beat-clip .visual-frame { align-content: start; }
 .beat-clip video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px 10px 0 0; background: var(--rubber); }
 .beat-strip { position: relative; height: 44px; overflow: hidden; background: var(--rubber); border-radius: 0 0 10px 10px; }
 .beat-ticks { position: absolute; left: 0; top: 0; bottom: 0; will-change: transform; }
 .beat-ticks i { position: absolute; top: 12px; bottom: 12px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: rgba(255,255,255,.7); }
 .beat-mark { position: absolute; left: 50%; top: 4px; bottom: 4px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--volt); }
 .beat-mark.hit { box-shadow: 0 0 0 3px var(--volt); }
-.beat-clip figcaption { margin-top: 12px; font-size: var(--t-16); color: var(--fg); }
 
 /* Step 3: one run, three paces */
 .runvis { display: grid; gap: 12px; }
@@ -330,7 +343,14 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
    Team
    ------------------------------------------------------------------ */
 .team { padding: 96px 0; }
-.people { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 28px; }
+.team-grid { display: grid; gap: 48px; margin-top: 8px; align-items: start; }
+.people { list-style: none; margin: 0; padding: 0; display: grid; gap: 28px; }
+.schools { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 520px; }
+.school { display: grid; gap: 10px; justify-items: center; text-align: center; }
+/* both logos sit in boxes of the same height, so the pair reads as balanced */
+.logo-slot { width: 100%; height: 120px; display: grid; place-items: center; border: 2px dashed rgba(22,17,14,.35); border-radius: 6px; color: var(--fg-2); font-size: var(--t-14); font-weight: 700; }
+.school img { height: 120px; width: auto; max-width: 100%; object-fit: contain; }
+.school-name { font-size: var(--t-16); color: var(--fg); }
 .person { display: grid; gap: 2px; }
 .person-name { font-size: var(--t-28); font-weight: 700; line-height: 1.2; }
 .person-role { color: var(--fg-2); }
@@ -348,12 +368,9 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 /* ------------------------------------------------------------------
    Footer
    ------------------------------------------------------------------ */
-.site-footer { position: relative; isolation: isolate; overflow: hidden; background: var(--rubber); color: var(--white); --fg-2: rgba(255,255,255,.74); }
-.foot-reel { position: absolute; inset: 0; z-index: -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--rubber); }
-.foot-reel video { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1); }
-.foot-reel video:nth-child(n+4) { display: none; }
-/* the top of the footer: rubber over the footage, so the links read and there's dark space below the volt Contact section */
-.foot-top { padding: 96px 0 48px; background: rgba(22,17,14,.84); }
+.site-footer { position: relative; overflow: hidden; background: var(--rubber); color: var(--white); --fg-2: rgba(255,255,255,.74); }
+/* plain dark space between the volt Contact section and the wordmark */
+.foot-top { padding: 104px 0 56px; }
 .foot { display: grid; gap: 20px; }
 .foot-brand { font-weight: 700; font-size: var(--t-22); }
 .foot-links { display: flex; flex-wrap: wrap; gap: 12px 28px; }
@@ -361,16 +378,20 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .foot-links a:hover { color: var(--white); text-decoration: underline; text-underline-offset: 4px; }
 .foot-links img { width: 18px; height: 18px; border-radius: 22.5%; }
 .legal { margin-top: 32px; font-size: var(--t-14); color: var(--fg-2); }
-/* The wordmark: a rubber band over the footage, multiplied, so the footage only shows inside the
-   letters, tinted lime yellow and fading toward the bottom like the old version. It keeps the old
+/* The wordmark: the clips play behind it and a rubber layer is multiplied over them, so the footage
+   only shows inside the letters, tinted lime yellow and fading toward the bottom. It keeps the old
    wide display style (Archivo at 125% width). */
+.foot-mark { position: relative; isolation: isolate; overflow: hidden; }
+.foot-reel { position: absolute; inset: 0; z-index: -1; display: grid; grid-template-columns: repeat(3, 1fr); background: var(--rubber); }
+.foot-reel video { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1); }
+.foot-reel video:nth-child(n+4) { display: none; }
 .foot-word {
-  margin: 0; padding: 24px 0 0; text-align: center; line-height: .78; user-select: none;
+  margin: 0; padding-top: 4px; text-align: center; line-height: .78; user-select: none;
   font-family: "Archivo", var(--display); font-weight: 900; font-stretch: 125%; letter-spacing: -.06em; font-size: clamp(5rem, 24vw, 22rem);
-  background: var(--rubber); mix-blend-mode: multiply; overflow: hidden;
+  mix-blend-mode: multiply; color: transparent;
+  background-image: linear-gradient(180deg, #E8F02A 0%, #E8F02A 40%, rgba(232,240,42,.35) 100%), linear-gradient(var(--rubber), var(--rubber));
+  -webkit-background-clip: text, border-box; background-clip: text, border-box;
 }
-.foot-word { color: transparent; background-image: linear-gradient(180deg, #E8F02A 0%, #E8F02A 40%, rgba(232,240,42,.35) 100%), linear-gradient(var(--rubber), var(--rubber));
-  -webkit-background-clip: text, border-box; background-clip: text, border-box; }
 
 /* ------------------------------------------------------------------
    Larger screens
@@ -383,6 +404,8 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
   .foot-reel { grid-template-columns: repeat(5, 1fr); }
   .foot-reel video:nth-child(n+4) { display: block; }
   .people { grid-template-columns: repeat(2, max-content); gap: 64px; }
+  .team-grid { grid-template-columns: auto 1fr; gap: 72px; }
+  .schools { justify-self: end; width: 100%; }
 }
 @media (min-width: 960px) {
   :root { --pad: 56px; }
@@ -391,7 +414,7 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
   .hero-copy { grid-column: 1 / -1; grid-template-columns: 1.05fr 1fr; column-gap: 56px; align-items: end; }
   .hero-copy .display { grid-row: 1 / span 4; align-self: end; }
   .step-grid { grid-template-columns: 1fr 1fr; gap: 64px; }
-  .flip .step-copy { order: 2; } /* Step 2 is mirrored: the track on the left, the words on the right */
+  .step2-visuals { grid-template-columns: 1fr 1fr; gap: 48px; align-items: stretch; }
   .feat-top { grid-template-columns: 1.1fr .9fr; gap: 56px; }
   .devices-grid { grid-template-columns: 1fr 1fr; gap: 64px; }
   .haptic-grid { grid-template-columns: 1.2fr .8fr; gap: 56px; }
