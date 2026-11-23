@@ -663,51 +663,31 @@ if (road && track) {
 if (footReel && reduceMotion) footReel.parentElement.style.setProperty('--lift', '1');
 
 /* ======================================================================
-   Footer wordmark: one clip per letter, and no seam inside any letter. Each letter gets a
-   layer of its own: its clip, placed on that letter's ink (measured here), under a copy of
-   the word with the other letters painted out. styles.css combines the six layers. On a
-   desktop, the letter under the pointer comes up to full color.
+   Footer wordmark: one video, a strip of six panels, one per letter. The panels' widths
+   match the letters' (they're fixed proportions of the word), so lining the strip up with
+   the word, from the left of the "A" to the right of the "o", puts each panel on its letter.
    ====================================================================== */
-const footMark = $('.foot-mark');
 const footWord = $('[data-foot-word]');
-if (footMark && footReel && footWord) {
-  const clips = $$('video', footReel), letters = $$('span', footWord);
-  if (clips.length === letters.length) {
-    clips.forEach((v, i) => {
-      const layer = document.createElement('div');
-      layer.className = 'foot-letter';
-      const word = footWord.cloneNode(true);
-      word.removeAttribute('data-foot-word');
-      word.children[i].className = 'on';
-      layer.append(v, word);
-      footMark.insertBefore(layer, footWord);
-    });
-    footMark.classList.add('placed');
-    const place = () => {
-      const box = footMark.getBoundingClientRect();
-      if (!box.width) return;
-      const size = parseFloat(getComputedStyle(footWord).fontSize);
-      const g = document.createElement('canvas').getContext('2d');
-      g.font = `900 expanded ${size}px Archivo`;
-      const haveFont = document.fonts && document.fonts.check(`900 ${size}px Archivo`);
-      letters.forEach((el, i) => { // each clip covers its letter's ink, and a little more
-        const r = el.getBoundingClientRect();
-        let x0 = r.left, x1 = r.right;
-        if (haveFont) { const m = g.measureText(el.textContent); x0 = r.left - m.actualBoundingBoxLeft; x1 = r.left + m.actualBoundingBoxRight; }
-        const pad = size * 0.03;
-        clips[i].style.left = `${(x0 - pad - box.left).toFixed(1)}px`;
-        clips[i].style.width = `${(x1 - x0 + pad * 2).toFixed(1)}px`;
-      });
-    };
-    place();
-    window.addEventListener('resize', place);
-    window.addEventListener('load', place);
-    if (document.fonts) { document.fonts.ready.then(place); document.fonts.load('900 100px Archivo').then(place, () => {}); }
-    if (window.matchMedia('(hover: hover)').matches) letters.forEach((el, i) => {
-      el.addEventListener('pointerenter', () => clips[i].classList.add('hot'));
-      el.addEventListener('pointerleave', () => clips[i].classList.remove('hot'));
-    });
-  }
+if (footReel && footWord) {
+  const strip = $('video', footReel), letters = $$('span', footWord);
+  const place = () => {
+    const box = footReel.getBoundingClientRect();
+    if (!box.width || !letters.length) return;
+    const size = parseFloat(getComputedStyle(footWord).fontSize);
+    if (!(document.fonts && document.fonts.check(`900 ${size}px Archivo`))) return; // until the font is in, the strip just fills the mark
+    const g = document.createElement('canvas').getContext('2d');
+    g.font = `900 expanded ${size}px Archivo`;
+    const first = letters[0], last = letters[letters.length - 1];
+    const x0 = first.getBoundingClientRect().left - g.measureText(first.textContent).actualBoundingBoxLeft;
+    const x1 = last.getBoundingClientRect().left + g.measureText(last.textContent).actualBoundingBoxRight;
+    strip.style.left = `${(x0 - box.left).toFixed(1)}px`;
+    strip.style.width = `${(x1 - x0).toFixed(1)}px`;
+    strip.style.objectFit = 'fill';
+  };
+  place();
+  window.addEventListener('resize', place);
+  window.addEventListener('load', place);
+  if (document.fonts) { document.fonts.ready.then(place); document.fonts.load('900 100px Archivo').then(place, () => {}); }
 }
 
 /* ======================================================================
@@ -730,6 +710,9 @@ if (modelCanvases.length && 'IntersectionObserver' in window) {
     import(`./models.js?v=${window.ADAGIO_V || ''}`).catch(() => root.classList.remove('pin3d'));
   }, { rootMargin: '900px 0px' });
   modelCanvases.forEach((c) => io.observe(c));
+  // or as soon as the page has loaded and gone quiet, so the models are ready before you reach them
+  const warm = () => { io.disconnect(); import(`./models.js?v=${window.ADAGIO_V || ''}`).catch(() => root.classList.remove('pin3d')); };
+  window.addEventListener('load', () => setTimeout(() => (window.requestIdleCallback ? requestIdleCallback(warm, { timeout: 3000 }) : warm()), 2200), { once: true }); // after the load sequence
 }
 
 // Placeholder links (no address yet) don't jump to the top.

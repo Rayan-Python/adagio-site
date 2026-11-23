@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adagio: the tour</title>
+  <meta name="description" content="Adagio matches your music's tempo to your running cadence on iPhone, Apple Watch and Garmin, with Apple Music.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#16110E">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Music&text=%F0%9D%84%9E%F0%9D%85%9F%F0%9D%85%A0%F0%9D%84%90%E2%99%A9&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="v2.css?v=4">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <!-- The stage: one 3D scene behind the whole page (v2.js). A phone stays on it from start to
+       finish and moves between scenes as you scroll, like the phone in an app promo. -->
+  <canvas class="stage" data-stage aria-hidden="true"></canvas>
+
+  <header class="nav">
+    <a class="nav-logo" href="#s0"><img src="apple-touch-icon.png" alt="" width="30" height="30"><span>Adagio</span></a>
+    <a class="nav-back" href="index.html">Main site</a>
+    <button class="chip" type="button" data-sound aria-pressed="false"><span data-sound-label>Sound off</span></button>
+    <a class="badge badge-nav" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener"><img src="assets/brand/app-store-badge.svg" alt="Download on the App Store" width="120" height="40"></a>
+  </header>
+
+  <main id="main">
+    <section class="scene" id="s0" data-scene>
+      <div class="copy">
+        <p class="count"><span class="num" data-bpm>176</span> steps a minute</p>
+        <h1 class="line">Run <br>Your <br><em>Rhythm</em></h1>
+        <p class="say">Adagio plays the songs in your Apple Music playlists whose beat matches your stride.</p>
+        <a class="badge" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener"><img src="assets/brand/app-store-badge.svg" alt="Download on the App Store" width="162" height="54"></a>
+      </div>
+      <img class="still" src="assets/screens/4-run-on-target.jpg" alt="Adagio's run screen: On target, 170 steps per minute" width="600" height="1303" loading="lazy">
+    </section>
+
+    <section class="scene" data-scene>
+      <div class="copy">
+        <p class="count">Step one</p>
+        <h2 class="line">Just <br><em>Run</em></h2>
+        <p class="say">Every footstrike is a beat. Adagio reads your cadence from your iPhone, Apple Watch or Garmin watch.</p>
+      </div>
+    </section>
+
+    <section class="scene" data-scene>
+      <div class="copy">
+        <p class="count">Step two</p>
+        <h2 class="line">Set <br>Your <br><em>Cadence</em></h2>
+        <p class="say">Pick a target, or enter a pace and Adagio works it out. Try it: tap the beat you run at.</p>
+        <div class="tap">
+          <button class="tap-btn" type="button" data-tap>Tap your beat</button>
+          <p class="tap-read" aria-live="polite"><span class="num" data-bpm>176</span> <span>steps a minute</span></p>
+        </div>
+      </div>
+      <img class="still" src="assets/screens/5-set-up-run.jpg" alt="Adagio's Set up run screen with a target cadence of 170" width="600" height="1303" loading="lazy">
+    </section>
+
+    <section class="scene" data-scene>
+      <div class="copy">
+        <p class="count">Step three</p>
+        <h2 class="line">Match <br>The <br><em>Beat</em></h2>
+        <p class="say">Adagio finds the songs whose tempo fits, at full, half or double time.</p>
+        <ul class="songs" data-songs aria-label="Example songs at your cadence (made up)"></ul>
+      </div>
+    </section>
+
+    <section class="scene" data-scene>
+      <div class="copy">
+        <p class="count">On the run</p>
+        <h2 class="line">Hear <br>The <br><em>Cue</em></h2>
+        <p class="say">Drift off your target and Adagio tells you, by voice, vibration and colour, until you're back on it.</p>
+        <p class="toast" data-toast aria-live="polite"><b data-toast-title>Speed up</b><span data-toast-text>157, target 170</span></p>
+      </div>
+      <img class="still" src="assets/screens/1-run-speed-up.jpg" alt="Adagio's run screen in blue: Speed up, 157 steps per minute, target 170" width="600" height="1303" loading="lazy">
+    </section>
+
+    <section class="scene" data-scene>
+      <div class="copy">
+        <p class="count">Pulse Mode</p>
+        <h2 class="line">Feel <br>The <br><em>Pulse</em></h2>
+        <p class="say">Built for deaf and hard-of-hearing runners: your watch taps the tempo, and each cue has its own pattern. No sound needed.</p>
+        <ul class="cues" aria-label="Pulse Mode cues">
+          <li><button class="cue" type="button" data-cue="70,110,70"><b>Speed up</b><span>Two quick taps</span></button></li>
+          <li><button class="cue" type="button" data-cue="480"><b>Slow down</b><span>One long buzz</span></button></li>
+          <li><button class="cue" type="button" data-cue="45"><b>Back on target</b><span>One soft tap</span></button></li>
+        </ul>
+      </div>
+      <img class="still" src="assets/screens/3-pulse-cues.jpg" alt="Adagio's Pulse Mode cues screen" width="600" height="1303" loading="lazy">
+    </section>
+
+    <section class="scene" data-scene>
+      <div class="copy">
+        <p class="count">Devices</p>
+        <h2 class="line">Wear <br>What <br><em>You Own</em></h2>
+        <p class="say">iPhone, Apple Watch and Garmin work today. Strava upload is in beta. Spotify and COROS are coming soon.</p>
+      </div>
+    </section>
+
+    <section class="scene scene-end" data-scene>
+      <div class="copy">
+        <p class="count">Made by two high school cross country runners</p>
+        <h2 class="line">Find <br>Your <br><em>Stride</em></h2>
+        <p class="say">Adagio is a tempo marking, from the Italian <span lang="it">ad agio</span>: at ease. It's how running should feel.</p>
+        <div class="badges">
+          <a class="badge" href="https://apps.apple.com/us/app/adagio-running/id6833734454" target="_blank" rel="noopener"><img src="assets/brand/app-store-badge.svg" alt="Download on the App Store" width="162" height="54"></a>
+          <a class="badge" href="https://apps-developer.garmin.com/apps/6215c95e-e5a2-4298-81f5-ff0b1000b1ab" target="_blank" rel="noopener"><img src="assets/brand/connect-iq-badge.svg" alt="Available on the Connect IQ Store" width="158" height="54"></a>
+        </div>
+        <p class="fine">Ryan Soudkhah and Darren Kapturski. <a href="mailto:adagiorunning.support@gmail.com">adagiorunning.support@gmail.com</a>. <a href="index.html">Back to the main site</a>.</p>
+      </div>
+      <img class="still" src="assets/screens/2-summary.jpg" alt="Adagio's run summary screen" width="600" height="1303" loading="lazy">
+    </section>
+  </main>
+
+  <!-- The score: a music staff along the foot of the screen that is also the page's progress bar.
+       Each scene is a note on it; the runner's mark moves along as you scroll (v2.js). -->
+  <div class="score" aria-hidden="true">
+    <svg data-score viewBox="0 0 1000 56" preserveAspectRatio="none"></svg>
+  </div>
+
+  <!-- SECURITY: vercel.json allows this exact import map by its sha256 hash. If you edit it
+       (even spacing), update the hash in vercel.json or the 3D models will be blocked. -->
+  <script type="importmap">
+    { "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    } }
+  </script>
+  <script type="module" src="v2.js?v=2"></script>
+</body>
+</html>

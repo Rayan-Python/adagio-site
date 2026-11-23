@@ -565,23 +565,13 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 .legal { margin-top: 24px; font-size: var(--t-14); color: var(--fg-2); }
 /* The wordmark: a rubber layer is multiplied over footage, so the footage only shows inside the
    letters, tinted lime yellow and fading toward the bottom. It keeps the old wide display style
-   (Archivo at 125% width). Each letter has its own clip, and no seam can cut through a letter:
-   script.js gives every letter a layer of its own (.foot-letter) holding that letter's clip, placed
-   on the letter's bounds, under a copy of the word in which the other five letters are painted
-   out. The six layers are combined with "lighten", which keeps each one's letter and nothing else.
-   (Before the script runs, the clips sit in six plain columns.) */
+   (Archivo at 125% width). One video sits behind it, a strip of six panels, one per letter;
+   script.js lines the strip up with the word, so each letter gets its own panel. The clips are
+   black-and-white in the file, so nothing is filtered live; the lift is plain opacity. */
 .foot-mark { position: relative; isolation: isolate; overflow: hidden; }
-.foot-reel { position: absolute; inset: 0; z-index: -1; display: grid; grid-template-columns: repeat(6, 1fr); background: var(--rubber); }
+.foot-reel { position: absolute; inset: 0; z-index: -1; background: var(--rubber); }
 /* the letters brighten as you reach the bottom of the page (script.js sets --lift on the mark, 0 to 1) */
-.foot-mark video { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1) brightness(calc(.62 + .5 * var(--lift, 1))); transition: filter 260ms; }
-.foot-letter { position: absolute; inset: 0; isolation: isolate; pointer-events: none; }
-.foot-letter + .foot-letter { mix-blend-mode: lighten; }
-.foot-letter video { position: absolute; top: 0; z-index: -1; }
-.foot-letter .foot-word span:not(.on) { color: var(--rubber); } /* painted out: only this layer's letter shows its clip */
-.foot-mark.placed > .foot-reel { display: none; }
-.foot-mark.placed > .foot-word { position: relative; opacity: 0; } /* keeps the mark's height, and takes the pointer */
-/* the letter under the pointer comes up to full color */
-.foot-mark video.hot { filter: grayscale(0) contrast(1.05) brightness(calc(.8 + .5 * var(--lift, 1))); }
+.foot-reel video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; opacity: calc(.5 + .5 * var(--lift, 1)); }
 .foot-word {
   margin: 0; padding: 4px 0 .06em; text-align: center; line-height: .78; user-select: none; /* room underneath lifts it off the page's bottom edge */
   font-family: "Archivo", var(--display); font-weight: 900; font-stretch: 125%; letter-spacing: -.06em; font-size: clamp(5rem, 24vw, 22rem);
@@ -640,5 +630,5 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .staff .note { transform: none; transition: none; }
-  .road3d .pole, .btn, .store-badge img, .toggle, .cue, .beat-chip, .play-page, .stepfoot svg, .cue-flip img, .foot-mark video, .road3d .lane-mark { transition: none; }
+  .road3d .pole, .btn, .store-badge img, .toggle, .cue, .beat-chip, .play-page, .stepfoot svg, .cue-flip img, .road3d .lane-mark { transition: none; }
 }
