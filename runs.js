@@ -25,7 +25,7 @@
   const $ = (id) => document.getElementById(id);
   const ui = {
     status: $('status'), signedOut: $('signed-out'), list: $('list-view'), detail: $('detail-view'),
-    week: $('week'), runs: $('runs'), empty: $('empty'), facts: $('facts'), detailTitle: $('detail-title'),
+    week: $('week'), months: $('months'), monthsHead: $('months-head'), runs: $('runs'), empty: $('empty'), facts: $('facts'), detailTitle: $('detail-title'),
     chart: $('chart'), chartWrap: $('chart-wrap'), legend: $('legend'), songs: $('songs'), songList: $('song-list'),
     back: $('back'),
   };
@@ -199,6 +199,34 @@
     );
     document.querySelectorAll('[data-period]').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.period === period)));
   }
+  // One row per month that has runs, newest first. The bar shows time run, relative to the
+  // busiest month (time is on every run; distance isn't).
+  function renderMonths() {
+    const byMonth = new Map();
+    for (const r of runs) {
+      const key = `${r.date.getFullYear()}-${String(r.date.getMonth() + 1).padStart(2, '0')}`;
+      const m = byMonth.get(key) || { date: new Date(r.date.getFullYear(), r.date.getMonth(), 1), count: 0, time: 0, dist: 0 };
+      m.count += 1; m.time += r.duration || 0; m.dist += r.distance || 0;
+      byMonth.set(key, m);
+    }
+    const months = [...byMonth.values()].sort((a, b) => b.date - a.date);
+    const maxTime = Math.max(1, ...months.map((m) => m.time));
+    ui.months.replaceChildren(...months.map((m) => {
+      const li = el('li', 'month');
+      li.append(el('span', 'month-name', m.date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })));
+      const bar = el('span', 'month-bar');
+      const fill = el('span');
+      fill.style.width = `${Math.max(2, (m.time / maxTime) * 100).toFixed(1)}%`;
+      bar.append(fill);
+      li.append(bar);
+      const parts = [`${m.count} ${m.count === 1 ? 'run' : 'runs'}`, fmtDuration(m.time) || '0:00'];
+      if (m.dist > 0) parts.push(fmtDistance(m.dist));
+      li.append(el('span', 'month-stats', parts.join(' · ')));
+      return li;
+    }));
+    ui.months.hidden = ui.monthsHead.hidden = months.length === 0;
+  }
+
   function runCard(run, index) {
     const li = el('li');
     const b = el('button', 'run');
@@ -225,6 +253,7 @@
   }
   function renderList() {
     renderWeek();
+    renderMonths();
     ui.runs.replaceChildren(...runs.map(runCard));
     ui.empty.hidden = runs.length > 0;
     document.querySelectorAll('[data-units]').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.units === units)));
@@ -365,6 +394,7 @@
       { recordName: 'demo-2', fields: { date: { value: now - 2 * day }, duration: { value: 2700 }, distance: { value: 0 }, avgCadence: { value: 168 },
         cadence: { value: wave(540, 168, 6) }, haptic: { value: 0 }, source: { value: 'iPhone' } } },
       { recordName: 'demo-3', fields: { date: { value: now - 9 * day }, duration: { value: 1500 }, distance: { value: 4100 }, haptic: { value: 0 }, source: { value: 'Garmin' } } },
+      { recordName: 'demo-4', fields: { date: { value: now - 40 * day }, duration: { value: 3000 }, distance: { value: 8000 }, avgCadence: { value: 170 }, haptic: { value: 0 }, source: { value: 'iPhone' } } },
     ];
     runs = fake.map(parseRun).filter(Boolean);
     renderList();
