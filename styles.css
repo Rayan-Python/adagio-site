@@ -196,11 +196,11 @@ button { font: inherit; color: inherit; }
 .tempo-pill small { font-size: .62rem; opacity: .7; }
 .tempo-pill:hover { background: rgba(166,226,46,.1); }
 .appstore {
-  display: none; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; text-decoration: none;
+  display: none; align-items: center; gap: 8px; padding: 5px 14px 5px 6px; border-radius: 999px; text-decoration: none;
   background: var(--white); color: var(--ink); transition: transform 200ms var(--ease);
 }
 .appstore:hover { transform: translateY(-1px); }
-.appstore svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
+.appstore svg { width: 26px; height: 26px; flex: none; border-radius: 6px; }
 .appstore-text { display: flex; flex-direction: column; line-height: 1.05; }
 .appstore-small { font-size: 9px; opacity: .65; }
 .appstore-big { font-size: 13px; font-weight: 700; }
