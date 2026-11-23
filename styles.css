@@ -583,7 +583,7 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 /* the letter under the pointer comes up to full color */
 .foot-mark video.hot { filter: grayscale(0) contrast(1.05) brightness(calc(.8 + .5 * var(--lift, 1))); }
 .foot-word {
-  margin: 0; padding-top: 4px; text-align: center; line-height: .78; user-select: none;
+  margin: 0; padding: 4px 0 .06em; text-align: center; line-height: .78; user-select: none; /* room underneath lifts it off the page's bottom edge */
   font-family: "Archivo", var(--display); font-weight: 900; font-stretch: 125%; letter-spacing: -.06em; font-size: clamp(5rem, 24vw, 22rem);
   mix-blend-mode: multiply; color: transparent;
   background-image: linear-gradient(180deg, #E8F02A 0%, #E8F02A 40%, rgba(232,240,42,.35) 100%), linear-gradient(var(--rubber), var(--rubber));

@@ -432,6 +432,7 @@
     });
     debug = { hard, soft, tunnels, P, W };
     built = true;
+    lastDrawn = -2; // new geometry: redraw the lines
     update();
   }
 
@@ -444,13 +445,16 @@
   const BEAT = 60000 / 176;
   const t0 = window.adagioIntroT0 || 0;
   const introOn = () => !reduceMotion && t0 && performance.now() - t0 < BEAT * 4;
-  let frame = 0;
+  let frame = 0, lastDrawn = -2;
   function update() {
     frame = 0;
     if (!built || !pts.length) return;
     const mainTop = docTop(main);
     const view = window.scrollY - mainTop;
-    const target = reduceMotion ? Infinity : view + window.innerHeight * 1.15; // reduced motion: fully drawn
+    // Drawn to 1.05 to 1.25 screens below the top, in steps of a fifth of a screen: the end is
+    // never in view, and the page-tall SVG repaints every ~150px of scrolling, not every frame.
+    const drawStep = window.innerHeight * 0.2;
+    const target = reduceMotion ? Infinity : Math.ceil((view + window.innerHeight * 1.05) / drawStep) * drawStep; // reduced motion: fully drawn
     const seen = reduceMotion ? Infinity : view + window.innerHeight * 0.9;    // a note appears once it's this far up the screen
     // last point whose base height has been reached (base only ever increases)
     let lo = 0, hi = pts.length - 1;
@@ -466,8 +470,10 @@
     const p = i < 0 ? null : pts[i];
     const q = i < 0 ? null : pts[Math.min(i + 2, pts.length - 1)];
     const done = i >= pts.length - 1;
+    const redraw = i !== lastDrawn || intro; // only touch the long lines when their end actually moves
+    lastDrawn = i;
     layers.forEach((Ly) => {
-      Ly.lines.forEach((path, k) => { path.style.strokeDashoffset = (lens[k] * (1 - frac)).toFixed(1); });
+      if (redraw) Ly.lines.forEach((path, k) => { path.style.strokeDashoffset = (lens[k] * (1 - frac)).toFixed(1); });
       Ly.clef.style.opacity = i >= clefAt ? 1 : 0;
       Ly.notes.forEach((el, k) => el.classList.toggle('on', noteAt[k] <= i && (k < heroNotes ? !intro || sinceLoad >= BEAT * (k + 1) : noteY[k] <= seen)));
       Ly.end.style.opacity = done ? 0.9 : 0;
@@ -477,7 +483,7 @@
       Ly.tip.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${angle.toFixed(1)})`);
       Ly.tip.style.opacity = intro && i < introEnd ? 1 : 0; // the note riding the tip only shows while the hero's stretch draws in
     });
-    if (frontAt) { // the front half of the story loop keeps pace with the line beneath it
+    if (frontAt && redraw) { // the front half of the story loop keeps pace with the line beneath it
       const f = clamp((i - frontAt[0]) / (frontAt[1] - frontAt[0]), 0, 1);
       frontLines.forEach((line, k) => { line.style.strokeDashoffset = (frontLens[k] * (1 - f)).toFixed(1); });
     }
