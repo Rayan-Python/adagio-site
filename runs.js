@@ -1,8 +1,11 @@
 // My runs: signs the runner in with their Apple ID (CloudKit JS) and reads the "Run" records
-// the Adagio app saved to their PRIVATE iCloud database. Nothing goes through our servers.
+// the Adagio app saved to their PRIVATE iCloud database. Nothing goes through our servers,
+// and nothing is stored in the browser except the mi/km and period choices.
 //
 // Security: every value from a record is written with textContent or as an SVG number,
 // never as HTML, so a song title like "<script>" is shown as text and can't run.
+//
+// runs-stats.js (the math) and runs-charts.js (the SVG) load before this file.
 'use strict';
 
 (() => {
@@ -16,25 +19,44 @@
     // Production token.
     environment: 'development',
   };
+  const S = window.AdagioStats;
+  const C = window.AdagioCharts;
   const MAX_RUNS = 2000;       // stop paging after this many records
   const MAX_SONGS = 300;       // per run
   const MAX_SAMPLES = 10000;   // cadence readings per run (~14 h at one per 5 s)
   const SAMPLE_SEC = 5;        // the app stores one cadence reading per ~5 s
+  const PAGE = 30;             // run cards shown before "Show more"
   const SOURCES = ['iPhone', 'Watch', 'Garmin'];
+  const PERIODS = { week: 'This week', month: 'This month', year: 'This year', all: 'All time' };
 
   const $ = (id) => document.getElementById(id);
   const ui = {
     status: $('status'), signedOut: $('signed-out'), list: $('list-view'), detail: $('detail-view'),
-    week: $('week'), months: $('months'), monthsHead: $('months-head'), runs: $('runs'), empty: $('empty'), facts: $('facts'), detailTitle: $('detail-title'),
-    chart: $('chart'), chartWrap: $('chart-wrap'), legend: $('legend'), songs: $('songs'), songList: $('song-list'),
-    back: $('back'),
+    synced: $('synced'), refresh: $('refresh'),
+    summary: $('summary'), highlights: $('highlights'),
+    weeklyChart: $('weekly-chart'), calendar: $('calendar'), calendarSub: $('calendar-sub'), heatKey: $('heat-key'),
+    trendCard: $('trend-card'), trend: $('trend'), trendSub: $('trend-sub'),
+    recordsBlock: $('records-block'), records: $('records'),
+    periodTitle: $('period-title'), week: $('week'),
+    pulseCard: $('pulse-card'), pulse: $('pulse'), tod: $('tod'), sourcesCard: $('sources-card'), sources: $('sources'),
+    topSongsCard: $('top-songs-card'), topSongs: $('top-songs'),
+    monthsBlock: $('months-block'), months: $('months'),
+    runs: $('runs'), noMatch: $('no-match'), more: $('more'), exportBtn: $('export'), empty: $('empty'),
+    facts: $('facts'), detailTitle: $('detail-title'), compare: $('compare'),
+    chart: $('chart'), chartWrap: $('chart-wrap'), legend: $('legend'),
+    hist: $('hist'), histWrap: $('hist-wrap'), histLegend: $('hist-legend'),
+    songs: $('songs'), songList: $('song-list'),
+    back: $('back'), newer: $('newer'), older: $('older'),
   };
   $('year').textContent = String(new Date().getFullYear());
 
-  let runs = [];
+  let runs = [];              // every run, newest first
+  let loadedAt = null;
   let units = 'mi';
-  let period = 'week';
-  try { const p = localStorage.getItem('adagio-period'); if (p === 'month' || p === 'all') period = p; } catch (e) { /* keep week */ }
+  let period = 'all';
+  let source = 'all';
+  let shown = PAGE;
+  try { const p = localStorage.getItem('adagio-period'); if (p in PERIODS) period = p; } catch (e) { /* keep all */ }
   try { if (localStorage.getItem('adagio-units') === 'km') units = 'km'; } catch (e) { /* storage blocked: keep mi */ }
 
   // ---------- small DOM helpers (text only) ----------
@@ -42,12 +64,6 @@
     const n = document.createElement(tag);
     if (className) n.className = className;
     if (text != null) n.textContent = String(text);
-    return n;
-  }
-  const SVG = 'http://www.w3.org/2000/svg';
-  function svg(tag, attrs) {
-    const n = document.createElementNS(SVG, tag);
-    for (const k in attrs) n.setAttribute(k, String(attrs[k]));
     return n;
   }
 
@@ -78,7 +94,7 @@
     const songs = Array.isArray(f.songs && f.songs.value)
       ? f.songs.value.slice(0, MAX_SONGS).map((s) => String(s).slice(0, 200)).filter(Boolean)
       : [];
-    const source = f.source && SOURCES.includes(f.source.value) ? f.source.value : null;
+    const src = f.source && SOURCES.includes(f.source.value) ? f.source.value : null;
     const avg = num(f, 'avgCadence');
     const target = num(f, 'targetBPM');
     const duration = num(f, 'duration');
@@ -92,13 +108,12 @@
       cadence,
       songs,
       pulse: num(f, 'haptic') === 1,
-      source,
+      source: src,
     };
   }
 
   // ---------- formatting ----------
-  function fmtDuration(sec) {
-    if (sec == null) return null;
+  function fmtClock(sec) {
     const s = Math.round(sec), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
     return h ? `${h}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}` : `${m}:${String(r).padStart(2, '0')}`;
   }
@@ -112,15 +127,18 @@
     return `${r}s`;
   }
   const perUnit = () => (units === 'km' ? 1000 : 1609.344);
-  function fmtDistance(m) { return m == null ? null : `${(m / perUnit()).toFixed(2)} ${units}`; }
+  function fmtDistance(m, digits) { return m == null ? null : `${(m / perUnit()).toFixed(digits ?? 2)} ${units}`; }
   function fmtPace(sec, m) {
     if (sec == null || m == null) return null;
     const p = sec / (m / perUnit());
     if (!Number.isFinite(p) || p <= 0 || p > 3600) return null;
-    return `${fmtDuration(p)} /${units}`;
+    return `${fmtClock(p)} /${units}`;
   }
   const fmtDay = (d) => d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  const fmtShort = (d) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const fmtTime = (d) => d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const fmtPct = (x) => `${Math.round(x * 100)}%`;
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many || `${one}s`}`;
   function fmtVsTarget(run) {
     if (run.avgCadence == null || run.targetBPM == null) return null;
     const d = run.avgCadence - run.targetBPM;
@@ -128,97 +146,195 @@
     return `${Math.abs(d)} spm ${d > 0 ? 'over' : 'under'} target`;
   }
 
-  // ---------- sparkline and chart ----------
-  function scale(values, extra) {
-    const all = values.concat(extra.filter((x) => x != null));
-    let lo = Math.min(...all), hi = Math.max(...all);
-    if (hi - lo < 10) { const mid = (hi + lo) / 2; lo = mid - 5; hi = mid + 5; }
-    return { lo, hi };
-  }
-  function sparkline(run) {
-    const w = 120, h = 36;
-    const s = svg('svg', { class: 'spark', viewBox: `0 0 ${w} ${h}`, preserveAspectRatio: 'none', 'aria-hidden': 'true', focusable: 'false' });
-    const vals = run.cadence;
-    if (vals.length < 2) return s;
-    const { lo, hi } = scale(vals, [run.targetBPM]);
-    const y = (v) => (h - 3) - ((v - lo) / (hi - lo)) * (h - 6);
-    if (run.targetBPM != null) {
-      s.append(svg('line', { x1: 0, x2: w, y1: y(run.targetBPM).toFixed(1), y2: y(run.targetBPM).toFixed(1),
-        stroke: 'rgba(255,255,255,.45)', 'stroke-width': 1, 'stroke-dasharray': '3 3', 'vector-effect': 'non-scaling-stroke' }));
-    }
-    const pts = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-    s.append(svg('polyline', { points: pts, fill: 'none', stroke: '#E8F02A', 'stroke-width': 2, 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke' }));
-    return s;
-  }
-  function chart(run) {
-    const W = 640, H = 240, L = 40, R = 12, T = 12, B = 28;
-    const vals = run.cadence;
-    const s = svg('svg', { class: 'chart', viewBox: `0 0 ${W} ${H}`, role: 'img' });
-    const { lo, hi } = scale(vals, [run.targetBPM]);
-    const x = (i) => L + (i / Math.max(vals.length - 1, 1)) * (W - L - R);
-    const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
-    // horizontal guides with labels
-    for (let k = 0; k <= 3; k++) {
-      const v = lo + ((hi - lo) * k) / 3, yy = y(v);
-      s.append(svg('line', { x1: L, x2: W - R, y1: yy.toFixed(1), y2: yy.toFixed(1), stroke: 'rgba(255,255,255,.08)' }));
-      const t = svg('text', { x: L - 8, y: (yy + 4).toFixed(1), 'text-anchor': 'end' });
-      t.textContent = String(Math.round(v));
-      s.append(t);
-    }
-    // time labels (minutes)
-    const totalMin = ((vals.length - 1) * SAMPLE_SEC) / 60;
-    const step = totalMin > 60 ? 15 : totalMin > 20 ? 5 : totalMin > 6 ? 2 : 1;
-    for (let m = 0; m <= totalMin; m += step) {
-      const t = svg('text', { x: x((m * 60) / SAMPLE_SEC).toFixed(1), y: H - 8, 'text-anchor': 'middle' });
-      t.textContent = `${m}m`;
-      s.append(t);
-    }
-    if (run.targetBPM != null) {
-      s.append(svg('line', { x1: L, x2: W - R, y1: y(run.targetBPM).toFixed(1), y2: y(run.targetBPM).toFixed(1),
-        stroke: 'rgba(255,255,255,.7)', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' }));
-    }
-    const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-    s.append(svg('polyline', { points: pts, fill: 'none', stroke: '#E8F02A', 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
-    const label = `Cadence over the run, between ${Math.round(Math.min(...vals))} and ${Math.round(Math.max(...vals))} steps per minute`
-      + (run.targetBPM != null ? `, target ${run.targetBPM}` : '');
-    s.setAttribute('aria-label', label);
-    return s;
-  }
-
-  // ---------- list view ----------
   function stat(label, value) {
     const box = el('div', 'stat');
     box.append(el('dt', null, label), el('dd', null, value));
     return box;
   }
-  function renderWeek() {
-    const now = new Date();
-    const starts = {
-      week: new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)), // Monday
-      month: new Date(now.getFullYear(), now.getMonth(), 1),
-      all: new Date(0),
-    };
-    const inPeriod = runs.filter((r) => r.date >= starts[period]);
-    const time = inPeriod.reduce((a, r) => a + (r.duration || 0), 0);
-    const dist = inPeriod.reduce((a, r) => a + (r.distance || 0), 0);
-    ui.week.replaceChildren(
-      stat('Runs', String(inPeriod.length)),
-      stat('Time', fmtLength(time)),
-      stat('Distance', dist > 0 ? fmtDistance(dist) : '—'),
-    );
-    document.querySelectorAll('[data-period]').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.period === period)));
+  // Horizontal bar rows (When you run, Recorded on). rows: [{ name, count, time }]
+  function hbars(list, rows) {
+    const max = Math.max(1, ...rows.map((r) => r.count));
+    list.replaceChildren(...rows.map((r) => {
+      const li = el('li', 'hbar');
+      li.append(el('span', 'hbar-name', r.name));
+      const bar = el('span', 'month-bar');
+      const fill = el('span');
+      fill.style.width = r.count ? `${Math.max(3, (r.count / max) * 100).toFixed(1)}%` : '0';
+      bar.append(fill);
+      li.append(bar, el('span', 'hbar-stats', r.count ? `${plural(r.count, 'run')} · ${fmtLength(r.time)}` : '—'));
+      return li;
+    }));
   }
-  // One row per month that has runs, newest first. The bar shows time run, relative to the
-  // busiest month (time is on every run; distance isn't).
-  function renderMonths() {
-    const byMonth = new Map();
-    for (const r of runs) {
-      const key = `${r.date.getFullYear()}-${String(r.date.getMonth() + 1).padStart(2, '0')}`;
-      const m = byMonth.get(key) || { date: new Date(r.date.getFullYear(), r.date.getMonth(), 1), count: 0, time: 0, dist: 0 };
-      m.count += 1; m.time += r.duration || 0; m.dist += r.distance || 0;
-      byMonth.set(key, m);
+
+  // ---------- overview (all time) ----------
+  function renderOverview() {
+    const now = new Date();
+    const all = S.totals(runs);
+    const first = runs[runs.length - 1];
+    const st = S.streaks(runs, now);
+    const totalsText = [all.time > 0 ? fmtLength(all.time) : null, all.dist > 0 ? fmtDistance(all.dist, 1) : null].filter(Boolean).join(' and ');
+    const parts = [`You've logged ${plural(all.count, 'run')} with Adagio since ${first.date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}${totalsText ? `: ${totalsText} in all.` : '.'}`];
+    if (all.avgCadence != null) parts.push(`Your average cadence is ${Math.round(all.avgCadence)} steps per minute.`);
+    if (all.onTarget) parts.push(`On runs with a target, you were within ${S.ON_TARGET_SPM} spm of it ${fmtPct(all.onTarget.share)} of the time.`);
+    if (st.weeks > 1) parts.push(`You've run every week for ${st.weeks} weeks in a row.`);
+    ui.summary.textContent = parts.join(' ');
+
+    const tod = S.timeOfDay(runs).sort((a, b) => b.count - a.count)[0];
+    const src = S.bySource(runs).sort((a, b) => b.count - a.count)[0];
+    const best = S.bestWeek(runs);
+    const items = [
+      ['Week streak', plural(st.weeks, 'week')],
+      ['Longest daily streak', plural(st.bestDays, 'day')],
+      ['Best week', best ? `${fmtLength(best.time)}` : null, best ? `Week of ${fmtShort(best.start)}` : null],
+      ['You usually run', tod && tod.count ? `${tod.name}s`.replace('Nights', 'At night') : null],
+      ['Mostly on', src ? src.name : null],
+      ['Songs played', all.songs ? String(all.songs) : null],
+    ].filter(([, v]) => v != null);
+    ui.highlights.replaceChildren(...items.map(([k, v, sub]) => {
+      const box = stat(k, v);
+      if (sub) box.append(el('p', 'stat-sub', sub));
+      return box;
+    }));
+  }
+
+  // ---------- charts (fixed windows) ----------
+  // Charts are drawn at the width they'll show at, so axis text stays a readable size on phones.
+  const wrapEl = document.querySelector('#main .wrap');
+  function chartWidth() {
+    const w = wrapEl.clientWidth - 40 - 42; // page padding, card padding and border
+    return Math.max(280, Math.min(720, Math.round(w)));
+  }
+  // Axis top for minutes, so the halfway line lands on a round time (30m, 1h, 1.5h ...).
+  function niceMinutes(v) {
+    for (const m of [20, 30, 60, 120, 180, 240, 360, 480, 600, 900, 1200, 1800]) if (v <= m) return m;
+    return Math.ceil(v / 600) * 600;
+  }
+  function renderCharts() {
+    const now = new Date();
+    const W = chartWidth();
+    const narrow = W < 460;
+    const weeks = S.weekly(runs, 12, now);
+    ui.weeklyChart.replaceChildren(C.bars({
+      W, H: narrow ? 180 : 220,
+      label: `Minutes run per week for the last 12 weeks. ${weeks.map((w) => `Week of ${fmtShort(w.start)}: ${Math.round(w.time / 60)} minutes`).join('. ')}`,
+      max: niceMinutes(Math.max(...weeks.map((w) => w.time / 60))),
+      yFmt: (v) => (v >= 60 ? `${+(v / 60).toFixed(1)}h` : `${Math.round(v)}m`),
+      items: weeks.map((w, i) => ({
+        value: w.time / 60,
+        label: (11 - i) % (narrow ? 4 : 3) === 0 ? fmtShort(w.start) : '', // every 3rd (4th on phones) week, ending this week
+        tip: `Week of ${fmtShort(w.start)}: ${w.count ? `${plural(w.count, 'run')}, ${fmtLength(w.time)}${w.dist ? `, ${fmtDistance(w.dist, 1)}` : ''}` : 'no runs'}`,
+      })),
+    }));
+
+    // As many weeks as fit, up to 6 months (26 weeks).
+    const nWeeks = Math.max(10, Math.min(26, Math.floor((W - 34) / 22)));
+    const days = S.calendar(runs, nWeeks, now);
+    ui.calendarSub.textContent = nWeeks === 26 ? 'Last 6 months, brighter means longer' : `Last ${nWeeks} weeks, brighter means longer`;
+    const ranDays = days.filter((d) => d.count);
+    const maxT = Math.max(1, ...ranDays.map((d) => d.time));
+    const level = (d) => (d.count === 0 ? 0 : d.time === 0 ? 1 : Math.min(4, 1 + Math.floor((d.time / maxT) * 3.999)));
+    ui.calendar.replaceChildren(C.calendar({
+      days, level,
+      monthName: (d) => d.toLocaleDateString(undefined, { month: 'short' }),
+      tipFor: (d) => `${fmtDay(d.date)}: ${d.count ? `${plural(d.count, 'run')}, ${fmtLength(d.time)}` : 'no runs'}`,
+      label: `Calendar of the last ${nWeeks} weeks. You ran on ${plural(ranDays.length, 'day')}.`,
+    }));
+    const key = [el('span', null, 'Less')];
+    C.heatColors.forEach((c) => { const sw = el('i'); sw.style.background = c; key.push(sw); });
+    key.push(el('span', null, 'More'));
+    ui.heatKey.replaceChildren(...key);
+
+    const withCad = runs.filter((r) => r.avgCadence != null).slice(0, 30).reverse();
+    ui.trendCard.hidden = withCad.length < 2;
+    if (withCad.length >= 2) {
+      const vals = withCad.map((r) => r.avgCadence);
+      ui.trendSub.textContent = `Your last ${withCad.length} runs with cadence, oldest on the left`;
+      ui.trend.replaceChildren(C.trend({
+        W, H: narrow ? 180 : 220,
+        points: withCad.map((r) => ({ value: r.avgCadence, tip: `${fmtDay(r.date)}: ${r.avgCadence} spm${r.pulse ? ', Pulse Mode' : ''}` })),
+        line: S.rolling(vals, 5),
+        label: `Average cadence for your last ${withCad.length} runs, from ${Math.min(...vals)} to ${Math.max(...vals)} steps per minute`,
+      }));
     }
-    const months = [...byMonth.values()].sort((a, b) => b.date - a.date);
+  }
+
+  // ---------- personal records (all time) ----------
+  function renderRecords() {
+    const rec = S.records(runs, perUnit());
+    const rows = [
+      ['Longest run', rec.longest, (r) => fmtLength(r.duration)],
+      ['Farthest run', rec.farthest, (r) => fmtDistance(r.distance)],
+      [`Fastest pace (1 ${units} or more)`, rec.fastest, (r) => fmtPace(r.duration, r.distance)],
+      ['Highest average cadence', rec.highCadence, (r) => `${r.avgCadence} spm`],
+      ['Steadiest cadence', rec.steadiest && rec.steadiest.run, () => `±${rec.steadiest.sd.toFixed(1)} spm`],
+      ['Most on target', rec.onTarget && rec.onTarget.run, () => fmtPct(rec.onTarget.share)],
+    ].filter(([, r]) => r);
+    ui.records.replaceChildren(...rows.map(([label, run, value]) => {
+      const li = el('li');
+      const b = el('button', 'record');
+      b.type = 'button';
+      b.append(el('span', 'record-label', label), el('span', 'record-value', value(run)), el('span', 'record-date', fmtShort(run.date)));
+      b.setAttribute('aria-label', `${label}: ${value(run)}, on ${fmtDay(run.date)}. Open run`);
+      b.addEventListener('click', () => openRun(run));
+      li.append(b);
+      return li;
+    }));
+    ui.recordsBlock.hidden = rows.length === 0;
+  }
+
+  // ---------- the period section ----------
+  function renderPeriod() {
+    const list = S.inPeriod(runs, period, new Date());
+    const t = S.totals(list);
+    ui.periodTitle.textContent = PERIODS[period];
+    ui.week.replaceChildren(
+      stat('Runs', String(t.count)),
+      stat('Time', fmtLength(t.time)),
+      stat('Distance', t.dist > 0 ? fmtDistance(t.dist) : '—'),
+      stat('Avg run', t.avgLength != null ? fmtLength(t.avgLength) : '—'),
+      stat('Avg cadence', t.avgCadence != null ? `${Math.round(t.avgCadence)} spm` : '—'),
+      stat('On target', t.onTarget ? fmtPct(t.onTarget.share) : '—'),
+    );
+
+    // Pulse Mode on vs off
+    const pc = S.pulseCompare(list);
+    if (pc.on.count && pc.off.count) {
+      const tbl = el('table', 'compare-table');
+      const head = el('tr');
+      head.append(el('th'), el('th', null, 'On'), el('th', null, 'Off'));
+      const row = (name, f) => { const tr = el('tr'); tr.append(el('th', null, name), el('td', null, f(pc.on)), el('td', null, f(pc.off))); return tr; };
+      const thead = el('thead'); thead.append(head);
+      const tbody = el('tbody');
+      tbody.append(
+        row('Runs', (x) => String(x.count)),
+        row('Avg cadence', (x) => (x.avgCadence != null ? `${Math.round(x.avgCadence)} spm` : '—')),
+        row('On target', (x) => (x.onTarget ? fmtPct(x.onTarget.share) : '—')),
+      );
+      tbl.append(thead, tbody);
+      ui.pulse.replaceChildren(tbl, el('p', 'sub', 'Plain averages from your own runs.'));
+    } else if (list.length) {
+      ui.pulse.replaceChildren(el('p', 'muted', pc.on.count
+        ? `All ${plural(list.length, 'run')} here had Pulse Mode on. Try one with it off to compare.`
+        : `None of these runs used Pulse Mode. Turn it on for a run to compare.`));
+    } else {
+      ui.pulse.replaceChildren(el('p', 'muted', 'No runs in this period yet.'));
+    }
+
+    hbars(ui.tod, S.timeOfDay(list));
+    const srcs = S.bySource(list);
+    ui.sourcesCard.hidden = srcs.length === 0;
+    hbars(ui.sources, srcs);
+
+    const top = S.topSongs(list, 10);
+    ui.topSongsCard.hidden = top.length === 0;
+    ui.topSongs.replaceChildren(...top.map((s) => {
+      const li = el('li');
+      li.append(el('span', 'song', s.song), el('span', 'count', plural(s.count, 'run')));
+      return li;
+    }));
+
+    // By month
+    const months = S.byMonth(list);
     const maxTime = Math.max(1, ...months.map((m) => m.time));
     ui.months.replaceChildren(...months.map((m) => {
       const li = el('li', 'month');
@@ -228,18 +344,23 @@
       fill.style.width = `${Math.max(2, (m.time / maxTime) * 100).toFixed(1)}%`;
       bar.append(fill);
       li.append(bar);
-      const parts = [`${m.count} ${m.count === 1 ? 'run' : 'runs'}`, fmtLength(m.time)];
+      const parts = [plural(m.count, 'run'), fmtLength(m.time)];
       if (m.dist > 0) parts.push(fmtDistance(m.dist));
       li.append(el('span', 'month-stats', parts.join(' · ')));
       return li;
     }));
-    ui.months.hidden = ui.monthsHead.hidden = months.length === 0;
+    ui.monthsBlock.hidden = months.length < 2;
+
+    renderRunList(list);
+    document.querySelectorAll('[data-period]').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.period === period)));
   }
 
-  function runCard(run, index) {
+  // ---------- run cards ----------
+  function runCard(run) {
     const li = el('li');
     const b = el('button', 'run');
     b.type = 'button';
+    b.dataset.id = run.id;
     const text = el('div');
     const when = el('p', 'run-when', `${fmtDay(run.date)} · ${fmtTime(run.date)}`);
     if (run.pulse) when.append(el('span', 'badge', 'Pulse Mode'));
@@ -254,68 +375,184 @@
       cad.append(document.createTextNode(vs ? ` average · ${vs}` : ' average'));
       text.append(cad);
     }
-    b.append(text, sparkline(run));
+    b.append(text, C.sparkline(run.cadence, run.targetBPM));
     b.setAttribute('aria-label', `Run on ${fmtDay(run.date)} at ${fmtTime(run.date)}, open details`);
-    b.addEventListener('click', () => openRun(index));
+    b.addEventListener('click', () => openRun(run));
     li.append(b);
     return li;
   }
+  let listed = [];
+  function renderRunList(periodRuns) {
+    listed = periodRuns.filter((r) => (source === 'all' ? true : source === 'pulse' ? r.pulse : r.source === source));
+    ui.runs.replaceChildren(...listed.slice(0, shown).map(runCard));
+    ui.more.hidden = listed.length <= shown;
+    ui.more.textContent = `Show more (${listed.length - shown} left)`;
+    ui.noMatch.hidden = listed.length > 0 || runs.length === 0;
+    document.querySelectorAll('[data-source]').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.source === source)));
+  }
+
   function renderList() {
-    renderWeek();
-    renderMonths();
-    ui.runs.replaceChildren(...runs.map(runCard));
     ui.empty.hidden = runs.length > 0;
+    ui.list.querySelectorAll('.block, .filter-row').forEach((n) => { n.hidden = runs.length === 0; });
+    const note = runs.length >= MAX_RUNS ? ` (your latest ${MAX_RUNS})` : '';
+    ui.synced.textContent = loadedAt ? `${plural(runs.length, 'run')}${note} · updated ${fmtTime(loadedAt)}` : '';
     document.querySelectorAll('[data-units]').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.units === units)));
+    if (!runs.length) return;
+    renderOverview();
+    renderCharts();
+    renderRecords();
+    renderPeriod();
   }
 
   // ---------- detail view ----------
-  let openIndex = -1;
-  function openRun(index) {
-    const run = runs[index];
+  let openId = null;
+  function drawRunCharts(run, cs) {
+    const W = chartWidth();
+    ui.chartWrap.hidden = run.cadence.length < 2;
+    ui.histWrap.hidden = run.cadence.length < 12;
+    if (run.cadence.length >= 2) {
+      ui.chart.replaceChildren(C.runCadence({
+        W, H: W < 460 ? 200 : 240,
+        values: run.cadence, target: run.targetBPM, band: S.ON_TARGET_SPM, sampleSec: SAMPLE_SEC,
+        label: `Cadence over the run, between ${cs.min} and ${cs.max} steps per minute${run.targetBPM != null ? `, target ${run.targetBPM}` : ''}`,
+      }));
+      ui.legend.replaceChildren(el('span', null, 'Your cadence'));
+      if (run.targetBPM != null) ui.legend.append(el('span', 'target', 'Target'), el('span', 'band', `Within ${S.ON_TARGET_SPM} spm`));
+    }
+    if (run.cadence.length >= 12) {
+      const width = cs.max - cs.min <= 36 ? 1 : 2; // 1 spm bins unless the run spans a wide range
+      const bins = S.histogram(run, width);
+      const n = run.cadence.length;
+      const tgt = run.targetBPM;
+      const inBand = (b) => tgt == null || (b.to - 1 >= tgt - S.ON_TARGET_SPM && b.from <= tgt + S.ON_TARGET_SPM);
+      ui.hist.replaceChildren(C.histogram({
+        W, H: W < 460 ? 150 : 180,
+        bins, inBand,
+        tipFor: (b) => `${width === 1 ? b.from : `${b.from}–${b.to - 1}`} spm: ${fmtPct(b.count / n)} of the run`,
+        label: `Cadence distribution from ${bins[0].from} to ${bins[bins.length - 1].to - 1} steps per minute`,
+      }));
+      ui.histLegend.replaceChildren();
+      if (tgt != null) ui.histLegend.append(el('span', null, 'Near target'), el('span', 'off', 'Away from target'));
+    }
+  }
+  function openRun(run, fromHistory) {
     if (!run) return;
-    openIndex = index;
+    openId = run.id;
+    const i = runs.indexOf(run);
     ui.detailTitle.textContent = `${fmtDay(run.date)} · ${fmtTime(run.date)}`;
+    const cs = S.cadenceStats(run);
+    const ot = S.onTarget(run);
     const facts = [
       ['Time', fmtLength(run.duration)], ['Distance', fmtDistance(run.distance)], ['Pace', fmtPace(run.duration, run.distance)],
       ['Avg cadence', run.avgCadence != null ? `${run.avgCadence} spm` : null],
-      ['Target', run.targetBPM != null ? `${run.targetBPM} BPM` : null],
+      ['Target', run.targetBPM != null ? `${run.targetBPM} spm` : null],
+      ['On target', ot ? fmtPct(ot.share) : null],
+      ['Cadence range', cs ? `${cs.min}–${cs.max}` : null],
+      ['Steadiness', cs ? `±${cs.sd.toFixed(1)} spm` : null],
       ['Recorded on', run.source], ['Pulse Mode', run.pulse ? 'On' : 'Off'],
+      ['Songs', run.songs.length ? String(run.songs.length) : null],
     ].filter(([, v]) => v != null);
     ui.facts.replaceChildren(...facts.map(([k, v]) => stat(k, v)));
 
-    ui.chartWrap.hidden = run.cadence.length < 2;
-    if (run.cadence.length >= 2) {
-      ui.chart.replaceChildren(chart(run));
-      ui.legend.replaceChildren(el('span', null, 'Your cadence'));
-      if (run.targetBPM != null) ui.legend.append(el('span', 'target', 'Target'));
+    // Plain comparisons: this run vs your all-time average, and first half vs second half.
+    const lines = [];
+    const avgAll = S.avgCadence(runs.filter((r) => r !== run));
+    if (run.avgCadence != null && avgAll != null) {
+      const d = Math.round(run.avgCadence - avgAll);
+      lines.push(d === 0 ? `Your cadence matched your usual average of ${Math.round(avgAll)} spm.`
+        : `Your cadence was ${Math.abs(d)} spm ${d > 0 ? 'above' : 'below'} your usual average of ${Math.round(avgAll)} spm.`);
     }
+    if (cs && cs.samples >= 24) {
+      const a = Math.round(cs.firstHalf), b = Math.round(cs.secondHalf);
+      lines.push(a === b ? `You held ${a} spm through both halves.` : `First half ${a} spm, second half ${b} spm.`);
+    }
+    ui.compare.textContent = lines.join(' ');
+    ui.compare.hidden = lines.length === 0;
+
+    drawRunCharts(run, cs);
     ui.songs.hidden = run.songs.length === 0;
     ui.songList.replaceChildren(...run.songs.map((s) => el('li', null, s)));
 
+    ui.newer.disabled = i <= 0;
+    ui.older.disabled = i < 0 || i >= runs.length - 1;
+
+    if (!fromHistory) {
+      if (history.state && history.state.run) history.replaceState({ run: run.id }, '', '#run');
+      else history.pushState({ run: run.id }, '', '#run');
+    }
     show('detail');
     window.scrollTo(0, 0);
     ui.detailTitle.focus();
   }
-  function closeRun() {
-    const index = openIndex;
-    openIndex = -1;
+  function closeRun(fromHistory) {
+    if (!fromHistory && history.state && history.state.run) { history.back(); return; } // popstate finishes the close
+    const id = openId;
+    openId = null;
     show('list');
-    const btn = ui.runs.querySelectorAll('.run')[index];
+    const btn = [...ui.runs.querySelectorAll('.run')].find((b) => b.dataset.id === id);
     if (btn) btn.focus();
   }
-  ui.back.addEventListener('click', closeRun);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !ui.detail.hidden) closeRun(); });
+  window.addEventListener('popstate', (e) => {
+    const id = e.state && e.state.run;
+    const run = id && runs.find((r) => r.id === id);
+    if (run) openRun(run, true);
+    else if (!ui.detail.hidden) closeRun(true);
+  });
+  ui.back.addEventListener('click', () => closeRun(false));
+  ui.newer.addEventListener('click', () => { const i = runs.findIndex((r) => r.id === openId); if (i > 0) openRun(runs[i - 1]); });
+  ui.older.addEventListener('click', () => { const i = runs.findIndex((r) => r.id === openId); if (i >= 0 && i < runs.length - 1) openRun(runs[i + 1]); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !ui.detail.hidden) closeRun(false); });
 
+  // ---------- controls ----------
   document.querySelectorAll('[data-period]').forEach((btn) => btn.addEventListener('click', () => {
-    period = ['week', 'month', 'all'].includes(btn.dataset.period) ? btn.dataset.period : 'week';
+    period = btn.dataset.period in PERIODS ? btn.dataset.period : 'all';
+    shown = PAGE;
     try { localStorage.setItem('adagio-period', period); } catch (e) { /* ignore */ }
-    renderWeek();
+    renderPeriod();
   }));
   document.querySelectorAll('[data-units]').forEach((btn) => btn.addEventListener('click', () => {
     units = btn.dataset.units === 'km' ? 'km' : 'mi';
     try { localStorage.setItem('adagio-units', units); } catch (e) { /* ignore */ }
     renderList();
   }));
+  document.querySelectorAll('[data-source]').forEach((btn) => btn.addEventListener('click', () => {
+    source = ['iPhone', 'Watch', 'Garmin', 'pulse'].includes(btn.dataset.source) ? btn.dataset.source : 'all';
+    shown = PAGE;
+    renderRunList(S.inPeriod(runs, period, new Date()));
+  }));
+  ui.more.addEventListener('click', () => {
+    const next = ui.runs.children.length;
+    shown += PAGE;
+    renderRunList(S.inPeriod(runs, period, new Date()));
+    const btn = ui.runs.children[next] && ui.runs.children[next].querySelector('.run');
+    if (btn) btn.focus();
+  });
+  // The CSV is made in this browser from the runs already on screen; nothing is uploaded.
+  ui.exportBtn.addEventListener('click', () => {
+    const blob = new Blob([S.toCSV(runs)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = el('a');
+    a.href = url;
+    const d = new Date();
+    a.download = `adagio-runs-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.csv`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  C.tooltips(document.getElementById('main'));
+  let lastW = 0, resizeTimer = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const w = chartWidth();
+      if (!runs.length || Math.abs(w - lastW) < 24) return;
+      lastW = w;
+      renderCharts();
+      const run = openId != null && runs.find((r) => r.id === openId);
+      if (run) drawRunCharts(run, S.cadenceStats(run));
+    }, 150);
+  });
 
   // ---------- CloudKit ----------
   const MESSAGES = {
@@ -350,20 +587,37 @@
     }
     return records.map(parseRun).filter(Boolean).sort((a, b) => b.date - a.date);
   }
+  function loaded(list) {
+    runs = list;
+    loadedAt = new Date();
+    shown = PAGE;
+    renderList();
+    if (history.state && history.state.run) history.replaceState(null, '', location.pathname + location.search);
+    show('list');
+  }
 
+  let activeContainer = null;
   function signedOut(container) {
+    activeContainer = null;
     runs = [];
     ui.runs.replaceChildren();
     show('signedOut');
     container.whenUserSignsIn().then(() => signedIn(container)).catch(fail);
   }
   function signedIn(container) {
+    activeContainer = container;
     show('loading', 'Loading your runs…');
     container.whenUserSignsOut().then(() => signedOut(container)).catch(fail);
-    fetchRuns(container.privateCloudDatabase)
-      .then((list) => { runs = list; renderList(); show('list'); })
-      .catch(fail);
+    fetchRuns(container.privateCloudDatabase).then(loaded).catch(fail);
   }
+  ui.refresh.addEventListener('click', () => {
+    if (!activeContainer) return;
+    ui.refresh.disabled = true;
+    ui.list.classList.add('is-refreshing'); // keep the page, dim it while it reloads
+    fetchRuns(activeContainer.privateCloudDatabase)
+      .then(loaded).catch(fail)
+      .finally(() => { ui.refresh.disabled = false; ui.list.classList.remove('is-refreshing'); });
+  });
 
   let started = false;
   function start() {
@@ -396,21 +650,26 @@
   const isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   if (isLocal && new URLSearchParams(location.search).has('demo')) {
     const day = 86400000, now = Date.now();
-    const wave = (n, base, amp) => Array.from({ length: n }, (_, i) => Math.round(base + amp * Math.sin(i / 9) + (i % 7) - 3));
-    const fake = [
-      { recordName: 'demo-1', fields: { date: { value: now - 3600000 }, duration: { value: 1920 }, distance: { value: 5200 }, avgCadence: { value: 172 }, targetBPM: { value: 174 },
-        cadence: { value: wave(384, 172, 4) }, songs: { value: ['Demo Song One — Demo Artist', '<b>Not bold</b> — Escaping Test'] }, haptic: { value: 1 }, source: { value: 'Watch' } } },
-      { recordName: 'demo-2', fields: { date: { value: now - 2 * day }, duration: { value: 2700 }, distance: { value: 0 }, avgCadence: { value: 168 },
-        cadence: { value: wave(540, 168, 6) }, haptic: { value: 0 }, source: { value: 'iPhone' } } },
-      { recordName: 'demo-3', fields: { date: { value: now - 9 * day }, duration: { value: 1500 }, distance: { value: 4100 }, haptic: { value: 0 }, source: { value: 'Garmin' } } },
-      { recordName: 'demo-5', fields: { date: { value: now - 7200000 }, duration: { value: 74 }, haptic: { value: 1 }, source: { value: 'Garmin' } } },
-      { recordName: 'demo-4', fields: { date: { value: now - 40 * day }, duration: { value: 3000 }, distance: { value: 8000 }, avgCadence: { value: 170 }, haptic: { value: 0 }, source: { value: 'iPhone' } } },
-    ];
-    runs = fake.map(parseRun).filter(Boolean).sort((a, b) => b.date - a.date);
-    renderList();
-    show('list');
-    const note = el('p', 'demo-note', 'Demo data: local testing only');
-    ui.list.prepend(note);
+    const wave = (n, base, amp, seed) => Array.from({ length: n }, (_, i) => Math.round(base + amp * Math.sin(i / 9 + seed) + ((i * 7 + seed) % 7) - 3));
+    const songs = ['Demo Song One — Demo Artist', 'Second Demo — Another Artist', 'Third Track — Demo Band', '<b>Not bold</b> — Escaping Test', '=1+1 — CSV Test'];
+    const fake = [];
+    // ~60 runs over 5 months, a few per week, different devices and times
+    for (let k = 0, t = now - 3600000; k < 60; k++) {
+      const dur = 900 + ((k * 397) % 2700);
+      const pulse = k % 3 !== 1;
+      const tgt = k % 4 === 3 ? null : 170 + (k % 3) * 2;
+      const base = (tgt || 168) + (pulse ? 0 : -3) + ((k % 5) - 2);
+      const src = SOURCES[k % 3];
+      fake.push({ recordName: `demo-${k}`, fields: {
+        date: { value: t }, duration: { value: dur }, distance: { value: k % 5 === 2 ? 0 : dur * (2.6 + (k % 4) * 0.15) },
+        avgCadence: { value: base }, ...(tgt ? { targetBPM: { value: tgt } } : {}),
+        cadence: { value: k % 9 === 8 ? [] : wave(Math.round(dur / SAMPLE_SEC), base, 3 + (k % 4), k) },
+        songs: { value: songs.slice(k % 3, (k % 3) + 2 + (k % 2)) }, haptic: { value: pulse ? 1 : 0 }, source: { value: src } } });
+      t -= day * (1 + ((k * 5) % 4)) + (k % 2 ? 9 : 3) * 3600000;
+    }
+    fake.push({ recordName: 'demo-short', fields: { date: { value: now - 7200000 }, duration: { value: 74 }, haptic: { value: 1 }, source: { value: 'Garmin' } } });
+    loaded(fake.map(parseRun).filter(Boolean).sort((a, b) => b.date - a.date));
+    ui.list.prepend(el('p', 'demo-note', 'Demo data: local testing only'));
     return;
   }
 

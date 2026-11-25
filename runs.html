@@ -43,25 +43,108 @@
         <div class="signin" id="apple-sign-in-button"></div>
       </section>
 
-      <!-- Signed in: list -->
-      <section id="list-view" hidden aria-labelledby="week-title">
-        <div class="toolbar">
-          <h2 id="week-title" class="visually-hidden">Totals</h2>
-          <div class="units" role="group" aria-label="Totals period">
-            <button type="button" data-period="week" aria-pressed="true">This week</button>
-            <button type="button" data-period="month" aria-pressed="false">This month</button>
-            <button type="button" data-period="all" aria-pressed="false">All time</button>
-          </div>
-          <div class="units" role="group" aria-label="Distance units">
-            <button type="button" data-units="mi" aria-pressed="true">mi</button>
-            <button type="button" data-units="km" aria-pressed="false">km</button>
+      <!-- Signed in: overview and list -->
+      <section id="list-view" hidden aria-label="Your runs">
+        <div class="toolbar topbar">
+          <p class="synced" id="synced"></p>
+          <div class="tools">
+            <div class="units" role="group" aria-label="Distance units">
+              <button type="button" data-units="mi" aria-pressed="true">mi</button>
+              <button type="button" data-units="km" aria-pressed="false">km</button>
+            </div>
+            <button type="button" class="btn small" id="refresh">Refresh</button>
           </div>
         </div>
-        <dl class="week" id="week"></dl>
-        <div class="toolbar" id="months-head"><h2 id="months-title">By month</h2></div>
-        <ul class="months" id="months" aria-labelledby="months-title"></ul>
-        <div class="toolbar"><h2 id="all-title">All runs</h2></div>
-        <ul class="runs" id="runs" aria-labelledby="all-title"></ul>
+
+        <section class="block" aria-labelledby="ov-title">
+          <h2 id="ov-title">Overview</h2>
+          <p class="summary" id="summary"></p>
+          <dl class="highlights" id="highlights"></dl>
+        </section>
+
+        <section class="block" aria-labelledby="time-title">
+          <h2 id="time-title">Over time</h2>
+          <div class="cards charts" id="charts">
+            <div class="card wide">
+              <h3>Time per week</h3>
+              <p class="sub">Last 12 weeks</p>
+              <div id="weekly-chart"></div>
+            </div>
+            <div class="card wide">
+              <h3>Calendar</h3>
+              <p class="sub" id="calendar-sub">Last 6 months, brighter means longer</p>
+              <div class="heat-wrap" id="calendar"></div>
+              <p class="heat-key" id="heat-key"></p>
+            </div>
+            <div class="card wide" id="trend-card">
+              <h3>Average cadence by run</h3>
+              <p class="sub" id="trend-sub"></p>
+              <div id="trend"></div>
+              <p class="legend"><span class="dot">One run</span><span>5-run average</span></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="block" aria-labelledby="rec-title" id="records-block">
+          <h2 id="rec-title">Personal records</h2>
+          <ul class="records" id="records"></ul>
+        </section>
+
+        <div class="filter-row" role="group" aria-label="Time period for everything below">
+          <button type="button" data-period="week" aria-pressed="false">Week</button>
+          <button type="button" data-period="month" aria-pressed="false">Month</button>
+          <button type="button" data-period="year" aria-pressed="false">Year</button>
+          <button type="button" data-period="all" aria-pressed="true">All time</button>
+        </div>
+
+        <section class="block" aria-labelledby="period-title">
+          <h2 id="period-title">All time</h2>
+          <dl class="week" id="week"></dl>
+          <div class="cards">
+            <div class="card" id="pulse-card">
+              <h3>Pulse Mode on vs off</h3>
+              <div id="pulse"></div>
+            </div>
+            <div class="card">
+              <h3>When you run</h3>
+              <ul class="hbars" id="tod"></ul>
+            </div>
+            <div class="card" id="sources-card">
+              <h3>Recorded on</h3>
+              <ul class="hbars" id="sources"></ul>
+            </div>
+            <div class="card" id="top-songs-card">
+              <h3>Most played songs</h3>
+              <p class="sub">How many runs each song played in</p>
+              <ol class="top-songs" id="top-songs"></ol>
+            </div>
+          </div>
+        </section>
+
+        <section class="block" aria-labelledby="months-title" id="months-block">
+          <h2 id="months-title">By month</h2>
+          <ul class="months" id="months"></ul>
+        </section>
+
+        <section class="block" aria-labelledby="all-title">
+          <div class="block-head">
+            <h2 id="all-title">Runs</h2>
+            <div class="units" role="group" aria-label="Show runs from">
+              <button type="button" data-source="all" aria-pressed="true">All</button>
+              <button type="button" data-source="iPhone" aria-pressed="false">iPhone</button>
+              <button type="button" data-source="Watch" aria-pressed="false">Watch</button>
+              <button type="button" data-source="Garmin" aria-pressed="false">Garmin</button>
+              <button type="button" data-source="pulse" aria-pressed="false">Pulse Mode</button>
+            </div>
+          </div>
+          <ul class="runs" id="runs"></ul>
+          <p class="muted none" id="no-match" hidden>No runs match this filter.</p>
+          <div class="list-foot">
+            <button type="button" class="btn" id="more" hidden>Show more</button>
+            <button type="button" class="btn" id="export">Download all runs (CSV)</button>
+          </div>
+        </section>
+
         <section class="panel" id="empty" hidden>
           <h2>No runs yet</h2>
           <p class="muted">Go for a run with Adagio, then check back. Runs show up here a moment after you finish them.</p>
@@ -71,16 +154,27 @@
       <!-- Signed in: one run -->
       <section id="detail-view" hidden aria-labelledby="detail-title">
         <div class="detail-head">
-          <h2 id="detail-title" tabindex="-1"></h2>
           <button type="button" class="btn" id="back">← All runs</button>
+          <div class="pager">
+            <button type="button" class="btn small" id="newer">← Newer</button>
+            <button type="button" class="btn small" id="older">Older →</button>
+          </div>
         </div>
+        <h2 class="detail-title" id="detail-title" tabindex="-1"></h2>
         <dl class="facts" id="facts"></dl>
-        <div class="chart-wrap" id="chart-wrap">
+        <p class="compare" id="compare"></p>
+        <div class="card chart-card" id="chart-wrap">
           <h3>Cadence</h3>
           <div id="chart"></div>
           <p class="legend" id="legend"></p>
         </div>
-        <div class="songs" id="songs">
+        <div class="card chart-card" id="hist-wrap">
+          <h3>Where your cadence sat</h3>
+          <p class="sub">Share of the run at each cadence, in steps per minute</p>
+          <div id="hist"></div>
+          <p class="legend" id="hist-legend"></p>
+        </div>
+        <div class="card songs" id="songs">
           <h3>Songs</h3>
           <ol id="song-list"></ol>
         </div>
@@ -95,7 +189,9 @@
     </div>
   </footer>
 
-  <!-- runs.js first (it waits for CloudKit), then Apple's CloudKit JS. No analytics on this page. -->
+  <!-- Our scripts first (runs.js waits for CloudKit), then Apple's CloudKit JS. No analytics on this page. -->
+  <script src="/runs-stats.js"></script>
+  <script src="/runs-charts.js"></script>
   <script src="/runs.js"></script>
   <script src="https://cdn.apple-cloudkit.com/ck/2/cloudkit.js" async></script>
 </body>
